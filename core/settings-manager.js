@@ -57,3 +57,10 @@ export function resetSettings() {
     extension_settings[SETTINGS_KEY] = getDefaultSettings();
     saveSettingsDebounced();
 }
+
+/**
+ * Force save settings immediately (for operations that need sync save)
+ */
+export async function saveSettings() {
+    saveSettingsDebounced();
+}

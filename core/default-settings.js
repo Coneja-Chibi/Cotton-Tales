@@ -166,6 +166,16 @@ export const defaultSettings = {
 
     /** SFX volume (0-100) */
     sfxVolume: 80,
+
+    // ==========================================================================
+    // PER-CARD NPC/SPRITE DATA
+    // ==========================================================================
+
+    /**
+     * Per-card NPC storage
+     * Structure: { [cardId]: [{ name, avatar, folderName, outfits, triggers, outfitTriggers }] }
+     */
+    cardNpcs: {},
 };
 
 /**

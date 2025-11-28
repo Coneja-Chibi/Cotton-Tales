@@ -13,7 +13,7 @@
 import { getContext } from '../../../../extensions.js';
 import { EXTENSION_NAME, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT, VECTHARE_TRIGGER } from '../core/constants.js';
 import { getSettings, updateSetting } from '../core/settings-manager.js';
-import { onVNModeToggled } from '../index.js';
+import { onVNModeToggled, openSpriteManager } from '../index.js';
 import { isVectHareAvailable, clearEmotionEmbeddingsCache } from '../ct-expressions.js';
 import { ConnectionManagerRequestService } from '../../../../shared.js';
 
@@ -145,6 +145,17 @@ function getCharactersTabHTML() {
         <div class="ct-detail-panel" id="ct_character_detail">
             <!-- Populated by JS when character selected -->
         </div>
+
+        <!-- Sprite Manager Button -->
+        <div class="ct-action-row" style="justify-content: center; margin-top: 16px;">
+            <button class="ct-btn" id="ct_open_sprite_manager">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                Open Sprite Manager
+            </button>
+        </div>
+        <p style="text-align: center; font-size: 11px; color: var(--ct-text-light); margin-top: 8px;">
+            Manage sprites, outfits, NPCs, and triggers
+        </p>
     `;
 }
 
@@ -856,6 +867,11 @@ function bindEvents() {
     // Stage composer button
     document.getElementById('ct_open_stage')?.addEventListener('click', () => {
         toastr.info('Stage Composer - Coming soon!');
+    });
+
+    // Sprite Manager button
+    document.getElementById('ct_open_sprite_manager')?.addEventListener('click', () => {
+        openSpriteManager();
     });
 
     // ==========================================================================

@@ -23,6 +23,7 @@ import {
     activateLandingPage,
     deactivateLandingPage,
 } from './ui/landing-page.js';
+import { openSpriteManager, closeSpriteManager } from './ui/sprite-manager.js';
 
 // Cotton-Tales modules - Expressions
 import { initExpressions, setExpressionsVisible } from './ct-expressions.js';
@@ -126,13 +127,25 @@ function loadCSS(filename) {
 }
 
 /**
+ * Load CSS from ui subfolder
+ */
+function loadUiCSS(filename) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = `/scripts/extensions/third-party/Cotton-Tales/ui/${filename}`;
+    document.head.appendChild(link);
+}
+
+/**
  * Main initialization function
  */
 async function init() {
     console.log(`[${EXTENSION_NAME}] Initializing...`);
 
-    // Load expressions CSS
+    // Load CSS
     loadCSS('ct-expressions.css');
+    loadUiCSS('sprite-manager.css');
 
     // Initialize settings
     initializeSettings();
@@ -206,4 +219,4 @@ if (document.readyState === 'loading') {
 // EXPORTS
 // =============================================================================
 
-export { EXTENSION_NAME };
+export { EXTENSION_NAME, openSpriteManager, closeSpriteManager };

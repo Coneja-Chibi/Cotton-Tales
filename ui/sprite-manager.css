@@ -1,0 +1,1051 @@
+/**
+ * ============================================================================
+ * COTTON-TALES SPRITE MANAGER - COZY RPG STYLES
+ * ============================================================================
+ * Modal styling for the sprite/expression manager.
+ * Combines flipbook navigation, outfit carousel, expression grid, and party dock.
+ *
+ * @author Coneja Chibi
+ * @version 0.1.0-alpha
+ * ============================================================================
+ */
+
+/* =============================================================================
+   CSS VARIABLES
+   ============================================================================= */
+
+.ct-sprite-manager {
+    /* Inherit Cotton-Tales palette */
+    --ct-sm-cream: #FDF6E3;
+    --ct-sm-cream-dark: #F5E6C8;
+    --ct-sm-peach: #FFECD2;
+    --ct-sm-peach-dark: #FFD9B3;
+    --ct-sm-pink: #FFB6C1;
+    --ct-sm-pink-soft: #FFD4DB;
+    --ct-sm-pink-deep: #E8909C;
+    --ct-sm-lavender: #E6E6FA;
+    --ct-sm-mint: #B8E8D0;
+    --ct-sm-mint-dark: #8DD4B8;
+    --ct-sm-wood: #8B7355;
+    --ct-sm-wood-dark: #6B5344;
+    --ct-sm-wood-light: #A89070;
+    --ct-sm-text: #5D4E4E;
+    --ct-sm-text-light: #8B7B7B;
+    --ct-sm-shadow: rgba(93, 78, 78, 0.15);
+    --ct-sm-shadow-strong: rgba(93, 78, 78, 0.3);
+
+    /* Additional colors for manager */
+    --ct-sm-gold: #FFD700;
+    --ct-sm-gold-soft: #FFF4CC;
+    --ct-sm-purple: #B8A9C9;
+    --ct-sm-purple-deep: #9381A8;
+}
+
+/* =============================================================================
+   MODAL CONTAINER & BACKDROP
+   ============================================================================= */
+
+#ct-sprite-manager-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+#ct-sprite-manager-modal.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.ct-sm-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(30, 20, 40, 0.85);
+    backdrop-filter: blur(4px);
+}
+
+.ct-sm-container {
+    position: relative;
+    width: 95%;
+    max-width: 900px;
+    max-height: 90vh;
+    background: linear-gradient(145deg, var(--ct-sm-cream) 0%, var(--ct-sm-peach) 100%);
+    border: 5px solid var(--ct-sm-wood);
+    border-radius: 20px;
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.4),
+        inset 0 2px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.95) translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+#ct-sprite-manager-modal.open .ct-sm-container {
+    transform: scale(1) translateY(0);
+}
+
+/* Decorative inner border */
+.ct-sm-container::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    border: 3px dashed var(--ct-sm-wood-light);
+    border-radius: 14px;
+    pointer-events: none;
+    opacity: 0.25;
+    z-index: 0;
+}
+
+/* =============================================================================
+   HEADER
+   ============================================================================= */
+
+.ct-sm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: linear-gradient(180deg, var(--ct-sm-wood) 0%, var(--ct-sm-wood-dark) 100%);
+    border-bottom: 4px solid var(--ct-sm-wood-dark);
+    position: relative;
+    z-index: 1;
+}
+
+.ct-sm-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--ct-sm-cream);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.ct-sm-title i {
+    color: var(--ct-sm-gold);
+    font-size: 20px;
+}
+
+.ct-sm-close {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: var(--ct-sm-cream);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ct-sm-close:hover {
+    background: var(--ct-sm-pink-deep);
+    border-color: var(--ct-sm-pink);
+    transform: rotate(90deg);
+}
+
+/* =============================================================================
+   CHARACTER FLIPBOOK
+   ============================================================================= */
+
+.ct-sm-flipbook {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 20px;
+    background: linear-gradient(180deg, rgba(255, 215, 0, 0.1) 0%, transparent 100%);
+    border-bottom: 2px dashed var(--ct-sm-wood-light);
+    position: relative;
+    z-index: 1;
+}
+
+.ct-sm-flip-btn {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(145deg, var(--ct-sm-wood) 0%, var(--ct-sm-wood-dark) 100%);
+    border: 3px solid var(--ct-sm-wood-dark);
+    border-radius: 50%;
+    color: var(--ct-sm-cream);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px var(--ct-sm-shadow);
+}
+
+.ct-sm-flip-btn:hover {
+    background: linear-gradient(145deg, var(--ct-sm-pink-deep) 0%, var(--ct-sm-pink) 100%);
+    border-color: var(--ct-sm-pink);
+    transform: scale(1.1);
+}
+
+.ct-sm-flip-btn:active {
+    transform: scale(0.95);
+}
+
+.ct-sm-add-char {
+    background: linear-gradient(145deg, var(--ct-sm-mint) 0%, var(--ct-sm-mint-dark) 100%);
+    border-color: var(--ct-sm-mint-dark);
+    color: #2D5A3D;
+}
+
+.ct-sm-add-char:hover {
+    background: linear-gradient(145deg, var(--ct-sm-mint-dark) 0%, #6BC49A 100%);
+}
+
+.ct-sm-character-display {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    background: var(--ct-sm-cream);
+    border: 3px solid var(--ct-sm-wood);
+    border-radius: 16px;
+    min-width: 280px;
+    box-shadow:
+        0 4px 12px var(--ct-sm-shadow),
+        inset 0 2px 0 rgba(255, 255, 255, 0.8);
+}
+
+.ct-sm-character-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3px solid var(--ct-sm-wood);
+    background: linear-gradient(145deg, var(--ct-sm-peach) 0%, var(--ct-sm-peach-dark) 100%);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 8px var(--ct-sm-shadow);
+}
+
+.ct-sm-character-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ct-sm-character-avatar i {
+    font-size: 28px;
+    color: var(--ct-sm-wood);
+}
+
+.ct-sm-character-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ct-sm-character-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ct-sm-text);
+}
+
+.ct-sm-character-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.ct-sm-character-badge.main {
+    background: var(--ct-sm-gold-soft);
+    color: #8B6914;
+    border: 2px solid var(--ct-sm-gold);
+}
+
+.ct-sm-character-badge.npc {
+    background: var(--ct-sm-lavender);
+    color: #4A4A6A;
+    border: 2px solid #C5C5E8;
+}
+
+/* Character counter */
+.ct-sm-counter {
+    text-align: center;
+    padding: 8px;
+    font-size: 12px;
+    color: var(--ct-sm-text-light);
+    font-weight: 600;
+}
+
+.ct-sm-counter-current {
+    color: var(--ct-sm-pink-deep);
+    font-weight: 800;
+}
+
+/* =============================================================================
+   MAIN CONTENT AREA
+   ============================================================================= */
+
+.ct-sm-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Custom scrollbar */
+.ct-sm-content::-webkit-scrollbar {
+    width: 10px;
+}
+
+.ct-sm-content::-webkit-scrollbar-track {
+    background: var(--ct-sm-peach);
+    border-radius: 5px;
+}
+
+.ct-sm-content::-webkit-scrollbar-thumb {
+    background: var(--ct-sm-wood);
+    border-radius: 5px;
+    border: 2px solid var(--ct-sm-peach);
+}
+
+.ct-sm-content::-webkit-scrollbar-thumb:hover {
+    background: var(--ct-sm-pink-deep);
+}
+
+/* =============================================================================
+   SECTION STYLING
+   ============================================================================= */
+
+.ct-sm-section {
+    margin-bottom: 24px;
+}
+
+.ct-sm-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--ct-sm-wood-dark);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px dashed var(--ct-sm-wood-light);
+}
+
+.ct-sm-section-header i {
+    color: var(--ct-sm-pink-deep);
+    font-size: 16px;
+}
+
+.ct-sm-outfit-label {
+    font-weight: 600;
+    color: var(--ct-sm-text-light);
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+/* =============================================================================
+   OUTFIT CAROUSEL
+   ============================================================================= */
+
+.ct-sm-outfit-carousel-wrapper {
+    position: relative;
+    padding: 0 50px;
+}
+
+.ct-sm-carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(145deg, var(--ct-sm-wood) 0%, var(--ct-sm-wood-dark) 100%);
+    border: 3px solid var(--ct-sm-wood-dark);
+    border-radius: 50%;
+    color: var(--ct-sm-cream);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    box-shadow: 0 3px 8px var(--ct-sm-shadow);
+}
+
+.ct-sm-carousel-arrow:hover {
+    background: var(--ct-sm-pink-deep);
+    border-color: var(--ct-sm-pink);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.ct-sm-carousel-left { left: 0; }
+.ct-sm-carousel-right { right: 0; }
+
+.ct-sm-outfit-carousel {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 12px 4px 16px;
+    scrollbar-width: none;
+}
+
+.ct-sm-outfit-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+/* Outfit Cards */
+.ct-sm-outfit-card {
+    flex: 0 0 140px;
+    background: var(--ct-sm-cream);
+    border: 3px solid var(--ct-sm-wood);
+    border-radius: 14px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow:
+        0 4px 10px var(--ct-sm-shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.ct-sm-outfit-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 10px 20px var(--ct-sm-shadow-strong);
+    border-color: var(--ct-sm-pink);
+}
+
+.ct-sm-outfit-card.selected {
+    border-color: var(--ct-sm-pink-deep);
+    background: linear-gradient(145deg, var(--ct-sm-cream) 0%, var(--ct-sm-pink-soft) 100%);
+    box-shadow:
+        0 6px 16px rgba(232, 144, 156, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.ct-sm-outfit-preview {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 10px;
+    border-radius: 10px;
+    border: 2px solid var(--ct-sm-wood-light);
+    background: var(--ct-sm-peach);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ct-sm-outfit-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ct-sm-outfit-preview i {
+    font-size: 32px;
+    color: var(--ct-sm-wood-light);
+}
+
+.ct-sm-outfit-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ct-sm-text);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ct-sm-outfit-count {
+    font-size: 11px;
+    color: var(--ct-sm-text-light);
+}
+
+/* Add outfit card */
+.ct-sm-outfit-add {
+    border-style: dashed;
+    background: transparent;
+    opacity: 0.7;
+}
+
+.ct-sm-outfit-add:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.ct-sm-outfit-add .ct-sm-outfit-preview {
+    background: transparent;
+    border-style: dashed;
+}
+
+.ct-sm-outfit-add .ct-sm-outfit-preview i {
+    color: var(--ct-sm-wood);
+}
+
+/* =============================================================================
+   EXPRESSION GRID
+   ============================================================================= */
+
+.ct-sm-expression-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 12px;
+}
+
+.ct-sm-expression-tile {
+    background: var(--ct-sm-cream);
+    border: 3px solid var(--ct-sm-wood);
+    border-radius: 12px;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 8px var(--ct-sm-shadow);
+}
+
+.ct-sm-expression-tile:hover {
+    transform: translateY(-4px) scale(1.05);
+    border-color: var(--ct-sm-pink);
+    box-shadow: 0 8px 16px var(--ct-sm-shadow-strong);
+    z-index: 5;
+}
+
+.ct-sm-expression-preview {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 8px;
+    border-radius: 8px;
+    border: 2px solid var(--ct-sm-wood-light);
+    background: var(--ct-sm-peach);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.ct-sm-expression-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ct-sm-expression-preview i {
+    font-size: 24px;
+    color: var(--ct-sm-wood-light);
+}
+
+.ct-sm-expression-count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--ct-sm-pink-deep);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--ct-sm-cream);
+}
+
+.ct-sm-expression-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ct-sm-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Add expression tile */
+.ct-sm-expression-add {
+    border-style: dashed;
+    opacity: 0.7;
+}
+
+.ct-sm-expression-add:hover {
+    opacity: 1;
+}
+
+.ct-sm-expression-add .ct-sm-expression-preview {
+    background: transparent;
+    border-style: dashed;
+}
+
+/* =============================================================================
+   TRIGGERS SECTION
+   ============================================================================= */
+
+.ct-sm-triggers-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.ct-sm-trigger-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ct-sm-trigger-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--ct-sm-cream);
+    border: 2px solid var(--ct-sm-wood-light);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ct-sm-text);
+    transition: all 0.2s ease;
+}
+
+.ct-sm-trigger-chip:hover {
+    border-color: var(--ct-sm-pink);
+    background: var(--ct-sm-pink-soft);
+}
+
+.ct-sm-trigger-remove {
+    width: 18px;
+    height: 18px;
+    background: var(--ct-sm-wood-light);
+    border: none;
+    border-radius: 50%;
+    color: var(--ct-sm-cream);
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.ct-sm-trigger-remove:hover {
+    background: var(--ct-sm-pink-deep);
+}
+
+.ct-sm-add-trigger {
+    width: 32px;
+    height: 32px;
+    background: var(--ct-sm-mint);
+    border: 2px dashed var(--ct-sm-mint-dark);
+    border-radius: 50%;
+    color: #2D5A3D;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.ct-sm-add-trigger:hover {
+    background: var(--ct-sm-mint-dark);
+    border-style: solid;
+    transform: scale(1.1);
+}
+
+/* Outfit triggers */
+.ct-sm-outfit-triggers-header {
+    margin-top: 16px;
+}
+
+.ct-sm-outfit-triggers {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ct-sm-outfit-trigger-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--ct-sm-peach);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.ct-sm-outfit-trigger-row:hover {
+    border-color: var(--ct-sm-wood-light);
+}
+
+.ct-sm-outfit-trigger-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ct-sm-text);
+    min-width: 80px;
+}
+
+.ct-sm-outfit-trigger-arrow {
+    color: var(--ct-sm-wood-light);
+}
+
+.ct-sm-outfit-trigger-values {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.ct-sm-mini-chip {
+    padding: 4px 10px;
+    background: var(--ct-sm-cream);
+    border: 1px solid var(--ct-sm-wood-light);
+    border-radius: 12px;
+    font-size: 11px;
+    color: var(--ct-sm-text);
+}
+
+.ct-sm-add-outfit-trigger {
+    width: 24px;
+    height: 24px;
+    background: var(--ct-sm-cream);
+    border: 2px dashed var(--ct-sm-wood-light);
+    border-radius: 50%;
+    color: var(--ct-sm-wood);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.ct-sm-add-outfit-trigger:hover {
+    background: var(--ct-sm-mint);
+    border-color: var(--ct-sm-mint-dark);
+    color: #2D5A3D;
+}
+
+/* =============================================================================
+   RPG PARTY DOCK
+   ============================================================================= */
+
+.ct-sm-party-dock {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(180deg, var(--ct-sm-wood-dark) 0%, #5A4234 100%);
+    border-top: 4px solid var(--ct-sm-wood);
+    position: relative;
+    z-index: 1;
+}
+
+.ct-sm-party-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ct-sm-cream);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+}
+
+.ct-sm-party-members {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+    overflow-x: auto;
+    padding: 4px;
+    scrollbar-width: none;
+}
+
+.ct-sm-party-members::-webkit-scrollbar {
+    display: none;
+}
+
+.ct-sm-party-member {
+    flex: 0 0 56px;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    border: 3px solid var(--ct-sm-wood-light);
+    background: var(--ct-sm-cream);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.ct-sm-party-member img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ct-sm-party-initial {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--ct-sm-wood);
+}
+
+.ct-sm-party-member:hover {
+    transform: translateY(-6px) scale(1.08);
+    border-color: var(--ct-sm-pink);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.ct-sm-party-member.active {
+    border-color: var(--ct-sm-gold);
+    box-shadow:
+        0 0 0 3px var(--ct-sm-gold),
+        0 6px 16px rgba(255, 215, 0, 0.3);
+    transform: translateY(-4px);
+}
+
+.ct-sm-party-npc-badge {
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ct-sm-lavender);
+    color: #4A4A6A;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 8px;
+    border: 2px solid #C5C5E8;
+}
+
+.ct-sm-party-add {
+    border-style: dashed;
+    background: transparent;
+    opacity: 0.6;
+}
+
+.ct-sm-party-add:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.ct-sm-party-add i {
+    font-size: 20px;
+    color: var(--ct-sm-cream);
+}
+
+/* =============================================================================
+   EMPTY STATE
+   ============================================================================= */
+
+.ct-sm-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.ct-sm-empty-state i {
+    font-size: 48px;
+    color: var(--ct-sm-wood-light);
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.ct-sm-empty-state p {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ct-sm-text);
+    margin-bottom: 8px;
+}
+
+.ct-sm-empty-state span {
+    font-size: 13px;
+    color: var(--ct-sm-text-light);
+}
+
+/* =============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================= */
+
+@media screen and (max-width: 768px) {
+    .ct-sm-container {
+        width: 100%;
+        max-width: none;
+        max-height: 100vh;
+        border-radius: 0;
+        border-width: 0;
+    }
+
+    .ct-sm-flipbook {
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .ct-sm-character-display {
+        min-width: unset;
+        flex: 1;
+        order: 1;
+        width: 100%;
+    }
+
+    .ct-sm-flip-prev { order: 2; }
+    .ct-sm-flip-next { order: 3; }
+    .ct-sm-add-char { order: 4; }
+
+    .ct-sm-outfit-carousel-wrapper {
+        padding: 0 40px;
+    }
+
+    .ct-sm-outfit-card {
+        flex: 0 0 120px;
+    }
+
+    .ct-sm-outfit-preview {
+        width: 80px;
+        height: 80px;
+    }
+
+    .ct-sm-expression-grid {
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 10px;
+    }
+
+    .ct-sm-expression-preview {
+        width: 54px;
+        height: 54px;
+    }
+
+    .ct-sm-party-member {
+        flex: 0 0 48px;
+        width: 48px;
+        height: 48px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .ct-sm-header {
+        padding: 12px 16px;
+    }
+
+    .ct-sm-title {
+        font-size: 14px;
+    }
+
+    .ct-sm-flip-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .ct-sm-character-avatar {
+        width: 48px;
+        height: 48px;
+    }
+
+    .ct-sm-character-name {
+        font-size: 14px;
+    }
+
+    .ct-sm-content {
+        padding: 16px;
+    }
+
+    .ct-sm-section-header {
+        font-size: 11px;
+    }
+
+    .ct-sm-party-dock {
+        padding: 12px 16px;
+    }
+
+    .ct-sm-party-label {
+        display: none;
+    }
+}
+
+/* =============================================================================
+   ANIMATIONS
+   ============================================================================= */
+
+@keyframes ctSmPop {
+    0% { transform: scale(0.8); opacity: 0; }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes ctSmSlideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.ct-sm-outfit-card {
+    animation: ctSmPop 0.3s ease backwards;
+}
+
+.ct-sm-outfit-card:nth-child(1) { animation-delay: 0.05s; }
+.ct-sm-outfit-card:nth-child(2) { animation-delay: 0.1s; }
+.ct-sm-outfit-card:nth-child(3) { animation-delay: 0.15s; }
+.ct-sm-outfit-card:nth-child(4) { animation-delay: 0.2s; }
+.ct-sm-outfit-card:nth-child(5) { animation-delay: 0.25s; }
+
+.ct-sm-expression-tile {
+    animation: ctSmSlideUp 0.2s ease backwards;
+}
+
+.ct-sm-party-member {
+    animation: ctSmPop 0.25s ease backwards;
+}
+
+.ct-sm-party-member:nth-child(1) { animation-delay: 0.05s; }
+.ct-sm-party-member:nth-child(2) { animation-delay: 0.1s; }
+.ct-sm-party-member:nth-child(3) { animation-delay: 0.15s; }
+.ct-sm-party-member:nth-child(4) { animation-delay: 0.2s; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .ct-sm-outfit-card,
+    .ct-sm-expression-tile,
+    .ct-sm-party-member,
+    #ct-sprite-manager-modal.open .ct-sm-container {
+        animation: none !important;
+        transition: none !important;
+    }
+}
