@@ -131,7 +131,7 @@
  */
 
 /* =============================================================================
-   MAIN CONTAINER
+   COMPACT DRAWER (in sidebar)
    ============================================================================= */
 
 #cotton-tales-settings {
@@ -139,9 +139,328 @@
 }
 
 #cotton-tales-settings .inline-drawer-content {
-    padding: 0 !important;
+    padding: 8px !important;
     background: transparent !important;
 }
+
+.ct-drawer-compact {
+    background: linear-gradient(145deg, rgba(15, 10, 26, 0.95), rgba(10, 8, 18, 0.98));
+    border: 2px solid var(--ct-border-strong);
+    border-radius: var(--ct-radius-lg);
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.ct-drawer-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--ct-gradient-pink-purple);
+}
+
+.ct-quick-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--ct-bg-card);
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    margin-bottom: 10px;
+}
+
+.ct-quick-toggle-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ct-text-primary);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.ct-quick-toggle-info i {
+    color: var(--ct-pink-vibrant);
+}
+
+.ct-open-modal-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--ct-gradient-pink-purple);
+    border: none;
+    border-radius: var(--ct-radius);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--ct-transition);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 15px var(--ct-pink-glow);
+}
+
+.ct-open-modal-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px var(--ct-pink-glow);
+    filter: brightness(1.1);
+}
+
+.ct-open-modal-btn:active {
+    transform: translateY(0);
+}
+
+.ct-drawer-footer {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 10px;
+    color: var(--ct-text-dim);
+}
+
+/* =============================================================================
+   MODAL OVERLAY
+   ============================================================================= */
+
+.ct-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.ct-modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.ct-modal {
+    width: 100%;
+    max-width: 1100px;
+    max-height: 85vh;
+    background: var(--ct-bg-base);
+    border: 2px solid var(--ct-purple);
+    border-radius: 24px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow:
+        0 25px 80px rgba(0, 0, 0, 0.8),
+        0 0 60px var(--ct-purple-glow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: scale(0.95) translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.ct-modal-overlay.active .ct-modal {
+    transform: scale(1) translateY(0);
+}
+
+/* =============================================================================
+   MODAL HEADER - OS Window Style
+   ============================================================================= */
+
+.ct-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--ct-gradient-pink-purple);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.ct-modal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ct-modal-header-left i {
+    font-size: 18px;
+    color: rgba(0, 0, 0, 0.7);
+}
+
+.ct-modal-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 0.85);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.ct-modal-subtitle {
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.5);
+    font-family: monospace;
+}
+
+.ct-modal-header-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.ct-modal-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: var(--ct-transition);
+}
+
+.ct-modal-dot.minimize {
+    background: #ffbd2e;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.ct-modal-dot.maximize {
+    background: #28c840;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.ct-modal-dot.close {
+    background: #ff5f57;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.ct-modal-dot.close:hover {
+    background: #ff3b30;
+    transform: scale(1.15);
+}
+
+/* =============================================================================
+   MODAL BODY - Sidebar + Content Layout
+   ============================================================================= */
+
+.ct-modal-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Sidebar Navigation */
+.ct-modal-sidebar {
+    width: 200px;
+    background: linear-gradient(180deg, var(--ct-bg-primary) 0%, var(--ct-bg-secondary) 100%);
+    border-right: 1px solid var(--ct-border);
+    display: flex;
+    flex-direction: column;
+    padding: 16px 0;
+    flex-shrink: 0;
+}
+
+.ct-sidebar-section {
+    margin-bottom: 20px;
+}
+
+.ct-sidebar-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--ct-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 0 16px;
+    margin-bottom: 8px;
+}
+
+.ct-sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    color: var(--ct-text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--ct-transition);
+    text-align: left;
+}
+
+.ct-sidebar-item i {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+}
+
+.ct-sidebar-item:hover {
+    background: rgba(183, 108, 255, 0.1);
+    color: var(--ct-text-primary);
+}
+
+.ct-sidebar-item.active {
+    background: linear-gradient(90deg, rgba(255, 107, 157, 0.15), transparent);
+    border-left-color: var(--ct-pink-vibrant);
+    color: var(--ct-pink-vibrant);
+}
+
+.ct-sidebar-item.active i {
+    color: var(--ct-pink-vibrant);
+}
+
+.ct-sidebar-footer {
+    margin-top: auto;
+    padding: 16px;
+    border-top: 1px solid var(--ct-border);
+}
+
+.ct-sidebar-footer a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--ct-text-muted);
+    font-size: 11px;
+    text-decoration: none;
+    transition: var(--ct-transition);
+}
+
+.ct-sidebar-footer a:hover {
+    color: var(--ct-pink-vibrant);
+}
+
+/* Main Content Area */
+.ct-modal-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    background: var(--ct-bg-base);
+}
+
+.ct-modal-tab {
+    display: none;
+    animation: ctFadeIn 0.3s ease;
+}
+
+.ct-modal-tab.active {
+    display: block;
+}
+
+@keyframes ctFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =============================================================================
+   LEGACY CONTAINER (keeping for tab content compatibility)
+   ============================================================================= */
 
 .ct-settings-container {
     background: var(--ct-bg-primary);
@@ -302,15 +621,31 @@
 }
 
 /* =============================================================================
-   CAROUSEL
+   CHARACTER GRID (Modal uses grid, not carousel)
    ============================================================================= */
 
 .ct-carousel-wrapper {
     position: relative;
-    padding: 0 45px;
     margin: 10px 0;
 }
 
+/* In modal, use a grid layout */
+.ct-modal-content .ct-carousel-wrapper {
+    padding: 0;
+}
+
+.ct-modal-content .ct-carousel {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    padding: 16px 0;
+}
+
+.ct-modal-content .ct-carousel-arrow {
+    display: none;
+}
+
+/* Legacy carousel for non-modal contexts */
 .ct-carousel {
     display: flex;
     gap: 14px;
@@ -372,6 +707,12 @@
         0 12px 32px rgba(0, 0, 0, 0.7),
         0 0 20px rgba(183, 108, 255, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* In modal grid, cards are flexible */
+.ct-modal-content .ct-card {
+    flex: unset;
+    width: 100%;
 }
 
 .ct-card:hover {

@@ -31,6 +31,7 @@ let currentTab = 'characters';
 // =============================================================================
 
 function getSettingsHTML() {
+    const settings = getSettings();
     return `
         <div id="cotton-tales-settings">
             <div class="inline-drawer">
@@ -39,64 +40,123 @@ function getSettingsHTML() {
                     <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
                 </div>
                 <div class="inline-drawer-content">
-                    <div class="ct-settings-container">
+                    <!-- Compact drawer content - just quick toggles and open button -->
+                    <div class="ct-drawer-compact">
+                        <!-- Quick Enable Toggle -->
+                        <div class="ct-quick-toggle">
+                            <div class="ct-quick-toggle-info">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                <span>VN Mode</span>
+                            </div>
+                            <label class="ct-switch">
+                                <input type="checkbox" id="ct_master_enable" ${settings.enabled ? 'checked' : ''} />
+                                <span class="ct-switch-slider"></span>
+                            </label>
+                        </div>
 
-                        <!-- Tab Navigation -->
-                        <div class="ct-tab-bar">
-                            <button class="ct-tab active" data-tab="characters">
+                        <!-- Open Settings Modal Button -->
+                        <button class="ct-open-modal-btn" id="ct_open_settings_modal">
+                            <i class="fa-solid fa-gear"></i>
+                            <span>Open Settings Panel</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </button>
+
+                        <div class="ct-drawer-footer">
+                            Cotton-Tales v0.1.0
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getModalHTML() {
+    return `
+        <div id="ct-modal-overlay" class="ct-modal-overlay">
+            <div class="ct-modal">
+                <!-- Modal Header - OS Window Style -->
+                <div class="ct-modal-header">
+                    <div class="ct-modal-header-left">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span class="ct-modal-title">Cotton-Tales Settings</span>
+                        <span class="ct-modal-subtitle">cotton-tales.config</span>
+                    </div>
+                    <div class="ct-modal-header-right">
+                        <div class="ct-modal-header-dots">
+                            <div class="ct-modal-dot minimize"></div>
+                            <div class="ct-modal-dot maximize"></div>
+                            <div class="ct-modal-dot close" id="ct_modal_close"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="ct-modal-body">
+                    <!-- Sidebar Navigation -->
+                    <div class="ct-modal-sidebar">
+                        <div class="ct-sidebar-section">
+                            <div class="ct-sidebar-label">Content</div>
+                            <button class="ct-sidebar-item active" data-tab="characters">
                                 <i class="fa-solid fa-users"></i>
-                                Characters
+                                <span>Characters</span>
                             </button>
-                            <button class="ct-tab" data-tab="expressions">
+                            <button class="ct-sidebar-item" data-tab="expressions">
                                 <i class="fa-solid fa-face-smile"></i>
-                                Expressions
+                                <span>Expressions</span>
                             </button>
-                            <button class="ct-tab" data-tab="backgrounds">
+                            <button class="ct-sidebar-item" data-tab="backgrounds">
                                 <i class="fa-solid fa-image"></i>
-                                Backgrounds
-                            </button>
-                            <button class="ct-tab" data-tab="display">
-                                <i class="fa-solid fa-display"></i>
-                                Display
-                            </button>
-                            <button class="ct-tab" data-tab="scenes">
-                                <i class="fa-solid fa-clapperboard"></i>
-                                Scenes
+                                <span>Backgrounds</span>
                             </button>
                         </div>
 
+                        <div class="ct-sidebar-section">
+                            <div class="ct-sidebar-label">Display</div>
+                            <button class="ct-sidebar-item" data-tab="display">
+                                <i class="fa-solid fa-display"></i>
+                                <span>VN Settings</span>
+                            </button>
+                            <button class="ct-sidebar-item" data-tab="scenes">
+                                <i class="fa-solid fa-clapperboard"></i>
+                                <span>Scenes</span>
+                            </button>
+                        </div>
+
+                        <div class="ct-sidebar-footer">
+                            <a href="https://github.com/Coneja-Chibi" target="_blank">
+                                <i class="fa-brands fa-github"></i>
+                                Coneja Chibi
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Main Content Area -->
+                    <div class="ct-modal-content">
                         <!-- Characters Tab -->
-                        <div class="ct-tab-content active" data-tab="characters">
+                        <div class="ct-modal-tab active" data-tab="characters">
                             ${getCharactersTabHTML()}
                         </div>
 
                         <!-- Expressions Tab -->
-                        <div class="ct-tab-content" data-tab="expressions">
+                        <div class="ct-modal-tab" data-tab="expressions">
                             ${getExpressionsTabHTML()}
                         </div>
 
                         <!-- Backgrounds Tab -->
-                        <div class="ct-tab-content" data-tab="backgrounds">
+                        <div class="ct-modal-tab" data-tab="backgrounds">
                             ${getBackgroundsTabHTML()}
                         </div>
 
                         <!-- Display Tab -->
-                        <div class="ct-tab-content" data-tab="display">
+                        <div class="ct-modal-tab" data-tab="display">
                             ${getDisplayTabHTML()}
                         </div>
 
                         <!-- Scenes Tab -->
-                        <div class="ct-tab-content" data-tab="scenes">
+                        <div class="ct-modal-tab" data-tab="scenes">
                             ${getScenesTabHTML()}
                         </div>
-
-                        <!-- Footer -->
-                        <div class="ct-footer">
-                            <p class="ct-footer-text">
-                                Cotton-Tales v0.1.0 by <a href="https://github.com/Coneja-Chibi" target="_blank">Coneja Chibi</a>
-                            </p>
-                        </div>
-
                     </div>
                 </div>
             </div>
@@ -1192,18 +1252,101 @@ export function renderSettings() {
     wrapper.innerHTML = getSettingsHTML();
     container.appendChild(wrapper.firstElementChild);
 
-    // Load settings into UI
-    const settings = getSettings();
-    const masterToggle = document.getElementById('ct_master_enable');
-    if (masterToggle) masterToggle.checked = settings.enabled;
-
-    // Bind events
-    bindEvents();
-
-    // Populate character carousel
-    populateCharacterCarousel();
+    // Bind drawer events
+    bindDrawerEvents();
 
     console.log(`[${EXTENSION_NAME}] Settings panel rendered`);
 }
 
-export { populateCharacterCarousel };
+function openSettingsModal() {
+    // Don't open if already open
+    if (document.getElementById('ct-modal-overlay')) {
+        return;
+    }
+
+    // Insert modal into body
+    const modalWrapper = document.createElement('div');
+    modalWrapper.innerHTML = getModalHTML();
+    document.body.appendChild(modalWrapper.firstElementChild);
+
+    // Animate in
+    requestAnimationFrame(() => {
+        document.getElementById('ct-modal-overlay')?.classList.add('active');
+    });
+
+    // Bind modal events
+    bindModalEvents();
+
+    // Populate content
+    populateCharacterCarousel();
+    populateBackgroundCarousel();
+}
+
+function closeSettingsModal() {
+    const overlay = document.getElementById('ct-modal-overlay');
+    if (!overlay) return;
+
+    overlay.classList.remove('active');
+
+    // Remove after animation
+    setTimeout(() => {
+        overlay.remove();
+    }, 300);
+}
+
+function bindDrawerEvents() {
+    // Master enable toggle in drawer
+    document.getElementById('ct_master_enable')?.addEventListener('change', (e) => {
+        const enabled = e.target.checked;
+        updateSetting('enabled', enabled);
+        onVNModeToggled(enabled);
+    });
+
+    // Open modal button
+    document.getElementById('ct_open_settings_modal')?.addEventListener('click', () => {
+        openSettingsModal();
+    });
+}
+
+function bindModalEvents() {
+    // Close button
+    document.getElementById('ct_modal_close')?.addEventListener('click', closeSettingsModal);
+
+    // Click outside to close
+    document.getElementById('ct-modal-overlay')?.addEventListener('click', (e) => {
+        if (e.target.id === 'ct-modal-overlay') {
+            closeSettingsModal();
+        }
+    });
+
+    // Escape key to close
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeSettingsModal();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+
+    // Sidebar navigation
+    document.querySelectorAll('.ct-sidebar-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const tabName = item.dataset.tab;
+
+            // Update sidebar
+            document.querySelectorAll('.ct-sidebar-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.ct-modal-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.ct-modal-tab[data-tab="${tabName}"]`)?.classList.add('active');
+
+            currentTab = tabName;
+        });
+    });
+
+    // Bind all the rest of the events
+    bindEvents();
+}
+
+export { populateCharacterCarousel, openSettingsModal, closeSettingsModal };
