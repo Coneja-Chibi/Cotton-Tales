@@ -20,16 +20,19 @@
 import { Fuse } from '../../../../lib.js';
 
 import {
+    characters,
     eventSource,
     event_types,
     generateQuietPrompt,
     generateRaw,
     getRequestHeaders,
+    getThumbnailUrl,
     online_status,
     saveSettingsDebounced,
     substituteParams,
     substituteParamsExtended,
     system_message_types,
+    this_chid,
 } from '../../../../../script.js';
 
 import { dragElement, isMobile } from '../../../RossAscends-mods.js';
@@ -428,10 +431,30 @@ async function setExpression(spriteFolderName, expression, { force = false } = {
 
         console.info(`[${MODULE_NAME}] Expression set:`, { expression: spriteFile.expression, file: spriteFile.fileName });
     } else {
-        // No sprite found
-        img.attr('src', '');
-        img.attr('data-expression', expression);
-        console.debug(`[${MODULE_NAME}] No sprite found for expression:`, expression);
+        // No sprite found - fall back to character avatar
+        const context = getContext();
+        let avatarUrl = '';
+
+        if (context.groupId) {
+            // Group chat - find the character
+            const character = context.characters.find(c => c.name === spriteFolderName || c.avatar?.replace(/\.[^/.]+$/, '') === spriteFolderName);
+            if (character?.avatar) {
+                avatarUrl = getThumbnailUrl('avatar', character.avatar);
+            }
+        } else if (this_chid !== undefined && characters[this_chid]) {
+            // Single chat - use current character
+            avatarUrl = getThumbnailUrl('avatar', characters[this_chid].avatar);
+        }
+
+        if (avatarUrl && img.attr('src') !== avatarUrl) {
+            img.attr('src', avatarUrl);
+            img.attr('data-expression', 'avatar-fallback');
+            console.debug(`[${MODULE_NAME}] Using character avatar as fallback`);
+        } else if (!avatarUrl) {
+            img.attr('src', '');
+            img.attr('data-expression', expression);
+            console.debug(`[${MODULE_NAME}] No sprite or avatar found for:`, spriteFolderName);
+        }
     }
 
     document.getElementById('ct-expression-holder').style.display = '';
@@ -528,14 +551,20 @@ async function visualNovelSetCharacterSprites(vnContainer, spriteFolderName, exp
 
         const spriteFile = chooseSpriteForExpression(memberSpriteFolderName, charExpression, { prevExpressionSrc });
 
+        // Get image path - sprite if available, otherwise character avatar
+        let imagePath = spriteFile?.imageSrc || '';
+        if (!imagePath && character.avatar) {
+            imagePath = getThumbnailUrl('avatar', character.avatar);
+        }
+
         if (expressionImage.length) {
             if (!spriteFolderName || spriteFolderName == memberSpriteFolderName) {
                 await validateImages(memberSpriteFolderName, true);
-                const path = spriteFile?.imageSrc || '';
                 const img = expressionImage.find('img');
-                await setImage(img, path);
+                await setImage(img, imagePath);
             }
-            expressionImage.toggleClass('hidden', !spriteFile);
+            // Always show if we have any image (sprite or avatar)
+            expressionImage.toggleClass('hidden', !imagePath);
         } else {
             // Create new expression holder for this character
             const template = $('#ct-expression-holder').clone();
@@ -544,10 +573,11 @@ async function visualNovelSetCharacterSprites(vnContainer, spriteFolderName, exp
             template.find('.drag-grabber').attr('id', `ct-expression-${avatar}header`);
             $('#ct-visual-novel-wrapper').append(template);
             dragElement($(template[0]));
-            template.toggleClass('hidden', !spriteFile);
+            // Always show if we have any image (sprite or avatar)
+            template.toggleClass('hidden', !imagePath);
 
             const img = template.find('img');
-            await setImage(img, spriteFile?.imageSrc || '');
+            await setImage(img, imagePath);
 
             const fadeInPromise = new Promise(resolve => {
                 template.fadeIn(250, () => resolve());

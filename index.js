@@ -52,11 +52,32 @@ function initializeSettings() {
 export { getSettings, updateSetting };
 
 // =============================================================================
+// VN MODE CONTROL
+// =============================================================================
+
+/**
+ * Enable Visual Novel mode layout
+ * Adds waifuMode class and shows character avatar behind chat
+ */
+function enableVNLayout() {
+    $('body').addClass('waifuMode');
+    console.debug(`[${EXTENSION_NAME}] VN layout enabled`);
+}
+
+/**
+ * Disable Visual Novel mode layout
+ */
+function disableVNLayout() {
+    $('body').removeClass('waifuMode');
+    console.debug(`[${EXTENSION_NAME}] VN layout disabled`);
+}
+
+// =============================================================================
 // EVENT HANDLERS
 // =============================================================================
 
 /**
- * Handle chat changes - toggle landing page
+ * Handle chat changes - toggle landing page and VN mode
  */
 function onChatChanged() {
     const settings = getSettings();
@@ -66,7 +87,9 @@ function onChatChanged() {
     const hasActiveChat = context.chatId && context.characterId !== undefined;
 
     if (!hasActiveChat) {
-        // On landing page
+        // On landing page - disable VN layout
+        disableVNLayout();
+
         if (settings.enabled) {
             setTimeout(() => {
                 activateLandingPage();
@@ -77,6 +100,13 @@ function onChatChanged() {
     } else {
         // In active chat - deactivate landing page styling
         deactivateLandingPage();
+
+        // Enable VN layout if Cotton-Tales is enabled
+        if (settings.enabled) {
+            enableVNLayout();
+        } else {
+            disableVNLayout();
+        }
     }
 }
 
@@ -116,15 +146,21 @@ async function init() {
     // Initialize expressions system (sprites, VN mode)
     await initExpressions();
 
-    // Check if we should activate landing page on load
+    // Check initial state and apply appropriate mode
     const settings = getSettings();
     const context = getContext();
     const hasActiveChat = context.chatId && context.characterId !== undefined;
 
-    if (settings.enabled && !hasActiveChat) {
-        setTimeout(() => {
-            activateLandingPage();
-        }, 150);
+    if (settings.enabled) {
+        if (!hasActiveChat) {
+            // On landing page
+            setTimeout(() => {
+                activateLandingPage();
+            }, 150);
+        } else {
+            // In active chat - enable VN layout
+            enableVNLayout();
+        }
     }
 
     console.log(`[${EXTENSION_NAME}] Initialization complete`);
@@ -139,14 +175,18 @@ export function onVNModeToggled(enabled) {
     const hasActiveChat = context.chatId && context.characterId !== undefined;
 
     if (enabled) {
-        // Only apply landing page if not in active chat
         if (!hasActiveChat) {
+            // On landing page - activate landing page styling
             setTimeout(() => {
                 activateLandingPage();
             }, 150);
+        } else {
+            // In active chat - enable VN layout
+            enableVNLayout();
         }
         console.log(`[${EXTENSION_NAME}] VN mode enabled`);
     } else {
+        disableVNLayout();
         deactivateLandingPage();
         console.log(`[${EXTENSION_NAME}] VN mode disabled`);
     }
