@@ -773,6 +773,19 @@ function isVectHareAvailable() {
     }
 }
 
+/**
+ * Check if VectHare's emotion classifier is available
+ * @returns {boolean} Whether VectHare classifier API is available
+ */
+function isVectHareClassifierAvailable() {
+    try {
+        const vhSettings = window.extension_settings?.vecthare;
+        return !!(vhSettings?.emotion_classifier_enabled && window.VectHareEmotionClassifier);
+    } catch {
+        return false;
+    }
+}
+
 /** Cache for emotion embeddings to avoid re-computing */
 let emotionEmbeddingsCache = null;
 let emotionEmbeddingsCacheSource = null;
@@ -891,20 +904,49 @@ export function clearEmotionEmbeddingsCache() {
 
 /**
  * Classify text using VectHare's semantic capabilities
- * Uses embeddings to find semantically similar expressions via cosine similarity
+ * Uses either:
+ * 1. VectHare's dedicated classifier API (if enabled in VectHare settings)
+ * 2. Embedding similarity fallback
+ *
  * @param {string} text - Text to classify
  * @param {string[]} labels - Available labels
  * @returns {Promise<string|null>} Expression label or null if unavailable
  */
 async function classifyWithVectHare(text, labels) {
-    // Check if VectHare is available
+    // Check if VectHare is available at all
     if (!isVectHareAvailable()) {
         console.debug(`[${MODULE_NAME}] VectHare not available`);
         return null;
     }
 
     const settings = getSettings();
+    const vhSettings = getVectHareSettings();
 
+    // Priority 1: Use VectHare's dedicated classifier API if available
+    if (isVectHareClassifierAvailable() && !vhSettings?.emotion_use_similarity) {
+        try {
+            const classifierAPI = window.VectHareEmotionClassifier;
+            const result = await classifierAPI.classifyEmotion(text);
+
+            if (result?.label) {
+                // Check if the label is in our allowed labels
+                const normalizedLabel = result.label.toLowerCase();
+                const matchedLabel = labels.find(l => l.toLowerCase() === normalizedLabel);
+
+                if (matchedLabel) {
+                    console.log(`[${MODULE_NAME}] VectHare classifier: "${matchedLabel}" (${(result.score * 100).toFixed(1)}%)`);
+                    return matchedLabel;
+                } else {
+                    console.debug(`[${MODULE_NAME}] VectHare classifier returned "${result.label}" which is not in allowed labels`);
+                    // Fall through to embedding similarity
+                }
+            }
+        } catch (error) {
+            console.debug(`[${MODULE_NAME}] VectHare classifier API failed, falling back to embedding similarity:`, error);
+        }
+    }
+
+    // Priority 2: Use embedding similarity
     try {
         // Generate embedding for the input text
         const textEmbedding = await generateEmbedding(text);
@@ -944,7 +986,7 @@ async function classifyWithVectHare(text, labels) {
         }
 
         if (bestLabel) {
-            console.log(`[${MODULE_NAME}] VectHare classified as "${bestLabel}" (score: ${bestScore.toFixed(4)})`);
+            console.log(`[${MODULE_NAME}] VectHare similarity: "${bestLabel}" (score: ${bestScore.toFixed(4)})`);
             return bestLabel;
         }
 
