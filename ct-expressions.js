@@ -741,10 +741,18 @@ async function moduleWorker() {
     const context = getContext();
     const ctSettings = getSettings();
 
-    // Skip if not enabled or no character
-    if (!ctSettings.enabled) return;
+    // Skip if not enabled - hide everything
+    if (!ctSettings.enabled) {
+        $('#ct-expression-wrapper').hide();
+        $('#ct-visual-novel-wrapper').hide();
+        return;
+    }
+
+    // No character loaded
     if (!context.groupId && context.characterId === undefined) {
         removeExpression();
+        $('#ct-expression-wrapper').hide();
+        $('#ct-visual-novel-wrapper').hide();
         return;
     }
 
