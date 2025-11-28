@@ -692,18 +692,6 @@ function sampleClassifyText(text, api) {
 }
 
 /**
- * Get the list of available expressions
- * @param {Object} options - Options
- * @param {boolean} options.filterAvailable - Whether to filter to only available sprites
- * @returns {Promise<string[]>} List of expression labels
- */
-async function getExpressionsList({ filterAvailable = false } = {}) {
-    // TODO: If filterAvailable, check sprite cache for current character
-    // For now, return default list
-    return [...DEFAULT_EXPRESSIONS];
-}
-
-/**
  * Get the LLM prompt for classification
  * @param {string[]} labels - Available expression labels
  * @returns {Promise<string>} The prompt to use
