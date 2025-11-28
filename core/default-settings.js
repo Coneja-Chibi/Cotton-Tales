@@ -111,6 +111,9 @@ export const defaultSettings = {
     /** Translate text to English before classification */
     translateBeforeClassify: false,
 
+    /** Connection profile ID for LLM classification (empty = use current API) */
+    expressionConnectionProfile: '',
+
     // ==========================================================================
     // BACKGROUND SETTINGS
     // ==========================================================================

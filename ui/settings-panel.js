@@ -15,6 +15,7 @@ import { EXTENSION_NAME, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT } from 
 import { getSettings, updateSetting } from '../core/settings-manager.js';
 import { onVNModeToggled } from '../index.js';
 import { isVectHareAvailable } from '../ct-expressions.js';
+import { ConnectionManagerRequestService } from '../../../../shared.js';
 
 // =============================================================================
 // STATE
@@ -208,15 +209,29 @@ function getExpressionsTabHTML() {
         </div>
         ` : ''}
 
-        <!-- LLM Settings (shown when LLM or WebLLM selected) -->
-        <div id="ct_llm_settings" style="display: ${[EXPRESSION_API.llm, EXPRESSION_API.webllm].includes(settings.expressionApi) ? 'block' : 'none'};">
+        <!-- LLM Settings (shown when LLM selected) -->
+        <div id="ct_llm_settings" style="display: ${settings.expressionApi === EXPRESSION_API.llm ? 'block' : 'none'};">
             <div class="ct-section-label" style="margin-top: 16px;">
                 <i class="fa-solid fa-message"></i>
                 LLM Settings
             </div>
 
-            <!-- Prompt Type (LLM only) -->
-            <div class="ct-slider-row" id="ct_prompt_type_row" style="display: ${settings.expressionApi === EXPRESSION_API.llm ? 'block' : 'none'};">
+            <!-- Connection Profile -->
+            <div class="ct-slider-row">
+                <div class="ct-slider-header">
+                    <span class="ct-slider-label">Connection Profile</span>
+                </div>
+                <select class="ct-select" id="ct_expression_connection_profile">
+                    <option value="">Use Current Chat API</option>
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+            <p style="font-size: 10px; color: var(--ct-text-light); margin: 4px 0 12px 0;">
+                Use a different API connection for classification (e.g., a cheaper/faster model)
+            </p>
+
+            <!-- Prompt Type -->
+            <div class="ct-slider-row" id="ct_prompt_type_row">
                 <div class="ct-slider-header">
                     <span class="ct-slider-label">Prompt Type</span>
                 </div>
@@ -830,16 +845,16 @@ function bindEvents() {
         const api = parseInt(e.target.value, 10);
         updateSetting('expressionApi', api);
 
-        // Show/hide LLM settings
-        const showLlm = [EXPRESSION_API.llm, EXPRESSION_API.webllm].includes(api);
+        // Show/hide LLM settings (only for LLM, not WebLLM which doesn't use profiles)
+        const showLlm = api === EXPRESSION_API.llm;
         if (llmSettings) llmSettings.style.display = showLlm ? 'block' : 'none';
-
-        // Show prompt type only for LLM (not WebLLM)
-        if (promptTypeRow) promptTypeRow.style.display = api === EXPRESSION_API.llm ? 'block' : 'none';
 
         // Update help text
         if (apiHelp) apiHelp.innerHTML = apiHelpTexts[api] || '';
     });
+
+    // Connection profile dropdown - use ConnectionManagerRequestService
+    initConnectionProfileDropdown();
 
     // Prompt type
     bindSelect('ct_expression_prompt_type', 'expressionPromptType');
@@ -865,6 +880,45 @@ function bindEvents() {
     // Classification options toggles
     bindToggle('ct_filter_available', 'filterAvailableExpressions');
     bindToggle('ct_translate_classify', 'translateBeforeClassify');
+}
+
+/**
+ * Initialize the connection profile dropdown using ConnectionManagerRequestService
+ */
+function initConnectionProfileDropdown() {
+    const settings = getSettings();
+    const dropdown = document.getElementById('ct_expression_connection_profile');
+
+    if (!dropdown) return;
+
+    try {
+        // Check if Connection Manager is available
+        const context = getContext();
+        if (context.extensionSettings?.disabledExtensions?.includes('connection-manager')) {
+            dropdown.innerHTML = '<option value="" disabled>Connection Manager not available</option>';
+            return;
+        }
+
+        // Use the handleDropdown helper from ConnectionManagerRequestService
+        ConnectionManagerRequestService.handleDropdown(
+            '#ct_expression_connection_profile',
+            settings.expressionConnectionProfile || '',
+            // onChange - when user selects a profile
+            (profile) => {
+                updateSetting('expressionConnectionProfile', profile?.id || '');
+                console.log(`[${EXTENSION_NAME}] Expression connection profile changed:`, profile?.name || 'Current API');
+            },
+            // onCreate - when a new profile is created
+            () => {},
+            // onUpdate - when a profile is updated
+            () => {},
+            // onDelete - when a profile is deleted
+            () => {}
+        );
+    } catch (error) {
+        console.debug(`[${EXTENSION_NAME}] Connection Manager not available:`, error.message);
+        dropdown.innerHTML = '<option value="">Use Current Chat API</option><option value="" disabled>Connection Manager not installed</option>';
+    }
 }
 
 function bindCarouselArrows(prevId, nextId, carouselId) {
