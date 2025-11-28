@@ -11,10 +11,10 @@
  */
 
 import { getContext } from '../../../../extensions.js';
-import { EXTENSION_NAME, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT } from '../core/constants.js';
+import { EXTENSION_NAME, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT, VECTHARE_TRIGGER } from '../core/constants.js';
 import { getSettings, updateSetting } from '../core/settings-manager.js';
 import { onVNModeToggled } from '../index.js';
-import { isVectHareAvailable } from '../ct-expressions.js';
+import { isVectHareAvailable, clearEmotionEmbeddingsCache } from '../ct-expressions.js';
 import { ConnectionManagerRequestService } from '../../../../shared.js';
 
 // =============================================================================
@@ -197,15 +197,51 @@ function getExpressionsTabHTML() {
 
         ${vectHareAvailable ? `
         <!-- VectHare Bonus Section -->
-        <div class="ct-vecthare-bonus" style="margin: 16px 0; padding: 12px; background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(139,92,246,0.3); border-radius: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <div class="ct-vecthare-bonus" id="ct_vecthare_settings" style="margin: 16px 0; padding: 12px; background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(139,92,246,0.3); border-radius: 8px; display: ${settings.expressionApi === EXPRESSION_API.vecthare ? 'block' : 'none'};">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
                 <i class="fa-solid fa-rabbit" style="color: #8b5cf6;"></i>
-                <span style="font-weight: 600; color: #8b5cf6;">VectHare Detected!</span>
+                <span style="font-weight: 600; color: #8b5cf6;">VectHare Semantic Classification</span>
             </div>
-            <p style="font-size: 11px; color: var(--ct-text-light); margin: 0;">
-                VectHare semantic classification uses embeddings to understand emotion context.
-                This can be more accurate than keyword matching for nuanced expressions.
+            <p style="font-size: 11px; color: var(--ct-text-light); margin: 0 0 12px 0;">
+                Uses VectHare's embedding provider to semantically match text to emotions via cosine similarity.
+                This understands emotion context rather than just keywords.
             </p>
+
+            <!-- Classification Trigger -->
+            <div class="ct-slider-row" style="margin-bottom: 8px;">
+                <div class="ct-slider-header">
+                    <span class="ct-slider-label" style="font-size: 12px;">Classification Trigger</span>
+                </div>
+                <select class="ct-select" id="ct_vecthare_trigger" style="font-size: 11px;">
+                    <option value="${VECTHARE_TRIGGER.after_response}" ${settings.vecthareTrigger === VECTHARE_TRIGGER.after_response ? 'selected' : ''}>
+                        After AI Response
+                    </option>
+                    <option value="${VECTHARE_TRIGGER.before_send}" ${settings.vecthareTrigger === VECTHARE_TRIGGER.before_send ? 'selected' : ''}>
+                        Before User Sends (classify previous)
+                    </option>
+                </select>
+            </div>
+            <p style="font-size: 10px; color: var(--ct-text-light); margin: 0 0 12px 0;">
+                "After AI Response" classifies immediately. "Before User Sends" waits until user starts typing.
+            </p>
+
+            <!-- Cache Emotions Toggle -->
+            <div class="ct-toggle-row" style="padding: 8px 0;">
+                <div>
+                    <div class="ct-toggle-label" style="font-size: 12px;">Cache Emotion Embeddings</div>
+                    <div class="ct-toggle-sublabel" style="font-size: 10px;">Faster classification (embeddings computed once)</div>
+                </div>
+                <label class="ct-switch">
+                    <input type="checkbox" id="ct_vecthare_cache" ${settings.vecthareCacheEmotions ? 'checked' : ''} />
+                    <span class="ct-switch-slider"></span>
+                </label>
+            </div>
+
+            <!-- Clear Cache Button -->
+            <button class="ct-btn secondary" id="ct_clear_emotion_cache" style="margin-top: 8px; font-size: 11px;">
+                <i class="fa-solid fa-trash"></i>
+                Clear Emotion Cache
+            </button>
         </div>
         ` : ''}
 
@@ -841,6 +877,8 @@ function bindEvents() {
         [EXPRESSION_API.none]: '<strong>None:</strong> No classification. Only uses fallback expression.',
     };
 
+    const vecthareSettings = document.getElementById('ct_vecthare_settings');
+
     apiSelect?.addEventListener('change', (e) => {
         const api = parseInt(e.target.value, 10);
         updateSetting('expressionApi', api);
@@ -848,6 +886,10 @@ function bindEvents() {
         // Show/hide LLM settings (only for LLM, not WebLLM which doesn't use profiles)
         const showLlm = api === EXPRESSION_API.llm;
         if (llmSettings) llmSettings.style.display = showLlm ? 'block' : 'none';
+
+        // Show/hide VectHare settings
+        const showVecthare = api === EXPRESSION_API.vecthare;
+        if (vecthareSettings) vecthareSettings.style.display = showVecthare ? 'block' : 'none';
 
         // Update help text
         if (apiHelp) apiHelp.innerHTML = apiHelpTexts[api] || '';
@@ -880,6 +922,24 @@ function bindEvents() {
     // Classification options toggles
     bindToggle('ct_filter_available', 'filterAvailableExpressions');
     bindToggle('ct_translate_classify', 'translateBeforeClassify');
+
+    // ==========================================================================
+    // VECTHARE SETTINGS BINDINGS
+    // ==========================================================================
+
+    // VectHare trigger
+    document.getElementById('ct_vecthare_trigger')?.addEventListener('change', (e) => {
+        updateSetting('vecthareTrigger', e.target.value);
+    });
+
+    // VectHare cache toggle
+    bindToggle('ct_vecthare_cache', 'vecthareCacheEmotions');
+
+    // Clear emotion cache button
+    document.getElementById('ct_clear_emotion_cache')?.addEventListener('click', () => {
+        clearEmotionEmbeddingsCache();
+        toastr.success('Emotion embeddings cache cleared');
+    });
 }
 
 /**

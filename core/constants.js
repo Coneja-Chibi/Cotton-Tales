@@ -135,6 +135,52 @@ export const FALLBACK_OPTIONS = {
     EMOJI: '#emoji',
 };
 
+/**
+ * When to trigger VectHare classification
+ * @enum {string}
+ */
+export const VECTHARE_TRIGGER = {
+    /** Classify after AI response is complete */
+    after_response: 'after_response',
+    /** Classify before user message is sent (on previous AI message) */
+    before_send: 'before_send',
+};
+
+/**
+ * Emotion descriptions for semantic matching
+ * Maps emotion labels to descriptive text for better embedding similarity
+ */
+export const EMOTION_DESCRIPTIONS = {
+    admiration: 'feeling admiration, respect, awe, impressed, looking up to someone',
+    amusement: 'feeling amused, entertained, finding something funny, laughing',
+    anger: 'feeling angry, mad, furious, enraged, irritated',
+    annoyance: 'feeling annoyed, bothered, irritated, frustrated',
+    approval: 'feeling approval, agreement, acceptance, nodding along',
+    caring: 'feeling caring, nurturing, protective, wanting to help',
+    confusion: 'feeling confused, puzzled, bewildered, not understanding',
+    curiosity: 'feeling curious, interested, wanting to know more, intrigued',
+    desire: 'feeling desire, longing, wanting, craving',
+    disappointment: 'feeling disappointed, let down, unsatisfied',
+    disapproval: 'feeling disapproval, disagreement, rejection, shaking head',
+    disgust: 'feeling disgusted, repulsed, revolted, grossed out',
+    embarrassment: 'feeling embarrassed, ashamed, self-conscious, blushing',
+    excitement: 'feeling excited, thrilled, eager, pumped up',
+    fear: 'feeling afraid, scared, frightened, terrified',
+    gratitude: 'feeling grateful, thankful, appreciative',
+    grief: 'feeling grief, mourning, deep sadness, loss',
+    joy: 'feeling joyful, happy, delighted, elated',
+    love: 'feeling love, affection, adoration, deep caring',
+    nervousness: 'feeling nervous, anxious, worried, on edge',
+    optimism: 'feeling optimistic, hopeful, positive about the future',
+    pride: 'feeling proud, accomplished, satisfied with achievement',
+    realization: 'having a realization, understanding something, epiphany',
+    relief: 'feeling relieved, weight lifted, tension released',
+    remorse: 'feeling remorse, regret, sorry for something done',
+    sadness: 'feeling sad, unhappy, down, melancholy',
+    surprise: 'feeling surprised, shocked, astonished, unexpected',
+    neutral: 'feeling neutral, calm, balanced, no strong emotion',
+};
+
 // =============================================================================
 // EFFECTS
 // =============================================================================

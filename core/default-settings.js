@@ -24,6 +24,7 @@ import {
     EXPRESSION_API,
     PROMPT_TYPE,
     DEFAULT_LLM_PROMPT,
+    VECTHARE_TRIGGER,
 } from './constants.js';
 
 /**
@@ -113,6 +114,19 @@ export const defaultSettings = {
 
     /** Connection profile ID for LLM classification (empty = use current API) */
     expressionConnectionProfile: '',
+
+    // ==========================================================================
+    // VECTHARE INTEGRATION SETTINGS
+    // ==========================================================================
+
+    /** When to trigger VectHare classification */
+    vecthareTrigger: VECTHARE_TRIGGER.after_response,
+
+    /** Use VectHare's embedding provider instead of its own */
+    vecthareUseProvider: true,
+
+    /** Cache emotion embeddings for faster classification */
+    vecthareCacheEmotions: true,
 
     // ==========================================================================
     // BACKGROUND SETTINGS

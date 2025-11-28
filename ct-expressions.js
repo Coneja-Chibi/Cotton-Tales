@@ -62,6 +62,7 @@ import {
     EXPRESSION_API,
     PROMPT_TYPE,
     DEFAULT_LLM_PROMPT,
+    EMOTION_DESCRIPTIONS,
 } from './core/constants.js';
 
 // Shared extension utilities
@@ -772,9 +773,125 @@ function isVectHareAvailable() {
     }
 }
 
+/** Cache for emotion embeddings to avoid re-computing */
+let emotionEmbeddingsCache = null;
+let emotionEmbeddingsCacheSource = null;
+
 /**
- * Classify text using VectHare's semantic capabilities (bonus feature)
- * Uses embeddings to find semantically similar expressions
+ * Get VectHare settings from extension_settings
+ * @returns {Object|null} VectHare settings or null
+ */
+function getVectHareSettings() {
+    try {
+        return window.extension_settings?.vecthare || null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Generate embedding for text using VectHare's configured provider
+ * @param {string} text - Text to embed
+ * @returns {Promise<number[]|null>} Embedding vector or null
+ */
+async function generateEmbedding(text) {
+    const vhSettings = getVectHareSettings();
+    if (!vhSettings) return null;
+
+    const source = vhSettings.source || 'transformers';
+
+    try {
+        const response = await fetch('/api/embeddings/compute', {
+            method: 'POST',
+            headers: getRequestHeaders(),
+            body: JSON.stringify({
+                text: text,
+                source: source,
+                model: vhSettings[`${source}_model`] || undefined,
+            }),
+        });
+
+        if (!response.ok) {
+            console.debug(`[${MODULE_NAME}] Embedding request failed: ${response.status}`);
+            return null;
+        }
+
+        const data = await response.json();
+        return data.embedding || data;
+    } catch (error) {
+        console.debug(`[${MODULE_NAME}] Embedding generation failed:`, error);
+        return null;
+    }
+}
+
+/**
+ * Cosine similarity between two vectors
+ * @param {number[]} a - First vector
+ * @param {number[]} b - Second vector
+ * @returns {number} Similarity score (-1 to 1)
+ */
+function cosineSimilarity(a, b) {
+    if (!a || !b || a.length !== b.length) return 0;
+
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    for (let i = 0; i < a.length; i++) {
+        dotProduct += a[i] * b[i];
+        normA += a[i] * a[i];
+        normB += b[i] * b[i];
+    }
+
+    const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
+    return magnitude === 0 ? 0 : dotProduct / magnitude;
+}
+
+/**
+ * Build emotion embeddings cache
+ * @param {string[]} labels - Emotion labels to cache
+ * @returns {Promise<Object>} Map of label -> embedding
+ */
+async function buildEmotionEmbeddingsCache(labels) {
+    const vhSettings = getVectHareSettings();
+    const currentSource = vhSettings?.source || 'transformers';
+
+    // Return cached if same source
+    if (emotionEmbeddingsCache && emotionEmbeddingsCacheSource === currentSource) {
+        return emotionEmbeddingsCache;
+    }
+
+    console.log(`[${MODULE_NAME}] Building emotion embeddings cache with ${currentSource}...`);
+
+    const cache = {};
+    for (const label of labels) {
+        // Use descriptive text for better semantic matching
+        const description = EMOTION_DESCRIPTIONS[label] || label;
+        const embedding = await generateEmbedding(description);
+        if (embedding) {
+            cache[label] = embedding;
+        }
+    }
+
+    emotionEmbeddingsCache = cache;
+    emotionEmbeddingsCacheSource = currentSource;
+
+    console.log(`[${MODULE_NAME}] Cached ${Object.keys(cache).length} emotion embeddings`);
+    return cache;
+}
+
+/**
+ * Clear emotion embeddings cache (call when provider changes)
+ */
+export function clearEmotionEmbeddingsCache() {
+    emotionEmbeddingsCache = null;
+    emotionEmbeddingsCacheSource = null;
+    console.debug(`[${MODULE_NAME}] Emotion embeddings cache cleared`);
+}
+
+/**
+ * Classify text using VectHare's semantic capabilities
+ * Uses embeddings to find semantically similar expressions via cosine similarity
  * @param {string} text - Text to classify
  * @param {string[]} labels - Available labels
  * @returns {Promise<string|null>} Expression label or null if unavailable
@@ -786,34 +903,54 @@ async function classifyWithVectHare(text, labels) {
         return null;
     }
 
-    try {
-        // VectHare exposes embedding generation through the ST plugin API
-        // We can use semantic similarity to match text to emotions
-        const response = await fetch('/api/plugins/similharity/vectors', {
-            method: 'POST',
-            headers: getRequestHeaders(),
-            body: JSON.stringify({
-                text: text,
-                source: 'transformers', // Use local embeddings
-            }),
-        });
+    const settings = getSettings();
 
-        if (!response.ok) {
+    try {
+        // Generate embedding for the input text
+        const textEmbedding = await generateEmbedding(text);
+        if (!textEmbedding) {
+            console.debug(`[${MODULE_NAME}] Failed to generate text embedding`);
             return null;
         }
 
-        // Get text embedding
-        const textVector = await response.json();
+        // Get or build emotion embeddings cache
+        let emotionEmbeddings;
+        if (settings.vecthareCacheEmotions) {
+            emotionEmbeddings = await buildEmotionEmbeddingsCache(labels);
+        } else {
+            // Generate on-the-fly (slower but always fresh)
+            emotionEmbeddings = {};
+            for (const label of labels) {
+                const description = EMOTION_DESCRIPTIONS[label] || label;
+                const embedding = await generateEmbedding(description);
+                if (embedding) {
+                    emotionEmbeddings[label] = embedding;
+                }
+            }
+        }
 
-        // Pre-computed emotion label embeddings (cached)
-        // For now, fall back to LLM - full VectHare integration would use semantic search
-        console.debug(`[${MODULE_NAME}] VectHare embedding generated, semantic matching TODO`);
+        // Find best matching emotion via cosine similarity
+        let bestLabel = null;
+        let bestScore = -Infinity;
 
-        // Placeholder: Use VectHare's semantic search to find closest emotion
-        // This would require pre-indexing emotion descriptions
+        for (const [label, embedding] of Object.entries(emotionEmbeddings)) {
+            const similarity = cosineSimilarity(textEmbedding, embedding);
+            console.debug(`[${MODULE_NAME}] ${label}: ${similarity.toFixed(4)}`);
+
+            if (similarity > bestScore) {
+                bestScore = similarity;
+                bestLabel = label;
+            }
+        }
+
+        if (bestLabel) {
+            console.log(`[${MODULE_NAME}] VectHare classified as "${bestLabel}" (score: ${bestScore.toFixed(4)})`);
+            return bestLabel;
+        }
+
         return null;
     } catch (error) {
-        console.debug(`[${MODULE_NAME}] VectHare classification failed:`, error);
+        console.error(`[${MODULE_NAME}] VectHare classification failed:`, error);
         return null;
     }
 }
@@ -1245,4 +1382,5 @@ export {
     sendExpressionCall,
     isVisualNovelMode,
     isVectHareAvailable,
+    clearEmotionEmbeddingsCache,
 };
