@@ -851,6 +851,29 @@ function removeExpression() {
     $('img.ct-expression').removeClass('default');
 }
 
+/**
+ * Immediately show or hide expressions (called on toggle)
+ * @param {boolean} enabled - Whether expressions should be visible
+ */
+export function setExpressionsVisible(enabled) {
+    if (enabled) {
+        const vnMode = isVisualNovelMode();
+        if (vnMode) {
+            $('#ct-expression-wrapper').hide();
+            $('#ct-visual-novel-wrapper').show();
+        } else {
+            $('#ct-expression-wrapper').show();
+            $('#ct-visual-novel-wrapper').hide();
+        }
+        // Trigger an immediate update
+        moduleWorker();
+    } else {
+        $('#ct-expression-wrapper').hide();
+        $('#ct-visual-novel-wrapper').hide();
+        removeExpression();
+    }
+}
+
 // =============================================================================
 // DOM CREATION
 // =============================================================================

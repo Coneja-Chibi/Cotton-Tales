@@ -130,22 +130,32 @@ img.ct-expression.default {
    WAIFU MODE OVERRIDES (VN layout active)
    ============================================================================= */
 
-/* Center the expression wrapper when in waifuMode */
+/* Wrapper fills viewport and centers content via flexbox */
 body.waifuMode #ct-expression-wrapper {
+    display: flex;
     justify-content: center;
+    align-items: flex-end;
+    position: fixed;
+    top: var(--topBarBlockSize);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
 }
 
-/* Center and size the expression holder properly */
-body.waifuMode .ct-expression-holder {
+/* Expression holder - use static/relative positioning so flex centering works */
+body.waifuMode #ct-expression-holder.ct-expression-holder {
+    position: relative;
+    left: unset;
+    right: unset;
+    bottom: unset;
     max-height: 90vh;
     max-width: 90vw;
     height: 90vh;
     width: fit-content;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    position: absolute;
+    margin: 0;
+    filter: drop-shadow(2px 2px 2px #51515199);
+    z-index: 2;
 }
 
 /* Make the image fill and cover nicely */
@@ -153,5 +163,6 @@ body.waifuMode img.ct-expression {
     max-height: 90vh;
     max-width: 90vw;
     height: 100%;
+    width: auto;
     object-fit: contain;
 }

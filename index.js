@@ -25,7 +25,7 @@ import {
 } from './ui/landing-page.js';
 
 // Cotton-Tales modules - Expressions
-import { initExpressions } from './ct-expressions.js';
+import { initExpressions, setExpressionsVisible } from './ct-expressions.js';
 
 // =============================================================================
 // SETTINGS MANAGEMENT
@@ -181,11 +181,14 @@ export function onVNModeToggled(enabled) {
                 activateLandingPage();
             }, 150);
         } else {
-            // In active chat - enable VN layout
+            // In active chat - enable VN layout immediately
             enableVNLayout();
+            setExpressionsVisible(true);
         }
         console.log(`[${EXTENSION_NAME}] VN mode enabled`);
     } else {
+        // Immediately hide expressions and disable layout
+        setExpressionsVisible(false);
         disableVNLayout();
         deactivateLandingPage();
         console.log(`[${EXTENSION_NAME}] VN mode disabled`);
