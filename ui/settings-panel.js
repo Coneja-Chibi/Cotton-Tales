@@ -27,6 +27,29 @@ let characterSpriteCache = {};
 let currentTab = 'characters';
 
 // =============================================================================
+// TAG COLORS (BunnyWorks style)
+// =============================================================================
+
+const TAG_COLORS = [
+    '#F472B6', '#34D399', '#60A5FA', '#FBBF24', '#A78BFA',
+    '#fb7185', '#F97316', '#10B981', '#06B6D4', '#8B5CF6',
+    '#EC4899', '#14B8A6', '#F59E0B', '#6366F1', '#EF4444',
+    '#22D3EE', '#A3E635', '#C084FC', '#FB923C', '#4ADE80',
+    '#38BDF8', '#818CF8', '#F87171', '#FDBA74', '#86EFAC',
+    '#7DD3FC', '#A5B4FC', '#FCA5A5', '#FDE047', '#D8B4FE'
+];
+
+function getTagColor(tag) {
+    const str = tag.toLowerCase();
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return TAG_COLORS[Math.abs(hash) % TAG_COLORS.length];
+}
+
+// =============================================================================
 // HTML TEMPLATES
 // =============================================================================
 
@@ -689,13 +712,33 @@ function getScenesTabHTML() {
 // CHARACTER CARD GENERATION
 // =============================================================================
 
-function generateCharacterCard(char, isNPC = false) {
+function generateCharacterCard(char, isNPC = false, isActive = false) {
     const spriteCount = characterSpriteCache[char.folder]?.length || 0;
     const avatarSrc = char.avatar ? `/characters/${char.avatar}` : '';
     const fileExt = isNPC ? '.npc' : '.char';
 
+    // Get tags from character data
+    const tags = char.data?.tags || [];
+    const tagsHtml = tags.slice(0, 5).map(tag => {
+        const color = getTagColor(tag);
+        return `<span class="ct-tag" style="color: ${color}; border: 1px solid ${color}60; box-shadow: 0 0 12px ${color}30;">${tag}</span>`;
+    }).join('');
+
+    // Get costumes/variants (sprites grouped by expression labels)
+    const sprites = characterSpriteCache[char.folder] || [];
+    const costumes = [...new Set(sprites.map(s => s.label))];
+    const hasCostumes = costumes.length > 1;
+
     return `
-        <div class="ct-card" data-character="${char.folder}" data-name="${char.name}">
+        <div class="ct-card ${isActive ? 'ct-card-active' : ''}" data-character="${char.folder}" data-name="${char.name}">
+            ${isActive ? `
+                <!-- Rainbow Border for Active Character -->
+                <div class="ct-card-rainbow-border"></div>
+                <div class="ct-card-active-badge">
+                    <i class="fa-solid fa-star"></i>
+                </div>
+            ` : ''}
+
             <!-- OS Window Title Bar -->
             <div class="ct-card-titlebar">
                 <div class="ct-card-titlebar-left">
@@ -722,6 +765,36 @@ function generateCharacterCard(char, isNPC = false) {
                     <i class="fa-solid ${isNPC ? 'fa-ghost' : 'fa-id-card'}"></i>
                     ${isNPC ? 'NPC' : 'Card'}
                 </div>
+
+                ${tags.length > 0 ? `
+                    <div class="ct-card-tags">
+                        ${tagsHtml}
+                    </div>
+                ` : ''}
+
+                ${hasCostumes ? `
+                    <div class="ct-card-variants" data-costumes='${JSON.stringify(costumes)}'>
+                        <div class="ct-variants-label">Alternates</div>
+                        <div class="ct-variants-carousel">
+                            <button class="ct-variant-arrow ct-variant-prev">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <div class="ct-variant-display">
+                                <div class="ct-variant-name">
+                                    <span class="ct-variant-current">${costumes[0] || 'Default'}</span>
+                                    <span class="ct-variant-type">Cover</span>
+                                </div>
+                            </div>
+                            <button class="ct-variant-arrow ct-variant-next">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div class="ct-variant-dots">
+                            ${costumes.map((_, i) => `<div class="ct-variant-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></div>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
                 <button class="ct-card-action">
                     <i class="fa-solid fa-sparkles"></i>
                     Manage
@@ -858,7 +931,12 @@ async function populateCharacterCarousel() {
     const context = getContext();
     const characters = context.characters || [];
 
-    console.debug(`[${EXTENSION_NAME}] populateCharacterCarousel: found ${characters.length} characters`);
+    // Get currently active character (the one in the current chat)
+    const activeCharName = context.name2 || '';
+    const activeCharAvatar = context.characterId !== undefined ? characters[context.characterId]?.avatar : null;
+    const activeCharFolder = activeCharAvatar?.replace(/\.[^/.]+$/, '') || activeCharName;
+
+    console.debug(`[${EXTENSION_NAME}] populateCharacterCarousel: found ${characters.length} characters, active: ${activeCharFolder}`);
 
     // Build character list from cards
     const charList = [];
@@ -869,7 +947,9 @@ async function populateCharacterCarousel() {
             name: char.name,
             folder: folder,
             avatar: char.avatar,
-            isNPC: false
+            data: char.data, // Include character data for tags
+            isNPC: false,
+            isActive: folder === activeCharFolder
         });
 
         // Pre-fetch sprite counts
@@ -885,6 +965,13 @@ async function populateCharacterCarousel() {
 
     // TODO: Also load NPCs from our own storage
 
+    // Sort so active character is first
+    charList.sort((a, b) => {
+        if (a.isActive && !b.isActive) return -1;
+        if (!a.isActive && b.isActive) return 1;
+        return 0;
+    });
+
     // Generate HTML
     if (charList.length === 0) {
         carousel.innerHTML = `
@@ -896,7 +983,29 @@ async function populateCharacterCarousel() {
         return;
     }
 
-    carousel.innerHTML = charList.map(c => generateCharacterCard(c, c.isNPC)).join('') + generateAddCard();
+    carousel.innerHTML = charList.map(c => generateCharacterCard(c, c.isNPC, c.isActive)).join('') + generateAddCard();
+
+    // Bind variant carousel events
+    carousel.querySelectorAll('.ct-card-variants').forEach(variantContainer => {
+        const costumes = JSON.parse(variantContainer.dataset.costumes || '[]');
+        if (costumes.length <= 1) return;
+
+        let currentIndex = 0;
+        const currentLabel = variantContainer.querySelector('.ct-variant-current');
+        const dots = variantContainer.querySelectorAll('.ct-variant-dot');
+        const prevBtn = variantContainer.querySelector('.ct-variant-prev');
+        const nextBtn = variantContainer.querySelector('.ct-variant-next');
+
+        const updateVariant = (newIndex) => {
+            currentIndex = (newIndex + costumes.length) % costumes.length;
+            if (currentLabel) currentLabel.textContent = costumes[currentIndex];
+            dots.forEach((dot, i) => dot.classList.toggle('active', i === currentIndex));
+        };
+
+        prevBtn?.addEventListener('click', (e) => { e.stopPropagation(); updateVariant(currentIndex - 1); });
+        nextBtn?.addEventListener('click', (e) => { e.stopPropagation(); updateVariant(currentIndex + 1); });
+        dots.forEach((dot, i) => dot.addEventListener('click', (e) => { e.stopPropagation(); updateVariant(i); }));
+    });
 
     // Bind card clicks
     carousel.querySelectorAll('.ct-card:not(.ct-card-add)').forEach(card => {

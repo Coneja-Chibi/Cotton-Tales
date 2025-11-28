@@ -702,7 +702,7 @@
     cursor: pointer;
     transition: var(--ct-transition-slow);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     box-shadow:
         0 12px 32px rgba(0, 0, 0, 0.7),
         0 0 20px rgba(183, 108, 255, 0.15),
@@ -730,6 +730,84 @@
         0 18px 48px rgba(0, 0, 0, 0.8),
         0 0 40px var(--ct-pink-glow),
         inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* =========================================================================
+   ACTIVE CHARACTER - Rainbow Animated Border (BUNNY BOPS style)
+   ========================================================================= */
+
+.ct-card.ct-card-active {
+    border-color: transparent;
+}
+
+.ct-card-rainbow-border {
+    position: absolute;
+    inset: -4px;
+    border-radius: 28px;
+    z-index: -1;
+    pointer-events: none;
+    background-image: linear-gradient(90deg,
+        #FF6B6B 0% 4.5%,
+        #FF8B6B 4.5% 9%,
+        #FFA06B 9% 13.5%,
+        #FFBC6B 13.5% 18%,
+        #FFD93D 18% 22.5%,
+        #F0E850 22.5% 27%,
+        #D4E157 27% 31.5%,
+        #AED581 31.5% 36%,
+        #81C784 36% 40.5%,
+        #4DB6AC 40.5% 45%,
+        #4DD0E1 45% 49.5%,
+        #4FC3F7 49.5% 54%,
+        #64B5F6 54% 58.5%,
+        #7986CB 58.5% 63%,
+        #9575CD 63% 67.5%,
+        #BA68C8 67.5% 72%,
+        #F06292 72% 76.5%,
+        #EC407A 76.5% 81%,
+        #FF6B9D 81% 85.5%,
+        #FF8A80 85.5% 90%,
+        #FF6B6B 90% 100%
+    );
+    background-size: 200% 100%;
+    animation: ct-rainbow-slide 8s linear infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    padding: 4px;
+}
+
+@keyframes ct-rainbow-slide {
+    0% { background-position-x: 0%; }
+    100% { background-position-x: -200%; }
+}
+
+/* Active badge on card */
+.ct-card-active-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    z-index: 50;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #FFD93D, #FF6B6B);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.5);
+    animation: ct-pulse-badge 2s ease-in-out infinite;
+}
+
+.ct-card-active-badge i {
+    color: #fff;
+    font-size: 14px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+}
+
+@keyframes ct-pulse-badge {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 
 /* Card Title Bar - OS Window Style */
@@ -861,6 +939,141 @@
     color: var(--ct-cyan);
     border: 1px solid rgba(168, 216, 255, 0.4);
     box-shadow: 0 0 12px rgba(168, 216, 255, 0.2);
+}
+
+/* =========================================================================
+   COLORFUL TAGS (like BunnyWorks)
+   ========================================================================= */
+
+.ct-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin: 8px 0;
+}
+
+.ct-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: var(--ct-radius-full);
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: var(--ct-transition);
+}
+
+.ct-tag:hover {
+    transform: scale(1.05);
+}
+
+/* =========================================================================
+   VARIANT/COSTUME CAROUSEL
+   ========================================================================= */
+
+.ct-card-variants {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ct-variants-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--ct-text-dim);
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.ct-variants-carousel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.ct-variant-arrow {
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: var(--ct-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: var(--ct-transition);
+    flex-shrink: 0;
+}
+
+.ct-variant-arrow:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--ct-pink);
+    color: var(--ct-pink);
+}
+
+.ct-variant-display {
+    flex: 1;
+    max-width: 180px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--ct-radius);
+    padding: 8px 12px;
+    text-align: center;
+}
+
+.ct-variant-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ct-text-primary);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.ct-variant-name .ct-variant-type {
+    font-size: 8px;
+    padding: 2px 6px;
+    border-radius: var(--ct-radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--ct-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Variant dots indicator */
+.ct-variant-dots {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.ct-variant-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: var(--ct-transition);
+}
+
+.ct-variant-dot:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.ct-variant-dot.active {
+    width: 16px;
+    border-radius: 3px;
+    background: var(--ct-gradient-pink-purple);
+    box-shadow: 0 0 8px var(--ct-pink-glow);
 }
 
 /* Card Stats */
