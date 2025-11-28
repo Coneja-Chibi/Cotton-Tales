@@ -33,17 +33,37 @@ import { initExpressions, setExpressionsVisible } from './ct-expressions.js';
 // =============================================================================
 
 /**
+ * Deep merge objects - handles nested objects like cardNpcs
+ * @param {Object} target - Target object
+ * @param {Object} source - Source object to merge from
+ * @returns {Object} Merged object
+ */
+function deepMerge(target, source) {
+    const result = { ...target };
+    for (const key of Object.keys(source)) {
+        if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+            // Recursively merge nested objects
+            result[key] = deepMerge(target[key] || {}, source[key]);
+        } else if (source[key] !== undefined) {
+            // Use source value for primitives and arrays
+            result[key] = source[key];
+        }
+    }
+    return result;
+}
+
+/**
  * Initialize extension settings with defaults
  */
 function initializeSettings() {
     if (!extension_settings[SETTINGS_KEY]) {
         extension_settings[SETTINGS_KEY] = getDefaultSettings();
     } else {
-        // Merge with defaults to handle new settings in updates
-        extension_settings[SETTINGS_KEY] = {
-            ...getDefaultSettings(),
-            ...extension_settings[SETTINGS_KEY],
-        };
+        // Deep merge with defaults to handle new settings while preserving nested objects
+        extension_settings[SETTINGS_KEY] = deepMerge(
+            getDefaultSettings(),
+            extension_settings[SETTINGS_KEY]
+        );
     }
 
     console.log(`[${EXTENSION_NAME}] Settings initialized`);

@@ -29,6 +29,32 @@ let modalEventsBound = false;
 let escKeyHandler = null;
 
 // =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+/**
+ * Safe toastr wrapper - falls back to console if toastr unavailable
+ */
+const notify = {
+    info: (msg) => typeof toastr !== 'undefined' ? toastr.info(msg) : console.info(`[Cotton-Tales] ${msg}`),
+    success: (msg) => typeof toastr !== 'undefined' ? toastr.success(msg) : console.log(`[Cotton-Tales] ✓ ${msg}`),
+    warning: (msg) => typeof toastr !== 'undefined' ? toastr.warning(msg) : console.warn(`[Cotton-Tales] ${msg}`),
+    error: (msg) => typeof toastr !== 'undefined' ? toastr.error(msg) : console.error(`[Cotton-Tales] ${msg}`),
+};
+
+/**
+ * Escape HTML to prevent XSS in dynamic content
+ * @param {string} str - String to escape
+ * @returns {string} Escaped string
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// =============================================================================
 // TAG COLORS (BunnyWorks style)
 // =============================================================================
 
@@ -719,11 +745,12 @@ function generateCharacterCard(char, isNPC = false, isActive = false) {
     const avatarSrc = char.avatar ? `/characters/${char.avatar}` : '';
     const fileExt = isNPC ? '.npc' : '.char';
 
-    // Get tags from character data
+    // Get tags from character data (escape for XSS safety)
     const tags = char.data?.tags || [];
     const tagsHtml = tags.slice(0, 5).map(tag => {
         const color = getTagColor(tag);
-        return `<span class="ct-tag" style="color: ${color}; border: 1px solid ${color}60; box-shadow: 0 0 12px ${color}30;">${tag}</span>`;
+        const safeTag = escapeHtml(tag);
+        return `<span class="ct-tag" style="color: ${color}; border: 1px solid ${color}60; box-shadow: 0 0 12px ${color}30;">${safeTag}</span>`;
     }).join('');
 
     // Get costumes/variants (sprites grouped by expression labels)
@@ -731,8 +758,12 @@ function generateCharacterCard(char, isNPC = false, isActive = false) {
     const costumes = [...new Set(sprites.map(s => s.label))];
     const hasCostumes = costumes.length > 1;
 
+    // Escape user-provided content to prevent XSS
+    const safeName = escapeHtml(char.name);
+    const safeFolder = escapeHtml(char.folder);
+
     return `
-        <div class="ct-card ${isActive ? 'ct-card-active' : ''}" data-character="${char.folder}" data-name="${char.name}">
+        <div class="ct-card ${isActive ? 'ct-card-active' : ''}" data-character="${safeFolder}" data-name="${safeName}">
             ${isActive ? `
                 <!-- Rainbow Border for Active Character -->
                 <div class="ct-card-rainbow-border"></div>
@@ -745,7 +776,7 @@ function generateCharacterCard(char, isNPC = false, isActive = false) {
             <div class="ct-card-titlebar">
                 <div class="ct-card-titlebar-left">
                     <i class="fa-solid fa-user ct-card-titlebar-icon"></i>
-                    <span class="ct-card-titlebar-text">${char.folder}${fileExt}</span>
+                    <span class="ct-card-titlebar-text">${safeFolder}${fileExt}</span>
                 </div>
                 <div class="ct-card-titlebar-dots">
                     <div class="ct-card-titlebar-dot"></div>
@@ -758,11 +789,11 @@ function generateCharacterCard(char, isNPC = false, isActive = false) {
             <div class="ct-card-content">
                 <div class="ct-card-avatar">
                     ${avatarSrc
-                        ? `<img src="${avatarSrc}" alt="${char.name}" />`
+                        ? `<img src="${avatarSrc}" alt="${safeName}" />`
                         : `<div class="ct-avatar-placeholder"><i class="fa-solid fa-user"></i></div>`
                     }
                 </div>
-                <div class="ct-card-name">${char.name}</div>
+                <div class="ct-card-name">${safeName}</div>
                 <div class="ct-card-badge ${isNPC ? 'npc' : 'card'}">
                     <i class="fa-solid ${isNPC ? 'fa-ghost' : 'fa-id-card'}"></i>
                     ${isNPC ? 'NPC' : 'Card'}
@@ -1015,7 +1046,7 @@ async function populateCharacterCarousel() {
     // Add character button
     document.getElementById('ct_add_character')?.addEventListener('click', () => {
         // TODO: Show add NPC modal
-        toastr.info('Add Character - Coming soon!');
+        notify.info('Add Character - Coming soon!');
     });
 }
 
@@ -1204,7 +1235,7 @@ function bindEvents() {
 
     // Stage composer button
     document.getElementById('ct_open_stage')?.addEventListener('click', () => {
-        toastr.info('Stage Composer - Coming soon!');
+        notify.info('Stage Composer - Coming soon!');
     });
 
     // Sprite Manager button
@@ -1271,7 +1302,7 @@ function bindEvents() {
             modelDescription.textContent = CLASSIFIER_MODELS[modelId].description;
         }
 
-        toastr.info(`Classifier model changed to ${CLASSIFIER_MODELS[modelId]?.name || modelId}. Reload may be required.`);
+        notify.info(`Classifier model changed to ${CLASSIFIER_MODELS[modelId]?.name || modelId}. Reload may be required.`);
     });
 
     // Quantization toggle
@@ -1281,7 +1312,7 @@ function bindEvents() {
     document.getElementById('ct_custom_classifier_repo')?.addEventListener('change', (e) => {
         updateSetting('customClassifierRepo', e.target.value.trim());
         if (e.target.value.trim()) {
-            toastr.info('Custom classifier repo set. Reload required to apply.');
+            notify.info('Custom classifier repo set. Reload required to apply.');
         }
     });
 
@@ -1302,7 +1333,7 @@ function bindEvents() {
         if (textarea) {
             textarea.value = DEFAULT_LLM_PROMPT;
             updateSetting('expressionLlmPrompt', DEFAULT_LLM_PROMPT);
-            toastr.success('Prompt reset to default');
+            notify.success('Prompt reset to default');
         }
     });
 
@@ -1328,7 +1359,7 @@ function bindEvents() {
     // Clear emotion cache button
     document.getElementById('ct_clear_emotion_cache')?.addEventListener('click', () => {
         clearEmotionEmbeddingsCache();
-        toastr.success('Emotion embeddings cache cleared');
+        notify.success('Emotion embeddings cache cleared');
     });
 }
 
@@ -1388,10 +1419,19 @@ function bindSlider(id, settingKey, displayId, suffix) {
     const slider = document.getElementById(id);
     const display = document.getElementById(displayId);
 
+    // Debounce the settings save to avoid spamming
+    let saveTimeout = null;
+
     slider?.addEventListener('input', (e) => {
         const val = parseInt(e.target.value, 10);
+        // Update display immediately for responsiveness
         if (display) display.textContent = val + suffix;
-        updateSetting(settingKey, val);
+
+        // Debounce the actual setting save
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            updateSetting(settingKey, val);
+        }, 150);
     });
 }
 
