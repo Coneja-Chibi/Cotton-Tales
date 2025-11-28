@@ -90,7 +90,10 @@ function showInputModal(title, placeholder = '', defaultValue = '') {
         // Focus input
         setTimeout(() => input?.focus(), 50);
 
+        let isClosing = false;
         const cleanup = (result) => {
+            if (isClosing) return; // Prevent double-clicks/rapid submissions
+            isClosing = true;
             overlay?.remove();
             resolve(result);
         };

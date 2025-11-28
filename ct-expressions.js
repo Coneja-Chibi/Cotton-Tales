@@ -1247,31 +1247,21 @@ async function getExpressionLabel(text, apiOverride = null) {
 // =============================================================================
 
 /**
- * Main expression update worker
+ * Hide all expression UI elements
  */
-async function moduleWorker() {
-    const context = getContext();
-    const ctSettings = getSettings();
+function hideExpressionUI() {
+    $('#ct-expression-wrapper').hide();
+    $('#ct-visual-novel-wrapper').hide();
+}
 
-    // Skip if not enabled - hide everything
-    if (!ctSettings.enabled) {
-        $('#ct-expression-wrapper').hide();
-        $('#ct-visual-novel-wrapper').hide();
-        return;
-    }
-
-    // No character loaded
-    if (!context.groupId && context.characterId === undefined) {
-        removeExpression();
-        $('#ct-expression-wrapper').hide();
-        $('#ct-visual-novel-wrapper').hide();
-        return;
-    }
-
-    const vnMode = isVisualNovelMode();
+/**
+ * Toggle visibility between single expression and VN mode
+ * @param {boolean} vnMode - Whether VN mode is active
+ * @returns {boolean} True if mode changed
+ */
+function toggleExpressionMode(vnMode) {
     const vnWrapperVisible = $('#ct-visual-novel-wrapper').is(':visible');
 
-    // Toggle between single and VN mode
     if (vnMode) {
         $('#ct-expression-wrapper').hide();
         $('#ct-visual-novel-wrapper').show();
@@ -1285,7 +1275,63 @@ async function moduleWorker() {
         lastMessage = null;
         $('#ct-visual-novel-wrapper').empty();
         $('#ct-expression-holder').css({ top: '', left: '', right: '', bottom: '', height: '', width: '', margin: '' });
+        return true;
     }
+    return false;
+}
+
+/**
+ * Check if expression update should be skipped
+ * @param {Object} context - Current context
+ * @param {Object} currentLastMessage - Current last message
+ * @returns {boolean} True if should skip
+ */
+function shouldSkipExpressionUpdate(context, currentLastMessage) {
+    // Check for message change
+    const sameMessage = (lastCharacter === context.characterId || lastCharacter === context.groupId)
+        && lastMessage === currentLastMessage.mes;
+
+    if (sameMessage) return true;
+
+    // Throttle during streaming
+    if (!context.groupId && context.streamingProcessor && !context.streamingProcessor.isFinished) {
+        const now = Date.now();
+        if (now - lastServerResponseTime < STREAMING_UPDATE_INTERVAL) {
+            return true;
+        }
+    }
+
+    // API busy check
+    if (inApiCall) {
+        console.debug(`[${MODULE_NAME}] Classification busy`);
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Main expression update worker
+ */
+async function moduleWorker() {
+    const context = getContext();
+    const ctSettings = getSettings();
+
+    // Skip if not enabled
+    if (!ctSettings.enabled) {
+        hideExpressionUI();
+        return;
+    }
+
+    // No character loaded
+    if (!context.groupId && context.characterId === undefined) {
+        removeExpression();
+        hideExpressionUI();
+        return;
+    }
+
+    const vnMode = isVisualNovelMode();
+    toggleExpressionMode(vnMode);
 
     const currentLastMessage = getLastCharacterMessage();
     let spriteFolderName = getSpriteFolderName(currentLastMessage, currentLastMessage.name);
@@ -1296,22 +1342,8 @@ async function moduleWorker() {
         lastCharacter = context.groupId || context.characterId;
     }
 
-    // Check for message change
-    const lastMessageChanged = !((lastCharacter === context.characterId || lastCharacter === context.groupId) && lastMessage === currentLastMessage.mes);
-
-    if (!lastMessageChanged) return;
-
-    // Throttle during streaming
-    if (!context.groupId && context.streamingProcessor && !context.streamingProcessor.isFinished) {
-        const now = Date.now();
-        if (now - lastServerResponseTime < STREAMING_UPDATE_INTERVAL) {
-            return;
-        }
-    }
-
-    // API busy check
-    if (inApiCall) {
-        console.debug(`[${MODULE_NAME}] Classification busy`);
+    // Skip if no update needed
+    if (shouldSkipExpressionUpdate(context, currentLastMessage)) {
         return;
     }
 

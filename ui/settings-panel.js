@@ -171,13 +171,13 @@ function getSettingsHTML() {
 
 function getModalHTML() {
     return `
-        <div id="ct-modal-overlay" class="ct-modal-overlay">
+        <div id="ct-modal-overlay" class="ct-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="ct-modal-title">
             <div class="ct-modal">
                 <!-- Modal Header - OS Window Style -->
                 <div class="ct-modal-header">
                     <div class="ct-modal-header-left">
                         <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <span class="ct-modal-title">Cotton-Tales Settings</span>
+                        <span class="ct-modal-title" id="ct-modal-title">Cotton-Tales Settings</span>
                         <span class="ct-modal-subtitle">cotton-tales.config</span>
                     </div>
                     <div class="ct-modal-header-right">
@@ -192,31 +192,31 @@ function getModalHTML() {
                 <!-- Modal Body -->
                 <div class="ct-modal-body">
                     <!-- Sidebar Navigation -->
-                    <div class="ct-modal-sidebar">
+                    <div class="ct-modal-sidebar" role="tablist" aria-label="Settings categories">
                         <div class="ct-sidebar-section">
-                            <div class="ct-sidebar-label">Content</div>
-                            <button class="ct-sidebar-item active" data-tab="characters">
-                                <i class="fa-solid fa-users"></i>
+                            <div class="ct-sidebar-label" id="ct-sidebar-content-label">Content</div>
+                            <button class="ct-sidebar-item active" data-tab="characters" id="ct-sidebar-characters" role="tab" aria-selected="true" aria-controls="ct-tab-characters">
+                                <i class="fa-solid fa-users" aria-hidden="true"></i>
                                 <span>Characters</span>
                             </button>
-                            <button class="ct-sidebar-item" data-tab="expressions">
-                                <i class="fa-solid fa-face-smile"></i>
+                            <button class="ct-sidebar-item" data-tab="expressions" id="ct-sidebar-expressions" role="tab" aria-selected="false" aria-controls="ct-tab-expressions">
+                                <i class="fa-solid fa-face-smile" aria-hidden="true"></i>
                                 <span>Expressions</span>
                             </button>
-                            <button class="ct-sidebar-item" data-tab="backgrounds">
-                                <i class="fa-solid fa-image"></i>
+                            <button class="ct-sidebar-item" data-tab="backgrounds" id="ct-sidebar-backgrounds" role="tab" aria-selected="false" aria-controls="ct-tab-backgrounds">
+                                <i class="fa-solid fa-image" aria-hidden="true"></i>
                                 <span>Backgrounds</span>
                             </button>
                         </div>
 
                         <div class="ct-sidebar-section">
-                            <div class="ct-sidebar-label">Display</div>
-                            <button class="ct-sidebar-item" data-tab="display">
-                                <i class="fa-solid fa-display"></i>
+                            <div class="ct-sidebar-label" id="ct-sidebar-display-label">Display</div>
+                            <button class="ct-sidebar-item" data-tab="display" id="ct-sidebar-display" role="tab" aria-selected="false" aria-controls="ct-tab-display">
+                                <i class="fa-solid fa-display" aria-hidden="true"></i>
                                 <span>VN Settings</span>
                             </button>
-                            <button class="ct-sidebar-item" data-tab="scenes">
-                                <i class="fa-solid fa-clapperboard"></i>
+                            <button class="ct-sidebar-item" data-tab="scenes" id="ct-sidebar-scenes" role="tab" aria-selected="false" aria-controls="ct-tab-scenes">
+                                <i class="fa-solid fa-clapperboard" aria-hidden="true"></i>
                                 <span>Scenes</span>
                             </button>
                         </div>
@@ -232,27 +232,27 @@ function getModalHTML() {
                     <!-- Main Content Area -->
                     <div class="ct-modal-content">
                         <!-- Characters Tab -->
-                        <div class="ct-modal-tab active" data-tab="characters">
+                        <div class="ct-modal-tab active" data-tab="characters" id="ct-tab-characters" role="tabpanel" aria-labelledby="ct-sidebar-characters">
                             ${getCharactersTabHTML()}
                         </div>
 
                         <!-- Expressions Tab -->
-                        <div class="ct-modal-tab" data-tab="expressions">
+                        <div class="ct-modal-tab" data-tab="expressions" id="ct-tab-expressions" role="tabpanel" aria-labelledby="ct-sidebar-expressions">
                             ${getExpressionsTabHTML()}
                         </div>
 
                         <!-- Backgrounds Tab -->
-                        <div class="ct-modal-tab" data-tab="backgrounds">
+                        <div class="ct-modal-tab" data-tab="backgrounds" id="ct-tab-backgrounds" role="tabpanel" aria-labelledby="ct-sidebar-backgrounds">
                             ${getBackgroundsTabHTML()}
                         </div>
 
                         <!-- Display Tab -->
-                        <div class="ct-modal-tab" data-tab="display">
+                        <div class="ct-modal-tab" data-tab="display" id="ct-tab-display" role="tabpanel" aria-labelledby="ct-sidebar-display">
                             ${getDisplayTabHTML()}
                         </div>
 
                         <!-- Scenes Tab -->
-                        <div class="ct-modal-tab" data-tab="scenes">
+                        <div class="ct-modal-tab" data-tab="scenes" id="ct-tab-scenes" role="tabpanel" aria-labelledby="ct-sidebar-scenes">
                             ${getScenesTabHTML()}
                         </div>
                     </div>
@@ -935,6 +935,7 @@ function showCharacterDetail(charFolder, charName) {
     if (!detailPanel) return;
 
     const sprites = characterSpriteCache[charFolder] || [];
+    const safeCharName = escapeHtml(charName);
 
     // Group sprites by expression
     const grouped = {};
@@ -948,8 +949,8 @@ function showCharacterDetail(charFolder, charName) {
     detailPanel.innerHTML = `
         <div class="ct-detail-header">
             <div class="ct-detail-title">
-                <i class="fa-solid fa-user"></i>
-                ${charName}
+                <i class="fa-solid fa-user" aria-hidden="true"></i>
+                ${safeCharName}
             </div>
             <button class="ct-detail-close" id="ct_close_detail">
                 <i class="fa-solid fa-times"></i>
@@ -970,12 +971,14 @@ function showCharacterDetail(charFolder, charName) {
             Expressions (${Object.keys(grouped).length})
         </div>
         <div class="ct-sprite-grid">
-            ${Object.entries(grouped).map(([label, files]) => `
-                <div class="ct-sprite-item" title="${label}">
-                    <img src="${files[0].path}" alt="${label}" loading="lazy" />
-                    <div class="ct-sprite-item-label">${label}</div>
+            ${Object.entries(grouped).map(([label, files]) => {
+                const safeLabel = escapeHtml(label);
+                return `
+                <div class="ct-sprite-item" title="${safeLabel}">
+                    <img src="${files[0].path}" alt="${safeLabel}" loading="lazy" />
+                    <div class="ct-sprite-item-label">${safeLabel}</div>
                 </div>
-            `).join('')}
+            `;}).join('')}
         </div>
 
         <div class="ct-action-row">
@@ -1228,17 +1231,20 @@ function bindEvents() {
         });
     }
 
-    // Tab switching
-    document.querySelectorAll('.ct-tab').forEach(tab => {
+    // Tab switching - cache DOM queries for performance
+    const tabButtons = document.querySelectorAll('.ct-tab');
+    const tabContents = document.querySelectorAll('.ct-tab-content');
+
+    tabButtons.forEach(tab => {
         tab.addEventListener('click', () => {
             const tabName = tab.dataset.tab;
 
             // Update tab buttons
-            document.querySelectorAll('.ct-tab').forEach(t => t.classList.remove('active'));
+            tabButtons.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
 
             // Update content
-            document.querySelectorAll('.ct-tab-content').forEach(c => c.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
             document.querySelector(`.ct-tab-content[data-tab="${tabName}"]`)?.classList.add('active');
 
             currentTab = tabName;
@@ -1597,18 +1603,25 @@ function bindModalEvents() {
     };
     document.addEventListener('keydown', escKeyHandler);
 
-    // Sidebar navigation
-    document.querySelectorAll('.ct-sidebar-item').forEach(item => {
+    // Sidebar navigation - cache DOM queries for performance
+    const sidebarItems = document.querySelectorAll('.ct-sidebar-item');
+    const modalTabs = document.querySelectorAll('.ct-modal-tab');
+
+    sidebarItems.forEach(item => {
         item.addEventListener('click', () => {
             const tabName = item.dataset.tab;
 
-            // Update sidebar
-            document.querySelectorAll('.ct-sidebar-item').forEach(i => i.classList.remove('active'));
+            // Update sidebar - toggle active class and aria-selected
+            sidebarItems.forEach(i => {
+                i.classList.remove('active');
+                i.setAttribute('aria-selected', 'false');
+            });
             item.classList.add('active');
+            item.setAttribute('aria-selected', 'true');
 
             // Update content
-            document.querySelectorAll('.ct-modal-tab').forEach(t => t.classList.remove('active'));
-            document.querySelector(`.ct-modal-tab[data-tab="${tabName}"]`)?.classList.add('active');
+            modalTabs.forEach(t => t.classList.remove('active'));
+            document.getElementById(`ct-tab-${tabName}`)?.classList.add('active');
 
             currentTab = tabName;
         });
