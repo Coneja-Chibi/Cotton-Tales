@@ -33,7 +33,7 @@ import {
     substituteParamsExtended,
     system_message_types,
     this_chid,
-} from '../../../../../script.js';
+} from '../../../../script.js';
 
 import { dragElement, isMobile } from '../../../RossAscends-mods.js';
 
