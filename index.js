@@ -24,6 +24,9 @@ import {
     deactivateLandingPage,
 } from './ui/landing-page.js';
 
+// Cotton-Tales modules - Expressions
+import { initExpressions } from './ct-expressions.js';
+
 // =============================================================================
 // SETTINGS MANAGEMENT
 // =============================================================================
@@ -82,10 +85,24 @@ function onChatChanged() {
 // =============================================================================
 
 /**
+ * Load additional CSS file
+ */
+function loadCSS(filename) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = `/scripts/extensions/third-party/Cotton-Tales/${filename}`;
+    document.head.appendChild(link);
+}
+
+/**
  * Main initialization function
  */
 async function init() {
     console.log(`[${EXTENSION_NAME}] Initializing...`);
+
+    // Load expressions CSS
+    loadCSS('ct-expressions.css');
 
     // Initialize settings
     initializeSettings();
@@ -95,6 +112,9 @@ async function init() {
 
     // Render settings UI
     renderSettings();
+
+    // Initialize expressions system (sprites, VN mode)
+    await initExpressions();
 
     // Check if we should activate landing page on load
     const settings = getSettings();
