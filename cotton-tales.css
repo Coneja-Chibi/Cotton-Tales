@@ -356,69 +356,113 @@
 .ct-carousel-arrow.right { right: 0; }
 
 /* =============================================================================
-   CHARACTER CARDS
+   CHARACTER CARDS - OS Window Style (BunnyWorks Design)
    ============================================================================= */
 
 .ct-card {
-    flex: 0 0 160px;
-    background: var(--ct-gradient-card);
-    border: 2px solid var(--ct-border);
-    border-radius: var(--ct-radius-lg);
-    padding: 14px 10px;
-    text-align: center;
+    flex: 0 0 200px;
+    background: linear-gradient(145deg, rgba(15, 15, 20, 0.95), rgba(25, 25, 35, 0.85));
+    border: 2px solid var(--ct-purple);
+    border-radius: 24px;
     cursor: pointer;
     transition: var(--ct-transition-slow);
     position: relative;
     overflow: hidden;
-}
-
-.ct-card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--ct-purple-vibrant);
-    opacity: 0;
-    transition: var(--ct-transition);
+    box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.7),
+        0 0 20px rgba(183, 108, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .ct-card:hover {
     transform: translateY(-6px);
-    border-color: var(--ct-purple-vibrant);
-    box-shadow: var(--ct-glow-md) var(--ct-purple-glow), var(--ct-shadow);
-}
-
-.ct-card:hover::before {
-    opacity: 1;
+    border-color: var(--ct-pink-vibrant);
+    box-shadow:
+        0 18px 48px rgba(0, 0, 0, 0.8),
+        0 0 30px var(--ct-pink-glow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .ct-card.selected {
     border-color: var(--ct-pink-vibrant);
-    box-shadow: var(--ct-glow-md) var(--ct-pink-glow), var(--ct-shadow);
+    box-shadow:
+        0 18px 48px rgba(0, 0, 0, 0.8),
+        0 0 40px var(--ct-pink-glow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
-.ct-card.selected::before {
-    opacity: 1;
-    background: var(--ct-pink-vibrant);
+/* Card Title Bar - OS Window Style */
+.ct-card-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--ct-gradient-pink-purple);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.ct-card-titlebar-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.ct-card-titlebar-icon {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.7);
+    flex-shrink: 0;
+}
+
+.ct-card-titlebar-text {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.85);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ct-card-titlebar-dots {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.ct-card-titlebar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* Card Content Area */
+.ct-card-content {
+    background: linear-gradient(to bottom right, rgba(8, 8, 12, 0.9), rgba(15, 15, 25, 0.8));
+    backdrop-filter: blur(5px);
+    padding: 12px;
+    text-align: center;
 }
 
 /* Card Avatar */
 .ct-card-avatar {
-    width: 70px;
-    height: 70px;
+    width: 80px;
+    height: 80px;
     margin: 0 auto 10px;
-    border-radius: var(--ct-radius-lg);
-    border: 3px solid var(--ct-border-strong);
-    background: var(--ct-bg-tertiary);
+    border-radius: 16px;
+    border: 2px solid var(--ct-border-strong);
+    background: linear-gradient(135deg, rgba(183, 108, 255, 0.1), rgba(255, 107, 157, 0.1));
     overflow: hidden;
     transition: var(--ct-transition);
+    box-shadow: 0 0 16px rgba(183, 108, 255, 0.2);
 }
 
 .ct-card:hover .ct-card-avatar {
-    border-color: var(--ct-purple-vibrant);
-    box-shadow: var(--ct-glow-sm) var(--ct-purple-glow);
+    border-color: var(--ct-pink-vibrant);
+    box-shadow: 0 0 20px var(--ct-pink-glow);
 }
 
 .ct-card-avatar img {
@@ -433,127 +477,198 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
-    color: var(--ct-text-muted);
+    font-size: 32px;
+    color: var(--ct-purple);
+    filter: drop-shadow(0 0 10px rgba(183, 108, 255, 0.5));
 }
 
 /* Card Name */
 .ct-card-name {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--ct-text-primary);
     margin-bottom: 6px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-shadow: 0 2px 8px rgba(183, 108, 255, 0.3);
 }
 
 /* Card Badge */
 .ct-card-badge {
-    display: inline-block;
-    padding: 3px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
     border-radius: var(--ct-radius-full);
     font-size: 9px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
     margin-bottom: 8px;
 }
 
 .ct-card-badge.card {
-    background: rgba(125, 255, 175, 0.15);
+    background: linear-gradient(135deg, rgba(125, 255, 175, 0.15), rgba(125, 255, 175, 0.08));
     color: var(--ct-green);
-    border: 1px solid rgba(125, 255, 175, 0.3);
+    border: 1px solid rgba(125, 255, 175, 0.4);
+    box-shadow: 0 0 12px rgba(125, 255, 175, 0.2);
 }
 
 .ct-card-badge.npc {
-    background: rgba(168, 216, 255, 0.15);
+    background: linear-gradient(135deg, rgba(168, 216, 255, 0.15), rgba(168, 216, 255, 0.08));
     color: var(--ct-cyan);
-    border: 1px solid rgba(168, 216, 255, 0.3);
+    border: 1px solid rgba(168, 216, 255, 0.4);
+    box-shadow: 0 0 12px rgba(168, 216, 255, 0.2);
 }
 
 /* Card Stats */
 .ct-card-stats {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 12px;
     font-size: 11px;
     color: var(--ct-text-muted);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .ct-card-stat {
     display: flex;
     align-items: center;
     gap: 4px;
+    padding: 2px 8px;
+    background: rgba(183, 108, 255, 0.1);
+    border: 1px solid rgba(183, 108, 255, 0.2);
+    border-radius: var(--ct-radius-full);
 }
 
 .ct-card-stat i {
     color: var(--ct-pink);
-    font-size: 11px;
+    font-size: 10px;
 }
 
 /* Card Action Button */
 .ct-card-action {
+    width: 100%;
     background: var(--ct-gradient-pink-purple);
-    color: #fff;
-    border: none;
+    background-size: 200% 100%;
+    color: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--ct-radius);
-    padding: 6px 14px;
-    font-size: 10px;
+    padding: 8px 14px;
+    font-size: 11px;
     font-weight: 700;
     cursor: pointer;
     transition: var(--ct-transition);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4);
+    box-shadow:
+        0 4px 12px rgba(255, 107, 157, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 .ct-card-action:hover {
-    filter: brightness(1.15);
-    transform: scale(1.05);
-    box-shadow: var(--ct-glow-sm) var(--ct-pink-glow);
+    background-position: 100% 0;
+    transform: scale(1.03);
+    box-shadow:
+        0 6px 20px rgba(255, 107, 157, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.ct-card-action:active {
+    transform: scale(0.97);
+}
+
+/* Card Status Bar */
+.ct-card-statusbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    border-top: 1px solid rgba(183, 108, 255, 0.2);
+    font-size: 10px;
+    color: var(--ct-text-muted);
+}
+
+.ct-card-statusbar-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ct-card-statusbar-left i {
+    color: var(--ct-purple);
+    font-size: 11px;
+}
+
+.ct-card-statusbar-sprites {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: rgba(255, 107, 157, 0.1);
+    border: 1px solid rgba(255, 107, 157, 0.3);
+    border-radius: var(--ct-radius-full);
+    color: var(--ct-pink);
+    font-weight: 700;
 }
 
 /* Add New Card */
 .ct-card.ct-card-add {
     border-style: dashed;
+    border-color: var(--ct-border);
     background: transparent;
+}
+
+.ct-card.ct-card-add .ct-card-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 180px;
+    background: transparent;
 }
 
 .ct-card.ct-card-add:hover {
-    background: var(--ct-bg-card);
+    background: rgba(92, 225, 230, 0.05);
     border-color: var(--ct-cyan-vibrant);
 }
 
 .ct-card-add-icon {
-    width: 50px;
-    height: 50px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    background: var(--ct-bg-elevated);
-    color: var(--ct-text-muted);
+    background: linear-gradient(135deg, rgba(92, 225, 230, 0.15), rgba(92, 225, 230, 0.08));
+    border: 2px solid rgba(92, 225, 230, 0.3);
+    color: var(--ct-cyan);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     transition: var(--ct-transition);
 }
 
 .ct-card.ct-card-add:hover .ct-card-add-icon {
     background: var(--ct-cyan-vibrant);
+    border-color: var(--ct-cyan-vibrant);
     color: var(--ct-bg-base);
     transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 0 20px var(--ct-cyan-glow);
 }
 
 .ct-card-add-text {
     font-size: 12px;
     font-weight: 600;
     color: var(--ct-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 /* =============================================================================

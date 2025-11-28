@@ -632,24 +632,56 @@ function getScenesTabHTML() {
 function generateCharacterCard(char, isNPC = false) {
     const spriteCount = characterSpriteCache[char.folder]?.length || 0;
     const avatarSrc = char.avatar ? `/characters/${char.avatar}` : '';
+    const fileExt = isNPC ? '.npc' : '.char';
 
     return `
         <div class="ct-card" data-character="${char.folder}" data-name="${char.name}">
-            <div class="ct-card-avatar">
-                ${avatarSrc
-                    ? `<img src="${avatarSrc}" alt="${char.name}" />`
-                    : `<div class="ct-avatar-placeholder"><i class="fa-solid fa-user"></i></div>`
-                }
-            </div>
-            <div class="ct-card-name">${char.name}</div>
-            <div class="ct-card-badge ${isNPC ? 'npc' : 'card'}">${isNPC ? 'NPC' : 'Card'}</div>
-            <div class="ct-card-stats">
-                <div class="ct-card-stat">
-                    <i class="fa-solid fa-image"></i>
-                    ${spriteCount}
+            <!-- OS Window Title Bar -->
+            <div class="ct-card-titlebar">
+                <div class="ct-card-titlebar-left">
+                    <i class="fa-solid fa-user ct-card-titlebar-icon"></i>
+                    <span class="ct-card-titlebar-text">${char.folder}${fileExt}</span>
+                </div>
+                <div class="ct-card-titlebar-dots">
+                    <div class="ct-card-titlebar-dot"></div>
+                    <div class="ct-card-titlebar-dot"></div>
+                    <div class="ct-card-titlebar-dot"></div>
                 </div>
             </div>
-            <button class="ct-card-action">Manage</button>
+
+            <!-- Content Area -->
+            <div class="ct-card-content">
+                <div class="ct-card-avatar">
+                    ${avatarSrc
+                        ? `<img src="${avatarSrc}" alt="${char.name}" />`
+                        : `<div class="ct-avatar-placeholder"><i class="fa-solid fa-user"></i></div>`
+                    }
+                </div>
+                <div class="ct-card-name">${char.name}</div>
+                <div class="ct-card-badge ${isNPC ? 'npc' : 'card'}">
+                    <i class="fa-solid ${isNPC ? 'fa-ghost' : 'fa-id-card'}"></i>
+                    ${isNPC ? 'NPC' : 'Card'}
+                </div>
+                <button class="ct-card-action">
+                    <i class="fa-solid fa-sparkles"></i>
+                    Manage
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="ct-card-statusbar">
+                <div class="ct-card-statusbar-left">
+                    <i class="fa-solid fa-mouse-pointer"></i>
+                    <span>Click to manage</span>
+                </div>
+                ${spriteCount > 0 ? `
+                    <div class="ct-card-statusbar-sprites">
+                        <i class="fa-solid fa-image"></i>
+                        <span>${spriteCount}</span>
+                    </div>
+                ` : ''}
+            </div>
         </div>
     `;
 }
@@ -657,10 +689,26 @@ function generateCharacterCard(char, isNPC = false) {
 function generateAddCard() {
     return `
         <div class="ct-card ct-card-add" id="ct_add_character">
-            <div class="ct-card-add-icon">
-                <i class="fa-solid fa-plus"></i>
+            <!-- Title Bar for Add Card -->
+            <div class="ct-card-titlebar" style="background: linear-gradient(135deg, rgba(92, 225, 230, 0.6), rgba(107, 159, 255, 0.6));">
+                <div class="ct-card-titlebar-left">
+                    <i class="fa-solid fa-plus ct-card-titlebar-icon"></i>
+                    <span class="ct-card-titlebar-text">new.char</span>
+                </div>
+                <div class="ct-card-titlebar-dots">
+                    <div class="ct-card-titlebar-dot"></div>
+                    <div class="ct-card-titlebar-dot"></div>
+                    <div class="ct-card-titlebar-dot"></div>
+                </div>
             </div>
-            <div class="ct-card-add-text">Add Character</div>
+
+            <!-- Content Area -->
+            <div class="ct-card-content">
+                <div class="ct-card-add-icon">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+                <div class="ct-card-add-text">Add NPC</div>
+            </div>
         </div>
     `;
 }
