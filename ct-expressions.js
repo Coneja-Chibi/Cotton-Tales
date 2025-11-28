@@ -1412,5 +1412,4 @@ export {
     sendExpressionCall,
     isVisualNovelMode,
     isVectHareAvailable,
-    clearEmotionEmbeddingsCache,
 };
