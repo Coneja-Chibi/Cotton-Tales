@@ -1,9 +1,9 @@
 /**
  * ============================================================================
- * COTTON-TALES - MAIN STYLESHEET
+ * COTTON-TALES - COZY PIXEL-ART AESTHETIC
  * ============================================================================
- * Master CSS entry point - imports component styles
- * Keep this file lean, actual styles live in /styles/
+ * Inspired by cozy games - warm colors, soft edges, playful feel
+ * ALL STYLES INLINE - no @import (ST compatibility)
  *
  * @author Coneja Chibi
  * @version 0.1.0-alpha
@@ -11,130 +11,1148 @@
  */
 
 /* =============================================================================
-   CSS CUSTOM PROPERTIES (Variables)
+   SETTINGS PANEL - COZY GAME STYLE
    ============================================================================= */
 
-:root {
-    /* Colors - VN Theme */
-    --ct-primary: #8b5cf6;
-    --ct-primary-hover: #7c3aed;
-    --ct-secondary: #ec4899;
-    --ct-accent: #f59e0b;
+#cotton-tales-settings {
+    /* Cozy Color Palette */
+    --ct-cream: #FDF6E3;
+    --ct-cream-dark: #F5E6C8;
+    --ct-peach: #FFECD2;
+    --ct-peach-dark: #FFD9B3;
+    --ct-pink: #FFB6C1;
+    --ct-pink-soft: #FFD4DB;
+    --ct-pink-deep: #E8909C;
+    --ct-lavender: #E6E6FA;
+    --ct-mint: #B8E8D0;
+    --ct-mint-dark: #8DD4B8;
+    --ct-wood: #8B7355;
+    --ct-wood-dark: #6B5344;
+    --ct-wood-light: #A89070;
+    --ct-text: #5D4E4E;
+    --ct-text-light: #8B7B7B;
+    --ct-shadow: rgba(93, 78, 78, 0.15);
+    --ct-shadow-strong: rgba(93, 78, 78, 0.3);
 
-    /* Background colors */
-    --ct-bg-dark: rgba(0, 0, 0, 0.85);
-    --ct-bg-medium: rgba(30, 30, 40, 0.9);
-    --ct-bg-light: rgba(50, 50, 60, 0.8);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: var(--ct-text);
+}
 
-    /* Text colors */
-    --ct-text-primary: #ffffff;
-    --ct-text-secondary: #a0a0b0;
-    --ct-text-muted: #707080;
-
-    /* Borders */
-    --ct-border-color: rgba(255, 255, 255, 0.1);
-    --ct-border-radius: 8px;
-    --ct-border-radius-lg: 12px;
-
-    /* Shadows */
-    --ct-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-    --ct-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
-    --ct-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
-
-    /* Transitions */
-    --ct-transition-fast: 150ms ease;
-    --ct-transition-normal: 300ms ease;
-    --ct-transition-slow: 500ms ease;
-
-    /* Z-index layers */
-    --ct-z-background: 1;
-    --ct-z-sprites: 10;
-    --ct-z-effects: 20;
-    --ct-z-dialogue: 100;
-    --ct-z-choices: 110;
-    --ct-z-overlay: 200;
-    --ct-z-modal: 300;
-
-    /* Spacing */
-    --ct-spacing-xs: 4px;
-    --ct-spacing-sm: 8px;
-    --ct-spacing-md: 16px;
-    --ct-spacing-lg: 24px;
-    --ct-spacing-xl: 32px;
+/* Override ST drawer padding */
+#cotton-tales-settings .inline-drawer-content {
+    padding: 0 !important;
+    background: transparent !important;
 }
 
 /* =============================================================================
-   VN CONTAINER - Main Wrapper
+   MAIN CONTAINER - WOODEN FRAME
    ============================================================================= */
 
-#cotton-tales-container {
-    display: none; /* Hidden by default, shown when VN mode enabled */
+.ct-settings-container {
+    background: linear-gradient(145deg, var(--ct-cream) 0%, var(--ct-peach) 100%);
+    border: 4px solid var(--ct-wood);
+    border-radius: 16px;
+    box-shadow:
+        0 6px 20px var(--ct-shadow-strong),
+        inset 0 2px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin: 10px 0;
+    position: relative;
+}
+
+/* Decorative corner accents */
+.ct-settings-container::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border: 2px dashed var(--ct-wood-light);
+    border-radius: 10px;
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+/* =============================================================================
+   TAB NAVIGATION - WOODEN TABS
+   ============================================================================= */
+
+.ct-tab-bar {
+    display: flex;
+    background: linear-gradient(180deg, var(--ct-wood) 0%, var(--ct-wood-dark) 100%);
+    padding: 8px 8px 0 8px;
+    gap: 4px;
+    border-bottom: 4px solid var(--ct-wood-dark);
+}
+
+.ct-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px 8px;
+    background: var(--ct-wood-light);
+    border: none;
+    border-radius: 10px 10px 0 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--ct-cream);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.ct-tab i {
+    font-size: 16px;
+    margin-bottom: 3px;
+}
+
+.ct-tab:hover {
+    background: var(--ct-wood);
+    transform: translateY(-2px);
+}
+
+.ct-tab.active {
+    background: var(--ct-cream);
+    color: var(--ct-text);
+    transform: translateY(-4px);
+    box-shadow:
+        0 -4px 8px rgba(0, 0, 0, 0.1),
+        inset 0 2px 0 rgba(255, 255, 255, 0.8);
+    z-index: 2;
+}
+
+.ct-tab.active i {
+    color: var(--ct-pink-deep);
+}
+
+/* =============================================================================
+   TAB CONTENT
+   ============================================================================= */
+
+.ct-tab-content {
+    display: none;
+    padding: 20px;
+    min-height: 350px;
+    position: relative;
+}
+
+.ct-tab-content.active {
+    display: block;
+    animation: ctFadeIn 0.3s ease;
+}
+
+@keyframes ctFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =============================================================================
+   MASTER ENABLE TOGGLE - SPECIAL STYLING
+   ============================================================================= */
+
+.ct-master-toggle {
+    background: linear-gradient(135deg, var(--ct-pink-soft) 0%, var(--ct-lavender) 100%);
+    border: 3px solid var(--ct-pink-deep);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow:
+        0 4px 12px rgba(232, 144, 156, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.ct-master-toggle .ct-toggle-info h3 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ct-text);
+}
+
+.ct-master-toggle .ct-toggle-info p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--ct-text-light);
+}
+
+/* =============================================================================
+   SECTION LABELS
+   ============================================================================= */
+
+.ct-section-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ct-wood-dark);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 20px 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px dashed var(--ct-wood-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ct-section-label i {
+    color: var(--ct-pink-deep);
+    font-size: 14px;
+}
+
+/* =============================================================================
+   CAROUSEL
+   ============================================================================= */
+
+.ct-carousel-wrapper {
+    position: relative;
+    padding: 0 45px;
+    margin: 10px 0;
+}
+
+.ct-carousel {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 12px 4px 16px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.ct-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+/* Carousel Arrows */
+.ct-carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(145deg, var(--ct-wood) 0%, var(--ct-wood-dark) 100%);
+    border: 3px solid var(--ct-wood-dark);
+    border-radius: 50%;
+    color: var(--ct-cream);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+    box-shadow: 0 3px 8px var(--ct-shadow);
+}
+
+.ct-carousel-arrow:hover {
+    background: var(--ct-pink-deep);
+    border-color: var(--ct-pink);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.ct-carousel-arrow.left { left: 0; }
+.ct-carousel-arrow.right { right: 0; }
+
+/* =============================================================================
+   CHARACTER CARDS
+   ============================================================================= */
+
+.ct-card {
+    flex: 0 0 160px;
+    background: var(--ct-cream);
+    border: 3px solid var(--ct-wood);
+    border-radius: 12px;
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow:
+        0 4px 8px var(--ct-shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    position: relative;
+}
+
+.ct-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow:
+        0 10px 20px var(--ct-shadow-strong),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    border-color: var(--ct-pink);
+}
+
+.ct-card.selected {
+    border-color: var(--ct-pink-deep);
+    background: linear-gradient(145deg, var(--ct-cream) 0%, var(--ct-pink-soft) 100%);
+    box-shadow:
+        0 6px 16px rgba(232, 144, 156, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Card Avatar */
+.ct-card-avatar {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    border: 3px solid var(--ct-wood);
+    background: linear-gradient(145deg, var(--ct-peach) 0%, var(--ct-peach-dark) 100%);
+    overflow: hidden;
+    box-shadow:
+        0 3px 8px var(--ct-shadow),
+        inset 0 2px 4px rgba(255, 255, 255, 0.5);
+}
+
+.ct-card-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ct-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: var(--ct-wood);
+}
+
+/* Card Name */
+.ct-card-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ct-text);
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Card Badge */
+.ct-card-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.ct-card-badge.card {
+    background: var(--ct-mint);
+    color: #2D5A3D;
+    border: 2px solid var(--ct-mint-dark);
+}
+
+.ct-card-badge.npc {
+    background: var(--ct-lavender);
+    color: #4A4A6A;
+    border: 2px solid #C5C5E8;
+}
+
+/* Card Stats */
+.ct-card-stats {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--ct-text-light);
+    margin-bottom: 8px;
+}
+
+.ct-card-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ct-card-stat i {
+    color: var(--ct-pink-deep);
+    font-size: 11px;
+}
+
+/* Card Action Button */
+.ct-card-action {
+    background: linear-gradient(145deg, var(--ct-wood) 0%, var(--ct-wood-dark) 100%);
+    color: var(--ct-cream);
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ct-card-action:hover {
+    background: linear-gradient(145deg, var(--ct-pink-deep) 0%, var(--ct-pink) 100%);
+    transform: scale(1.05);
+}
+
+/* Add New Card */
+.ct-card.ct-card-add {
+    border-style: dashed;
+    border-width: 3px;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    opacity: 0.8;
+}
+
+.ct-card.ct-card-add:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.5);
+    border-color: var(--ct-pink);
+}
+
+.ct-card-add-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--ct-wood);
+    color: var(--ct-cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+}
+
+.ct-card.ct-card-add:hover .ct-card-add-icon {
+    background: var(--ct-pink-deep);
+    transform: scale(1.1) rotate(90deg);
+}
+
+.ct-card-add-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ct-text);
+}
+
+/* =============================================================================
+   DETAIL PANEL
+   ============================================================================= */
+
+.ct-detail-panel {
+    display: none;
+    background: var(--ct-cream);
+    border: 3px solid var(--ct-wood);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+    box-shadow: inset 0 2px 8px var(--ct-shadow);
+}
+
+.ct-detail-panel.active {
+    display: block;
+    animation: ctSlideDown 0.3s ease;
+}
+
+@keyframes ctSlideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ct-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px dashed var(--ct-wood-light);
+}
+
+.ct-detail-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ct-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ct-detail-title i {
+    color: var(--ct-pink-deep);
+}
+
+.ct-detail-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: var(--ct-text-light);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.ct-detail-close:hover {
+    background: var(--ct-peach);
+    color: var(--ct-text);
+}
+
+/* Costume Buttons */
+.ct-costume-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.ct-costume-btn {
+    padding: 8px 14px;
+    background: var(--ct-peach);
+    border: 2px solid var(--ct-wood-light);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ct-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ct-costume-btn:hover {
+    border-color: var(--ct-pink);
+    background: var(--ct-pink-soft);
+}
+
+.ct-costume-btn.active {
+    background: var(--ct-pink);
+    border-color: var(--ct-pink-deep);
+    color: white;
+}
+
+.ct-costume-btn.add {
+    border-style: dashed;
+    background: transparent;
+}
+
+/* Sprite Grid */
+.ct-sprite-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.ct-sprite-item {
+    aspect-ratio: 1;
+    background: var(--ct-peach);
+    border: 2px solid var(--ct-wood-light);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.ct-sprite-item:hover {
+    border-color: var(--ct-pink);
+    transform: scale(1.08);
+    z-index: 5;
+}
+
+.ct-sprite-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ct-sprite-item-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 8px;
+    padding: 2px 4px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =============================================================================
+   TOGGLE SWITCHES
+   ============================================================================= */
+
+.ct-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--ct-peach);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: all 0.2s ease;
+}
+
+.ct-toggle-row:hover {
+    border-color: var(--ct-wood-light);
+    background: var(--ct-peach-dark);
+}
+
+.ct-toggle-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ct-text);
+}
+
+.ct-toggle-sublabel {
+    font-size: 10px;
+    color: var(--ct-text-light);
+    margin-top: 2px;
+}
+
+/* Custom Switch */
+.ct-switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.ct-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.ct-switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--ct-wood-light);
+    border-radius: 26px;
+    transition: all 0.3s ease;
+    border: 2px solid var(--ct-wood);
+}
+
+.ct-switch-slider::before {
+    content: '';
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px var(--ct-shadow);
+}
+
+.ct-switch input:checked + .ct-switch-slider {
+    background: var(--ct-pink-deep);
+    border-color: var(--ct-pink);
+}
+
+.ct-switch input:checked + .ct-switch-slider::before {
+    transform: translateX(22px);
+}
+
+/* =============================================================================
+   SLIDERS
+   ============================================================================= */
+
+.ct-slider-row {
+    margin-bottom: 14px;
+}
+
+.ct-slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.ct-slider-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ct-text);
+}
+
+.ct-slider-value {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ct-pink-deep);
+    background: var(--ct-pink-soft);
+    padding: 2px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--ct-pink);
+}
+
+.ct-slider {
+    width: 100%;
+    height: 10px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--ct-peach);
+    border-radius: 5px;
+    outline: none;
+    border: 2px solid var(--ct-wood-light);
+}
+
+.ct-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(145deg, var(--ct-wood) 0%, var(--ct-wood-dark) 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--ct-cream);
+    box-shadow: 0 2px 6px var(--ct-shadow);
+    transition: all 0.2s ease;
+}
+
+.ct-slider::-webkit-slider-thumb:hover {
+    background: linear-gradient(145deg, var(--ct-pink-deep) 0%, var(--ct-pink) 100%);
+    transform: scale(1.1);
+}
+
+.ct-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(145deg, var(--ct-wood) 0%, var(--ct-wood-dark) 100%);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--ct-cream);
+    box-shadow: 0 2px 6px var(--ct-shadow);
+}
+
+/* =============================================================================
+   SELECT DROPDOWNS
+   ============================================================================= */
+
+.ct-select {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--ct-cream);
+    border: 2px solid var(--ct-wood-light);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ct-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238B7355' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.ct-select:hover {
+    border-color: var(--ct-pink);
+}
+
+.ct-select:focus {
+    outline: none;
+    border-color: var(--ct-pink-deep);
+    box-shadow: 0 0 0 3px var(--ct-pink-soft);
+}
+
+.ct-select option:disabled {
+    color: var(--ct-text-light);
+    font-style: italic;
+}
+
+/* =============================================================================
+   BUTTONS
+   ============================================================================= */
+
+.ct-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: linear-gradient(145deg, var(--ct-wood) 0%, var(--ct-wood-dark) 100%);
+    color: var(--ct-cream);
+    border: none;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 8px var(--ct-shadow);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ct-btn:hover {
+    background: linear-gradient(145deg, var(--ct-pink-deep) 0%, var(--ct-pink) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px var(--ct-shadow-strong);
+}
+
+.ct-btn.secondary {
+    background: var(--ct-peach);
+    color: var(--ct-text);
+    border: 2px solid var(--ct-wood-light);
+    box-shadow: none;
+}
+
+.ct-btn.secondary:hover {
+    background: var(--ct-pink-soft);
+    border-color: var(--ct-pink);
+}
+
+.ct-action-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+/* =============================================================================
+   EMPTY STATES
+   ============================================================================= */
+
+.ct-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ct-text-light);
+}
+
+.ct-empty-state i {
+    font-size: 40px;
+    margin-bottom: 12px;
+    color: var(--ct-wood-light);
+}
+
+.ct-empty-state-text {
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+/* =============================================================================
+   FOOTER
+   ============================================================================= */
+
+.ct-footer {
+    text-align: center;
+    padding: 14px;
+    border-top: 2px dashed var(--ct-wood-light);
+    margin-top: 20px;
+    background: linear-gradient(180deg, transparent 0%, rgba(255, 230, 205, 0.5) 100%);
+}
+
+.ct-footer-text {
+    font-size: 11px;
+    color: var(--ct-text-light);
+}
+
+.ct-footer-text a {
+    color: var(--ct-pink-deep);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.ct-footer-text a:hover {
+    text-decoration: underline;
+}
+
+/* =============================================================================
+   VN DISPLAY - ADV MODE
+   ============================================================================= */
+
+/* Main VN Container */
+#cotton-tales-vn {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: var(--ct-z-background);
+    z-index: 9500;
     overflow: hidden;
+    background: #000;
 }
 
-#cotton-tales-container.active {
+#cotton-tales-vn.active {
     display: block;
 }
 
-/* =============================================================================
-   SETTINGS PANEL
-   ============================================================================= */
-
-#cotton-tales-settings {
-    padding: var(--ct-spacing-md);
+/* Body class when VN mode is active */
+body.ct-vn-mode {
+    overflow: hidden;
 }
 
-#cotton-tales-settings .ct-settings-section {
-    margin-bottom: var(--ct-spacing-lg);
-    padding: var(--ct-spacing-md);
-    background: var(--ct-bg-light);
-    border-radius: var(--ct-border-radius);
-    border: 1px solid var(--ct-border-color);
+/* -----------------------------------------------------------------------------
+   BACKGROUND LAYER
+   ----------------------------------------------------------------------------- */
+
+.ct-vn-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
 }
 
-#cotton-tales-settings .ct-settings-section h4 {
-    margin: 0 0 var(--ct-spacing-md) 0;
-    color: var(--ct-text-primary);
+.ct-vn-background .ct-bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* -----------------------------------------------------------------------------
+   SPRITE LAYER
+   ----------------------------------------------------------------------------- */
+
+.ct-vn-sprites {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.ct-sprite-slot {
+    position: relative;
+    height: 85%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.ct-sprite-slot.center {
+    /* Center sprite */
+}
+
+.ct-sprite-slot.left {
+    position: absolute;
+    left: 5%;
+}
+
+.ct-sprite-slot.right {
+    position: absolute;
+    right: 5%;
+}
+
+.ct-sprite-image {
+    max-height: 100%;
+    max-width: 50vw;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5));
+}
+
+/* Sprite animation classes */
+.ct-sprite-clone {
+    position: absolute;
+}
+
+.ct-sprite-animating {
+    /* Handled by JS */
+}
+
+/* -----------------------------------------------------------------------------
+   DIALOGUE BOX
+   ----------------------------------------------------------------------------- */
+
+.ct-vn-dialogue {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 0 5%;
+    padding-bottom: 30px;
+}
+
+/* Namebox */
+.ct-dialogue-namebox {
+    display: inline-block;
+    background: linear-gradient(135deg, #2a1f3d 0%, #1a1225 100%);
+    border: 2px solid #8b5cf6;
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    padding: 8px 24px;
+    margin-left: 40px;
+    margin-bottom: -2px;
+    position: relative;
+    z-index: 2;
+}
+
+.ct-speaker-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Dialogue Content Box */
+.ct-dialogue-content {
+    background: linear-gradient(180deg, rgba(20, 15, 30, 0.95) 0%, rgba(10, 8, 18, 0.98) 100%);
+    border: 3px solid #8b5cf6;
+    border-radius: 16px;
+    padding: 24px 32px;
+    min-height: 120px;
+    position: relative;
+    box-shadow:
+        0 -4px 30px rgba(139, 92, 246, 0.2),
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.ct-dialogue-text {
+    font-size: 18px;
+    line-height: 1.7;
+    color: #f0f0f5;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Advance indicator */
+.ct-dialogue-indicator {
+    position: absolute;
+    bottom: 12px;
+    right: 20px;
+    color: #8b5cf6;
     font-size: 14px;
-    font-weight: 600;
+    animation: ctBounce 1s ease-in-out infinite;
+}
+
+@keyframes ctBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(5px); }
+}
+
+/* -----------------------------------------------------------------------------
+   CHOICE PANEL
+   ----------------------------------------------------------------------------- */
+
+.ct-vn-choices {
+    position: absolute;
+    bottom: 180px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 110;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 400px;
+    max-width: 600px;
+}
+
+.ct-choice-btn {
     display: flex;
     align-items: center;
-    gap: var(--ct-spacing-sm);
+    gap: 16px;
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, rgba(30, 20, 50, 0.95) 0%, rgba(20, 15, 35, 0.98) 100%);
+    border: 2px solid #6366f1;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-#cotton-tales-settings .ct-settings-section h4 i {
-    color: var(--ct-primary);
+.ct-choice-btn:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%);
+    border-color: #8b5cf6;
+    transform: translateX(8px);
+    box-shadow:
+        0 6px 20px rgba(139, 92, 246, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* =============================================================================
-   PLACEHOLDER STYLES
-   These will be expanded as components are built
-   ============================================================================= */
-
-/* Dialogue Box placeholder */
-.ct-dialogue-box {
-    /* Will be styled in styles/dialogue.css */
+.ct-choice-btn:active {
+    transform: translateX(4px) scale(0.98);
 }
 
-/* Choice Panel placeholder */
-.ct-choice-panel {
-    /* Will be styled in styles/choices.css */
+.ct-choice-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
 }
 
-/* Sprite Display placeholder */
-.ct-sprite-display {
-    /* Will be styled in styles/sprites.css */
+.ct-choice-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #e0e0f0;
+    line-height: 1.4;
 }
 
-/* Effects Layer placeholder */
-.ct-effects-layer {
-    /* Will be styled in styles/effects.css */
+/* -----------------------------------------------------------------------------
+   VN CONTROLS
+   ----------------------------------------------------------------------------- */
+
+.ct-vn-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 150;
+    display: flex;
+    gap: 8px;
+}
+
+.ct-control-btn {
+    width: 44px;
+    height: 44px;
+    background: rgba(20, 15, 30, 0.8);
+    border: 2px solid rgba(139, 92, 246, 0.5);
+    border-radius: 10px;
+    color: #a0a0b0;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ct-control-btn:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: #8b5cf6;
+    color: #fff;
+}
+
+.ct-control-btn.active {
+    background: rgba(139, 92, 246, 0.3);
+    border-color: #8b5cf6;
+    color: #8b5cf6;
 }
 
 /* =============================================================================
@@ -145,32 +1163,1282 @@
     display: none !important;
 }
 
-.ct-fade-in {
-    animation: ctFadeIn var(--ct-transition-normal) forwards;
+/* =============================================================================
+   LANDING PAGE - COLORFUL OS SAVE FILE SELECTION
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   CSS VARIABLES - Vibrant Game OS Theme
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active {
+    /* Dark foundation with purple undertones */
+    --ct-lp-bg-base: #0f0a1a;
+    --ct-lp-bg-primary: #1a1428;
+    --ct-lp-bg-secondary: #251d35;
+    --ct-lp-bg-card: #2a2240;
+    --ct-lp-bg-card-hover: #352b4d;
+    --ct-lp-bg-elevated: #3d3355;
+
+    /* Vibrant accent spectrum */
+    --ct-lp-pink: #ff6b9d;
+    --ct-lp-pink-glow: rgba(255, 107, 157, 0.4);
+    --ct-lp-purple: #b76cff;
+    --ct-lp-purple-soft: #c98fff;
+    --ct-lp-purple-glow: rgba(183, 108, 255, 0.4);
+    --ct-lp-cyan: #5ce1e6;
+    --ct-lp-cyan-glow: rgba(92, 225, 230, 0.4);
+    --ct-lp-orange: #ffb347;
+    --ct-lp-orange-glow: rgba(255, 179, 71, 0.4);
+    --ct-lp-green: #7dffaf;
+    --ct-lp-blue: #6b9fff;
+
+    /* Gradients */
+    --ct-lp-gradient-pink-purple: linear-gradient(135deg, #ff6b9d 0%, #b76cff 100%);
+    --ct-lp-gradient-cyan-blue: linear-gradient(135deg, #5ce1e6 0%, #6b9fff 100%);
+    --ct-lp-gradient-orange-pink: linear-gradient(135deg, #ffb347 0%, #ff6b9d 100%);
+    --ct-lp-gradient-card: linear-gradient(145deg, #2a2240 0%, #1f1832 100%);
+    --ct-lp-gradient-card-hover: linear-gradient(145deg, #352b4d 0%, #2a2240 100%);
+
+    /* Text */
+    --ct-lp-text-primary: #ffffff;
+    --ct-lp-text-secondary: #c4bdd4;
+    --ct-lp-text-muted: #8b82a0;
+
+    /* Borders */
+    --ct-lp-border: rgba(183, 108, 255, 0.2);
+    --ct-lp-border-strong: rgba(183, 108, 255, 0.35);
+    --ct-lp-border-glow: rgba(183, 108, 255, 0.6);
+
+    /* Shadows & Glows */
+    --ct-lp-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --ct-lp-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+    --ct-lp-glow-sm: 0 0 15px;
+    --ct-lp-glow-md: 0 0 25px;
+    --ct-lp-glow-lg: 0 0 40px;
+
+    /* Timing */
+    --ct-lp-transition: 200ms ease;
+    --ct-lp-transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.ct-fade-out {
-    animation: ctFadeOut var(--ct-transition-normal) forwards;
+/* -----------------------------------------------------------------------------
+   BACKGROUND - Animated Gradient
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active {
+    background:
+        radial-gradient(ellipse at 20% 20%, rgba(183, 108, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(255, 107, 157, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(92, 225, 230, 0.05) 0%, transparent 60%),
+        linear-gradient(180deg, #0f0a1a 0%, #1a1428 100%) !important;
+    background-attachment: fixed !important;
+    min-height: 100vh;
 }
 
-@keyframes ctFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+/* Animated background overlay */
+body.ct-landing-active::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent 0px,
+            transparent 2px,
+            rgba(183, 108, 255, 0.02) 2px,
+            rgba(183, 108, 255, 0.02) 4px
+        );
+    pointer-events: none;
+    z-index: 0;
 }
 
-@keyframes ctFadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
+/* Hide old decorative elements */
+body.ct-landing-active .ct-viewport-frame,
+body.ct-landing-active .ct-panel-header,
+body.ct-landing-active .ct-panel-footer,
+body.ct-landing-active .ct-save-number,
+body.ct-landing-active .ct-type-icon,
+body.ct-landing-active .ct-avatar-frame,
+body.ct-landing-active .ct-card-glow {
+    display: none !important;
 }
 
 /* =============================================================================
-   COMPONENT IMPORTS
-   Uncomment as files are created
+   TAKEOVER MODE - Hide ST's default UI, show our landing page
    ============================================================================= */
 
-/* @import './styles/base.css'; */
-/* @import './styles/dialogue.css'; */
-/* @import './styles/choices.css'; */
-/* @import './styles/sprites.css'; */
-/* @import './styles/effects.css'; */
-/* @import './styles/settings.css'; */
+/* Hide the default top settings bar */
+body.ct-landing-active #top-settings-holder {
+    display: none !important;
+}
+
+/* Hide the top icon bar */
+body.ct-landing-active #top-bar {
+    display: none !important;
+}
+
+/* Hide default form/input area */
+body.ct-landing-active #form_sheld {
+    display: none !important;
+}
+
+/* Hide extension top bar - we'll show our own */
+body.ct-landing-active #extensionTopBar {
+    display: none !important;
+}
+
+/* Hide the shell header (drag grabber) */
+body.ct-landing-active #sheldheader {
+    display: none !important;
+}
+
+/* Hide any drawer toggles */
+body.ct-landing-active .drawer-icon {
+    display: none !important;
+}
+
+/* Make the main container take full viewport */
+body.ct-landing-active #sheld {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+}
+
+/* Chat container becomes our main content area */
+body.ct-landing-active #chat {
+    flex: 1 !important;
+    width: 100% !important;
+    max-width: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 40px 20px !important;
+    overflow-y: auto !important;
+    background: transparent !important;
+}
+
+/* -----------------------------------------------------------------------------
+   WELCOME PANEL - Main Container with Glow Border
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .welcomePanel {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px !important;
+    width: calc(100% - 60px) !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: var(--ct-lp-bg-primary) !important;
+    border: 2px solid var(--ct-lp-border-strong) !important;
+    border-radius: 24px !important;
+    box-shadow:
+        var(--ct-lp-shadow-lg),
+        0 0 60px rgba(183, 108, 255, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    overflow: hidden !important;
+    /* Fill available space */
+    flex: 1 !important;
+    max-height: calc(100vh - 80px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Top gradient accent bar */
+body.ct-landing-active .welcomePanel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--ct-lp-gradient-pink-purple);
+    z-index: 10;
+}
+
+/* Corner glow accents */
+body.ct-landing-active .welcomePanel::after {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255, 107, 157, 0.2) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   TITLE HEADER - Game Title Bar Style
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .welcomeHeaderTitle {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    padding: 20px 24px !important;
+    margin: 0 !important;
+    background: linear-gradient(180deg, rgba(183, 108, 255, 0.1) 0%, transparent 100%) !important;
+    border: none !important;
+    border-bottom: 1px solid var(--ct-lp-border) !important;
+    border-radius: 0 !important;
+    position: relative;
+    z-index: 2;
+}
+
+/* Logo with glow */
+body.ct-landing-active .welcomeHeaderLogo {
+    width: 48px !important;
+    height: 48px !important;
+    border: 2px solid var(--ct-lp-purple) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow) !important;
+    filter: none !important;
+}
+
+/* Version badge - pill style */
+body.ct-landing-active .welcomeHeaderVersionDisplay {
+    font-family: 'Consolas', 'SF Mono', monospace !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--ct-lp-cyan) !important;
+    background: rgba(92, 225, 230, 0.1) !important;
+    padding: 6px 12px !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(92, 225, 230, 0.3) !important;
+    text-shadow: var(--ct-lp-glow-sm) var(--ct-lp-cyan-glow) !important;
+    letter-spacing: 0.5px;
+}
+
+/* Toggle buttons with glow */
+body.ct-landing-active .mes_button.showRecentChats,
+body.ct-landing-active .mes_button.hideRecentChats {
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--ct-lp-bg-card) !important;
+    border: 1px solid var(--ct-lp-border) !important;
+    border-radius: 10px !important;
+    color: var(--ct-lp-text-secondary) !important;
+    transition: var(--ct-lp-transition) !important;
+    box-shadow: none !important;
+}
+
+body.ct-landing-active .mes_button.showRecentChats:hover,
+body.ct-landing-active .mes_button.hideRecentChats:hover {
+    background: var(--ct-lp-bg-elevated) !important;
+    border-color: var(--ct-lp-purple) !important;
+    color: var(--ct-lp-purple) !important;
+    box-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   NAVIGATION BAR - Save File Actions
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .welcomeHeader {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    padding: 16px 24px !important;
+    margin: 0 !important;
+    background: var(--ct-lp-bg-secondary) !important;
+    border: none !important;
+    border-bottom: 1px solid var(--ct-lp-border) !important;
+    border-radius: 0 !important;
+}
+
+/* "Recent Chats" title with glow */
+body.ct-landing-active .recentChatsTitle {
+    font-family: system-ui, -apple-system, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: var(--ct-lp-text-primary) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    text-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow) !important;
+}
+
+/* Shortcut buttons container */
+body.ct-landing-active .welcomeShortcuts {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+/* Shortcut buttons */
+body.ct-landing-active .welcomeShortcuts .menu_button {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px 16px !important;
+    background: var(--ct-lp-bg-card) !important;
+    border: 1px solid var(--ct-lp-border) !important;
+    border-radius: 10px !important;
+    font-family: system-ui, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--ct-lp-text-secondary) !important;
+    transition: var(--ct-lp-transition) !important;
+    box-shadow: none !important;
+}
+
+body.ct-landing-active .welcomeShortcuts .menu_button:hover {
+    background: var(--ct-lp-bg-card-hover) !important;
+    border-color: var(--ct-lp-border-strong) !important;
+    color: var(--ct-lp-text-primary) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: var(--ct-lp-shadow) !important;
+}
+
+body.ct-landing-active .welcomeShortcuts .menu_button i {
+    font-size: 14px;
+}
+
+/* New Story button - special gradient */
+body.ct-landing-active .welcomeShortcuts .openTemporaryChat {
+    background: var(--ct-lp-gradient-pink-purple) !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    box-shadow: var(--ct-lp-glow-md) var(--ct-lp-pink-glow) !important;
+}
+
+body.ct-landing-active .welcomeShortcuts .openTemporaryChat:hover {
+    filter: brightness(1.15) saturate(1.1) !important;
+    transform: translateY(-3px) scale(1.02) !important;
+    box-shadow:
+        var(--ct-lp-glow-lg) var(--ct-lp-pink-glow),
+        0 8px 24px rgba(255, 107, 157, 0.3) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   SAVE FILE LIST - Chat Cards as Save Slots
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .recentChatList {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Welcome content area - make it scrollable and fill space */
+body.ct-landing-active .welcomeRecent {
+    flex: 1 !important;
+    padding: 16px !important;
+    background: transparent !important;
+    overflow-y: auto !important;
+    min-height: 0 !important; /* Important for flexbox scrolling */
+}
+
+/* Custom scrollbar for recent chats */
+body.ct-landing-active .welcomeRecent::-webkit-scrollbar {
+    width: 8px;
+}
+
+body.ct-landing-active .welcomeRecent::-webkit-scrollbar-track {
+    background: var(--ct-lp-bg-secondary);
+    border-radius: 4px;
+}
+
+body.ct-landing-active .welcomeRecent::-webkit-scrollbar-thumb {
+    background: var(--ct-lp-purple);
+    border-radius: 4px;
+}
+
+body.ct-landing-active .welcomeRecent::-webkit-scrollbar-thumb:hover {
+    background: var(--ct-lp-pink);
+}
+
+/* Individual Save Slot Card */
+body.ct-landing-active .recentChat {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    padding: 16px 20px !important;
+    margin: 0 0 12px 0 !important;
+    background: var(--ct-lp-gradient-card) !important;
+    border: 2px solid var(--ct-lp-border) !important;
+    border-radius: 16px !important;
+    cursor: pointer;
+    transition: var(--ct-lp-transition-slow) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Slot number indicator via CSS counter */
+body.ct-landing-active .recentChatList {
+    counter-reset: save-slot;
+}
+
+body.ct-landing-active .recentChat::before {
+    counter-increment: save-slot;
+    content: "SLOT " counter(save-slot, decimal-leading-zero);
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-family: 'Consolas', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ct-lp-purple);
+    background: rgba(183, 108, 255, 0.15);
+    padding: 4px 10px;
+    border-radius: 12px;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    z-index: 5;
+}
+
+/* Left accent bar */
+body.ct-landing-active .recentChat::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--ct-lp-purple);
+    opacity: 0;
+    transition: var(--ct-lp-transition);
+}
+
+/* Hover state - SELECTED save file feel */
+body.ct-landing-active .recentChat:hover {
+    background: var(--ct-lp-gradient-card-hover) !important;
+    border-color: var(--ct-lp-purple) !important;
+    transform: translateX(8px) scale(1.01) !important;
+    box-shadow:
+        var(--ct-lp-glow-md) var(--ct-lp-purple-glow),
+        var(--ct-lp-shadow-lg) !important;
+}
+
+body.ct-landing-active .recentChat:hover::before {
+    color: var(--ct-lp-pink);
+    background: rgba(255, 107, 157, 0.2);
+    opacity: 1;
+}
+
+body.ct-landing-active .recentChat:hover::after {
+    opacity: 1;
+    box-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow);
+}
+
+/* Active/click state */
+body.ct-landing-active .recentChat:active {
+    transform: translateX(4px) scale(0.99) !important;
+}
+
+/* Group chat - different accent color */
+body.ct-landing-active .recentChat.group::after {
+    background: var(--ct-lp-cyan);
+}
+
+body.ct-landing-active .recentChat.group:hover {
+    border-color: var(--ct-lp-cyan) !important;
+    box-shadow:
+        var(--ct-lp-glow-md) var(--ct-lp-cyan-glow),
+        var(--ct-lp-shadow-lg) !important;
+}
+
+body.ct-landing-active .recentChat.group:hover::before {
+    color: var(--ct-lp-cyan);
+    background: rgba(92, 225, 230, 0.2);
+}
+
+body.ct-landing-active .recentChat.group:hover::after {
+    box-shadow: var(--ct-lp-glow-sm) var(--ct-lp-cyan-glow);
+}
+
+/* -----------------------------------------------------------------------------
+   AVATAR - Character Portrait with Frame
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .recentChat .avatar {
+    flex: 0 0 72px !important;
+    width: 72px !important;
+    height: 72px !important;
+    margin: 0 !important;
+    position: relative !important;
+}
+
+body.ct-landing-active .recentChat .avatar img {
+    width: 100% !important;
+    height: 100% !important;
+    border: 3px solid var(--ct-lp-border-strong) !important;
+    border-radius: 14px !important;
+    object-fit: cover !important;
+    transition: var(--ct-lp-transition) !important;
+    box-shadow: var(--ct-lp-shadow) !important;
+}
+
+body.ct-landing-active .recentChat:hover .avatar img {
+    border-color: var(--ct-lp-purple) !important;
+    box-shadow:
+        var(--ct-lp-glow-md) var(--ct-lp-purple-glow),
+        var(--ct-lp-shadow) !important;
+}
+
+body.ct-landing-active .recentChat.group:hover .avatar img {
+    border-color: var(--ct-lp-cyan) !important;
+    box-shadow:
+        var(--ct-lp-glow-md) var(--ct-lp-cyan-glow),
+        var(--ct-lp-shadow) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   CHAT INFO - Save Data Display
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .recentChat .recentChatInfo {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding-right: 70px !important; /* Space for slot number */
+}
+
+body.ct-landing-active .recentChat .chatNameContainer {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+body.ct-landing-active .recentChat .chatName {
+    font-family: system-ui, sans-serif !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: var(--ct-lp-text-primary) !important;
+}
+
+body.ct-landing-active .recentChat .characterName {
+    color: var(--ct-lp-purple-soft) !important;
+    font-weight: 700 !important;
+    text-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow) !important;
+}
+
+/* Date badge */
+body.ct-landing-active .recentChat .chatDate {
+    font-family: 'Consolas', monospace !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--ct-lp-orange) !important;
+    background: rgba(255, 179, 71, 0.15) !important;
+    padding: 4px 10px !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(255, 179, 71, 0.3) !important;
+}
+
+/* Chat actions */
+body.ct-landing-active .recentChat .chatActions {
+    display: flex !important;
+    gap: 6px !important;
+    opacity: 0;
+    transition: var(--ct-lp-transition);
+}
+
+body.ct-landing-active .recentChat:hover .chatActions {
+    opacity: 1;
+}
+
+body.ct-landing-active .recentChat .chatActions button {
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    background: var(--ct-lp-bg-elevated) !important;
+    border: 1px solid var(--ct-lp-border) !important;
+    border-radius: 8px !important;
+    color: var(--ct-lp-text-muted) !important;
+    transition: var(--ct-lp-transition) !important;
+    box-shadow: none !important;
+}
+
+body.ct-landing-active .recentChat .chatActions button:hover {
+    background: var(--ct-lp-bg-card-hover) !important;
+    color: var(--ct-lp-text-primary) !important;
+    transform: translateY(-2px) !important;
+}
+
+body.ct-landing-active .recentChat .chatActions button.deleteChat:hover {
+    background: rgba(255, 107, 157, 0.2) !important;
+    border-color: var(--ct-lp-pink) !important;
+    color: var(--ct-lp-pink) !important;
+    box-shadow: var(--ct-lp-glow-sm) var(--ct-lp-pink-glow) !important;
+}
+
+/* Message preview */
+body.ct-landing-active .recentChat .chatMessageContainer {
+    margin: 0;
+}
+
+body.ct-landing-active .recentChat .chatMessage {
+    font-family: system-ui, sans-serif !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    color: var(--ct-lp-text-muted) !important;
+    font-style: italic !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Stats row */
+body.ct-landing-active .recentChat .chatStats {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+    margin-top: 4px !important;
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+body.ct-landing-active .recentChat .chatStats .counterBlock {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-family: 'Consolas', monospace !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--ct-lp-text-muted) !important;
+}
+
+body.ct-landing-active .recentChat .chatStats .counterBlock i {
+    font-size: 12px;
+    color: var(--ct-lp-green);
+}
+
+body.ct-landing-active .recentChat .chatStats .fileSize {
+    font-family: 'Consolas', monospace !important;
+    font-size: 11px !important;
+    color: var(--ct-lp-text-muted) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   EMPTY STATE - No Save Files
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .noRecentChat {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 60px 30px !important;
+    margin: 16px !important;
+    background: var(--ct-lp-gradient-card) !important;
+    border: 2px dashed var(--ct-lp-border-strong) !important;
+    border-radius: 20px !important;
+    text-align: center !important;
+}
+
+body.ct-landing-active .noRecentChat i {
+    font-size: 56px !important;
+    color: var(--ct-lp-purple) !important;
+    margin-bottom: 16px !important;
+    display: block !important;
+    opacity: 0.6;
+    text-shadow: var(--ct-lp-glow-md) var(--ct-lp-purple-glow);
+}
+
+body.ct-landing-active .noRecentChat span {
+    font-family: system-ui, sans-serif !important;
+    font-size: 16px !important;
+    color: var(--ct-lp-text-secondary) !important;
+    font-weight: 600 !important;
+}
+
+/* -----------------------------------------------------------------------------
+   SHOW MORE BUTTON
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .showMoreChats {
+    display: block !important;
+    width: calc(100% - 32px) !important;
+    margin: 0 16px 16px !important;
+    padding: 14px 24px !important;
+    background: var(--ct-lp-bg-card) !important;
+    border: 2px solid var(--ct-lp-border) !important;
+    border-radius: 12px !important;
+    font-family: system-ui, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: var(--ct-lp-text-secondary) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    transition: var(--ct-lp-transition) !important;
+    box-shadow: none !important;
+}
+
+body.ct-landing-active .showMoreChats:hover {
+    background: var(--ct-lp-bg-card-hover) !important;
+    border-color: var(--ct-lp-purple) !important;
+    color: var(--ct-lp-purple) !important;
+    box-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow) !important;
+    transform: none !important;
+}
+
+/* -----------------------------------------------------------------------------
+   TOP BAR - System Chrome Styling
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active #top-bar {
+    background: var(--ct-lp-bg-primary) !important;
+    border-bottom: 1px solid var(--ct-lp-border) !important;
+}
+
+body.ct-landing-active #top-bar i {
+    color: var(--ct-lp-text-muted) !important;
+    transition: var(--ct-lp-transition);
+}
+
+body.ct-landing-active #top-bar i:hover {
+    color: var(--ct-lp-purple) !important;
+    text-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow);
+}
+
+/* Form area */
+body.ct-landing-active #form_sheld {
+    background: var(--ct-lp-bg-primary) !important;
+    border-top: 1px solid var(--ct-lp-border) !important;
+}
+
+body.ct-landing-active #send_textarea {
+    background: var(--ct-lp-bg-secondary) !important;
+    border: 1px solid var(--ct-lp-border) !important;
+    color: var(--ct-lp-text-primary) !important;
+    border-radius: 12px !important;
+}
+
+body.ct-landing-active #send_textarea:focus {
+    border-color: var(--ct-lp-purple) !important;
+    box-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow) !important;
+}
+
+body.ct-landing-active #send_textarea::placeholder {
+    color: var(--ct-lp-text-muted) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   SCROLLBAR
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.ct-landing-active ::-webkit-scrollbar-track {
+    background: var(--ct-lp-bg-primary);
+}
+
+body.ct-landing-active ::-webkit-scrollbar-thumb {
+    background: var(--ct-lp-bg-elevated);
+    border-radius: 5px;
+    border: 2px solid var(--ct-lp-bg-primary);
+}
+
+body.ct-landing-active ::-webkit-scrollbar-thumb:hover {
+    background: var(--ct-lp-purple);
+}
+
+/* -----------------------------------------------------------------------------
+   ANIMATIONS
+   ----------------------------------------------------------------------------- */
+
+@keyframes ctSlotAppear {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes ctGlowPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+body.ct-landing-active .welcomePanel {
+    animation: ctSlotAppear 0.4s ease-out;
+}
+
+body.ct-landing-active .recentChat {
+    animation: ctSlotAppear 0.3s ease-out backwards;
+}
+
+body.ct-landing-active .recentChat:nth-child(1) { animation-delay: 0.1s; }
+body.ct-landing-active .recentChat:nth-child(2) { animation-delay: 0.15s; }
+body.ct-landing-active .recentChat:nth-child(3) { animation-delay: 0.2s; }
+body.ct-landing-active .recentChat:nth-child(4) { animation-delay: 0.25s; }
+body.ct-landing-active .recentChat:nth-child(5) { animation-delay: 0.3s; }
+
+/* -----------------------------------------------------------------------------
+   ACCESSIBILITY
+   ----------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    body.ct-landing-active *,
+    body.ct-landing-active *::before,
+    body.ct-landing-active *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+body.ct-landing-active .recentChat:focus-visible,
+body.ct-landing-active button:focus-visible,
+body.ct-landing-active .menu_button:focus-visible {
+    outline: 2px solid var(--ct-lp-purple);
+    outline-offset: 2px;
+}
+
+/* -----------------------------------------------------------------------------
+   MASCOT HINT PANEL - The Assistant Box
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .welcomeAssistant,
+body.ct-landing-active #welcome_assistant {
+    background: var(--ct-lp-bg-secondary) !important;
+    border: 2px solid var(--ct-lp-border) !important;
+    border-radius: 20px !important;
+    box-shadow: var(--ct-lp-shadow) !important;
+    margin: 0 auto 20px !important;
+    max-width: 1100px !important;
+    width: calc(100% - 80px) !important;
+    overflow: hidden !important;
+}
+
+body.ct-landing-active .welcomeAssistant .assistant_container,
+body.ct-landing-active #welcome_assistant .assistant_container {
+    background: transparent !important;
+    border: none !important;
+}
+
+body.ct-landing-active .welcomeAssistant .assistant_avatar,
+body.ct-landing-active #welcome_assistant .assistant_avatar {
+    border: 3px solid var(--ct-lp-border-strong) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow) !important;
+}
+
+body.ct-landing-active .welcomeAssistant .assistant_text,
+body.ct-landing-active #welcome_assistant .assistant_text {
+    color: var(--ct-lp-text-secondary) !important;
+    font-size: 14px !important;
+}
+
+body.ct-landing-active .welcomeAssistant .assistant_text a,
+body.ct-landing-active #welcome_assistant .assistant_text a {
+    color: var(--ct-lp-pink) !important;
+    text-decoration: none !important;
+}
+
+body.ct-landing-active .welcomeAssistant .assistant_text a:hover,
+body.ct-landing-active #welcome_assistant .assistant_text a:hover {
+    color: var(--ct-lp-purple) !important;
+    text-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow) !important;
+}
+
+/* Hint label */
+body.ct-landing-active .welcomeAssistant .hint_label,
+body.ct-landing-active #welcome_assistant .hint_label {
+    color: var(--ct-lp-orange) !important;
+    font-weight: 700 !important;
+}
+
+/* -----------------------------------------------------------------------------
+   FOOTER NAVIGATION BAR - API/Character/Extensions
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .welcomeFooter,
+body.ct-landing-active #welcome_footer,
+body.ct-landing-active .footer_links {
+    background: var(--ct-lp-bg-secondary) !important;
+    border: 2px solid var(--ct-lp-border) !important;
+    border-radius: 16px !important;
+    padding: 12px 24px !important;
+    margin: 0 auto 20px !important;
+    max-width: 1100px !important;
+    width: calc(100% - 80px) !important;
+    display: flex !important;
+    justify-content: center !important;
+    gap: 8px !important;
+}
+
+body.ct-landing-active .welcomeFooter a,
+body.ct-landing-active #welcome_footer a,
+body.ct-landing-active .footer_links a,
+body.ct-landing-active .footer_links .menu_button {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 10px 18px !important;
+    background: var(--ct-lp-bg-card) !important;
+    border: 1px solid var(--ct-lp-border) !important;
+    border-radius: 10px !important;
+    color: var(--ct-lp-text-secondary) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: var(--ct-lp-transition) !important;
+}
+
+body.ct-landing-active .welcomeFooter a:hover,
+body.ct-landing-active #welcome_footer a:hover,
+body.ct-landing-active .footer_links a:hover,
+body.ct-landing-active .footer_links .menu_button:hover {
+    background: var(--ct-lp-bg-card-hover) !important;
+    border-color: var(--ct-lp-purple) !important;
+    color: var(--ct-lp-purple) !important;
+    box-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow) !important;
+    transform: translateY(-2px) !important;
+}
+
+body.ct-landing-active .welcomeFooter i,
+body.ct-landing-active #welcome_footer i,
+body.ct-landing-active .footer_links i {
+    color: var(--ct-lp-cyan) !important;
+}
+
+/* Note: Top bar and extension top bar are hidden in takeover mode above */
+
+/* -----------------------------------------------------------------------------
+   CHAT CONTAINER - When no chat is open
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active #chat {
+    background: transparent !important;
+    scrollbar-color: var(--ct-lp-bg-elevated) transparent;
+}
+
+/* Hide the welcome assistant messages - the welcomePanel already shows everything needed */
+body.ct-landing-active #chat > .mes {
+    display: none !important;
+}
+
+/* Make sure the whole viewport area uses our theme */
+body.ct-landing-active #sheld {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+body.ct-landing-active .dragContainer {
+    background: transparent !important;
+}
+
+/* -----------------------------------------------------------------------------
+   QUICK ACTION BUTTONS - API/Character/Extensions at bottom of welcome
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .custom-flex-container {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    padding: 20px !important;
+    background: var(--ct-lp-bg-secondary) !important;
+    border-radius: 16px !important;
+    border: 2px solid var(--ct-lp-border) !important;
+    margin: 0 auto 20px !important;
+    max-width: 1100px !important;
+    width: calc(100% - 80px) !important;
+}
+
+body.ct-landing-active .custom-flex-container .menu_button {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 14px 24px !important;
+    background: var(--ct-lp-gradient-card) !important;
+    border: 2px solid var(--ct-lp-border) !important;
+    border-radius: 12px !important;
+    color: var(--ct-lp-text-secondary) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    transition: var(--ct-lp-transition) !important;
+}
+
+body.ct-landing-active .custom-flex-container .menu_button:hover {
+    background: var(--ct-lp-gradient-card-hover) !important;
+    border-color: var(--ct-lp-purple) !important;
+    color: var(--ct-lp-text-primary) !important;
+    box-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow) !important;
+    transform: translateY(-2px) !important;
+}
+
+body.ct-landing-active .custom-flex-container .menu_button i {
+    font-size: 16px !important;
+    color: var(--ct-lp-cyan) !important;
+}
+
+body.ct-landing-active .custom-flex-container .menu_button:hover i {
+    color: var(--ct-lp-pink) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   DRAWER PANELS - Settings/Character panels when open
+   ----------------------------------------------------------------------------- */
+
+body.ct-landing-active .drawer-content,
+body.ct-landing-active .inline-drawer-content {
+    background: var(--ct-lp-bg-primary) !important;
+    border: 1px solid var(--ct-lp-border) !important;
+}
+
+body.ct-landing-active .drawer-header {
+    background: var(--ct-lp-bg-secondary) !important;
+    border-bottom: 1px solid var(--ct-lp-border) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   MISC UI ELEMENTS
+   ----------------------------------------------------------------------------- */
+
+/* Tooltips */
+body.ct-landing-active [data-tooltip]::after,
+body.ct-landing-active .tooltip {
+    background: var(--ct-lp-bg-elevated) !important;
+    border: 1px solid var(--ct-lp-border) !important;
+    color: var(--ct-lp-text-primary) !important;
+    border-radius: 8px !important;
+}
+
+/* Dropdown menus */
+body.ct-landing-active select,
+body.ct-landing-active .dropdown {
+    background: var(--ct-lp-bg-card) !important;
+    border: 1px solid var(--ct-lp-border) !important;
+    border-radius: 8px !important;
+    color: var(--ct-lp-text-primary) !important;
+}
+
+body.ct-landing-active select:focus,
+body.ct-landing-active .dropdown:focus {
+    border-color: var(--ct-lp-purple) !important;
+    box-shadow: var(--ct-lp-glow-sm) var(--ct-lp-purple-glow) !important;
+}
+
+/* Checkboxes and toggles */
+body.ct-landing-active input[type="checkbox"] {
+    accent-color: var(--ct-lp-purple) !important;
+}
+
+/* Range sliders */
+body.ct-landing-active input[type="range"] {
+    accent-color: var(--ct-lp-purple) !important;
+}
+
+/* General text styling */
+body.ct-landing-active .menu_button {
+    color: var(--ct-lp-text-secondary) !important;
+}
+
+body.ct-landing-active .menu_button:hover {
+    color: var(--ct-lp-text-primary) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   RESPONSIVE DESIGN - Mobile & Tablet Adjustments
+   ----------------------------------------------------------------------------- */
+
+/* Tablet */
+@media screen and (max-width: 1024px) {
+    body.ct-landing-active .welcomePanel {
+        max-width: calc(100% - 40px) !important;
+        width: calc(100% - 40px) !important;
+        margin: 10px auto !important;
+        border-radius: 16px !important;
+    }
+
+    body.ct-landing-active .welcomeAssistant,
+    body.ct-landing-active #welcome_assistant {
+        max-width: calc(100% - 40px) !important;
+        width: calc(100% - 40px) !important;
+    }
+
+    body.ct-landing-active .welcomeFooter,
+    body.ct-landing-active #welcome_footer,
+    body.ct-landing-active .footer_links {
+        max-width: calc(100% - 40px) !important;
+        width: calc(100% - 40px) !important;
+        flex-wrap: wrap !important;
+    }
+
+    body.ct-landing-active .recentChat {
+        padding: 14px 16px !important;
+    }
+
+    body.ct-landing-active .recentChat::before {
+        font-size: 10px !important;
+        padding: 4px 10px !important;
+    }
+
+    body.ct-landing-active .recentChat .avatar img {
+        width: 56px !important;
+        height: 56px !important;
+    }
+}
+
+/* Mobile */
+@media screen and (max-width: 640px) {
+    body.ct-landing-active .welcomePanel {
+        max-width: calc(100% - 20px) !important;
+        width: calc(100% - 20px) !important;
+        margin: 8px auto !important;
+        border-radius: 12px !important;
+    }
+
+    body.ct-landing-active .welcomeHeaderTitle {
+        padding: 12px 16px !important;
+        gap: 10px !important;
+    }
+
+    body.ct-landing-active .welcomeHeaderLogo {
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    body.ct-landing-active .welcomeHeaderVersionDisplay {
+        font-size: 9px !important;
+        padding: 4px 8px !important;
+    }
+
+    body.ct-landing-active .welcomeHeader {
+        padding: 10px 14px !important;
+    }
+
+    body.ct-landing-active .recentChatList {
+        padding: 12px !important;
+        gap: 10px !important;
+    }
+
+    body.ct-landing-active .recentChat {
+        padding: 10px 12px !important;
+        border-radius: 12px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+
+    body.ct-landing-active .recentChat::before {
+        font-size: 9px !important;
+        padding: 3px 8px !important;
+        top: 8px !important;
+        right: 8px !important;
+    }
+
+    body.ct-landing-active .recentChat .avatar {
+        margin-bottom: 0 !important;
+    }
+
+    body.ct-landing-active .recentChat .avatar img {
+        width: 48px !important;
+        height: 48px !important;
+    }
+
+    body.ct-landing-active .recentChatInfo {
+        width: 100% !important;
+    }
+
+    body.ct-landing-active .chatName {
+        font-size: 14px !important;
+    }
+
+    body.ct-landing-active .chatMessage {
+        font-size: 12px !important;
+    }
+
+    body.ct-landing-active .chatStats {
+        font-size: 10px !important;
+    }
+
+    body.ct-landing-active .welcomeAssistant,
+    body.ct-landing-active #welcome_assistant {
+        max-width: calc(100% - 20px) !important;
+        width: calc(100% - 20px) !important;
+        border-radius: 12px !important;
+    }
+
+    body.ct-landing-active .welcomeFooter,
+    body.ct-landing-active #welcome_footer,
+    body.ct-landing-active .footer_links {
+        max-width: calc(100% - 20px) !important;
+        width: calc(100% - 20px) !important;
+        padding: 10px 12px !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+    }
+
+    body.ct-landing-active .welcomeFooter a,
+    body.ct-landing-active #welcome_footer a,
+    body.ct-landing-active .footer_links a,
+    body.ct-landing-active .footer_links .menu_button {
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+    }
+
+    body.ct-landing-active #form_sheld {
+        padding: 8px 12px !important;
+    }
+
+    body.ct-landing-active #send_textarea {
+        font-size: 14px !important;
+        min-height: 40px !important;
+    }
+}
+
+/* Very small screens */
+@media screen and (max-width: 400px) {
+    body.ct-landing-active .welcomePanel {
+        max-width: calc(100% - 10px) !important;
+        width: calc(100% - 10px) !important;
+        border-radius: 8px !important;
+    }
+
+    body.ct-landing-active .welcomeHeaderTitle {
+        padding: 10px 12px !important;
+        flex-wrap: wrap !important;
+    }
+
+    body.ct-landing-active .recentChat::before {
+        position: static !important;
+        margin-bottom: 6px !important;
+    }
+}

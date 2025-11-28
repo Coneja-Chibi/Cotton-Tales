@@ -26,8 +26,10 @@ export const MODULE_NAME = 'cotton-tales';
 
 /** @enum {string} Layout style for VN presentation */
 export const LAYOUT_MODE = {
-    ADV: 'adv',     // Adventure style - dialogue box at bottom, sprites above
-    NVL: 'nvl',     // Novel style - text fills screen like a book
+    /** Adventure style - Full screen background, sprites overlaid, dialogue box at bottom (Ren'Py classic) */
+    ADV: 'adv',
+    /** Portrait style - Character/Persona portraits in ornate side panels, speech bubbles in main area (RPG style) */
+    PRT: 'prt',
 };
 
 /** Default layout mode */

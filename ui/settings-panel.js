@@ -1,0 +1,723 @@
+/**
+ * ============================================================================
+ * COTTON-TALES SETTINGS PANEL
+ * ============================================================================
+ * Game-like carousel UI for sprite and settings management.
+ * Cute, adorable, cozy game aesthetic.
+ *
+ * @author Coneja Chibi
+ * @version 0.1.0-alpha
+ * ============================================================================
+ */
+
+import { getContext } from '../../../../extensions.js';
+import { EXTENSION_NAME } from '../core/constants.js';
+import { getSettings, updateSetting } from '../core/settings-manager.js';
+import { onVNModeToggled } from '../index.js';
+
+// =============================================================================
+// STATE
+// =============================================================================
+
+let selectedCharacter = null;
+let characterSpriteCache = {};
+let currentTab = 'characters';
+
+// =============================================================================
+// HTML TEMPLATES
+// =============================================================================
+
+function getSettingsHTML() {
+    return `
+        <div id="cotton-tales-settings">
+            <div class="inline-drawer">
+                <div class="inline-drawer-toggle inline-drawer-header">
+                    <b>Cotton-Tales</b>
+                    <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+                </div>
+                <div class="inline-drawer-content">
+                    <div class="ct-settings-container">
+
+                        <!-- Tab Navigation -->
+                        <div class="ct-tab-bar">
+                            <button class="ct-tab active" data-tab="characters">
+                                <i class="fa-solid fa-users"></i>
+                                Characters
+                            </button>
+                            <button class="ct-tab" data-tab="backgrounds">
+                                <i class="fa-solid fa-image"></i>
+                                Backgrounds
+                            </button>
+                            <button class="ct-tab" data-tab="display">
+                                <i class="fa-solid fa-display"></i>
+                                Display
+                            </button>
+                            <button class="ct-tab" data-tab="scenes">
+                                <i class="fa-solid fa-clapperboard"></i>
+                                Scenes
+                            </button>
+                        </div>
+
+                        <!-- Characters Tab -->
+                        <div class="ct-tab-content active" data-tab="characters">
+                            ${getCharactersTabHTML()}
+                        </div>
+
+                        <!-- Backgrounds Tab -->
+                        <div class="ct-tab-content" data-tab="backgrounds">
+                            ${getBackgroundsTabHTML()}
+                        </div>
+
+                        <!-- Display Tab -->
+                        <div class="ct-tab-content" data-tab="display">
+                            ${getDisplayTabHTML()}
+                        </div>
+
+                        <!-- Scenes Tab -->
+                        <div class="ct-tab-content" data-tab="scenes">
+                            ${getScenesTabHTML()}
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="ct-footer">
+                            <p class="ct-footer-text">
+                                Cotton-Tales v0.1.0 by <a href="https://github.com/Coneja-Chibi" target="_blank">Coneja Chibi</a>
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getCharactersTabHTML() {
+    return `
+        <!-- Master Toggle -->
+        <div class="ct-master-toggle">
+            <div class="ct-toggle-info">
+                <h3>Enable Visual Novel Mode</h3>
+                <p>Transform your chat into a VN experience</p>
+            </div>
+            <label class="ct-switch">
+                <input type="checkbox" id="ct_master_enable" />
+                <span class="ct-switch-slider"></span>
+            </label>
+        </div>
+
+        <!-- Character Carousel -->
+        <div class="ct-section-label">
+            <i class="fa-solid fa-star"></i>
+            Your Characters
+        </div>
+
+        <div class="ct-carousel-wrapper">
+            <button class="ct-carousel-arrow left" id="ct_char_prev">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+
+            <div class="ct-carousel" id="ct_character_carousel">
+                <!-- Cards populated by JS -->
+                <div class="ct-empty-state">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <div class="ct-empty-state-text">Loading characters...</div>
+                </div>
+            </div>
+
+            <button class="ct-carousel-arrow right" id="ct_char_next">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Detail Panel (shown when card selected) -->
+        <div class="ct-detail-panel" id="ct_character_detail">
+            <!-- Populated by JS when character selected -->
+        </div>
+    `;
+}
+
+function getBackgroundsTabHTML() {
+    return `
+        <div class="ct-section-label">
+            <i class="fa-solid fa-image"></i>
+            Background Library
+        </div>
+
+        <div class="ct-carousel-wrapper">
+            <button class="ct-carousel-arrow left" id="ct_bg_prev">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+
+            <div class="ct-carousel" id="ct_background_carousel">
+                <div class="ct-empty-state">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <div class="ct-empty-state-text">Loading backgrounds...</div>
+                </div>
+            </div>
+
+            <button class="ct-carousel-arrow right" id="ct_bg_next">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <div class="ct-action-row" style="margin-top: 20px; justify-content: center;">
+            <button class="ct-btn" id="ct_upload_bg">
+                <i class="fa-solid fa-upload"></i>
+                Upload Background
+            </button>
+        </div>
+    `;
+}
+
+function getDisplayTabHTML() {
+    const settings = getSettings();
+
+    return `
+        <div class="ct-section-label">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            Visual Settings
+        </div>
+
+        <!-- Layout Mode -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Layout Style</span>
+            </div>
+            <select class="ct-select" id="ct_layout_mode">
+                <option value="adv" ${settings.layoutMode === 'adv' ? 'selected' : ''}>ADV - Full screen, dialogue at bottom (Ren'Py)</option>
+                <option value="prt" disabled>PRT - Portrait panels on side (Coming Soon)</option>
+            </select>
+        </div>
+
+        <!-- Dialogue Opacity -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Dialogue Box Opacity</span>
+                <span class="ct-slider-value" id="ct_opacity_val">${settings.dialogueOpacity}%</span>
+            </div>
+            <input type="range" class="ct-slider" id="ct_dialogue_opacity"
+                   min="20" max="100" value="${settings.dialogueOpacity}" />
+        </div>
+
+        <!-- Typewriter Toggle -->
+        <div class="ct-toggle-row">
+            <div>
+                <div class="ct-toggle-label">Typewriter Effect</div>
+                <div class="ct-toggle-sublabel">Text appears character by character</div>
+            </div>
+            <label class="ct-switch">
+                <input type="checkbox" id="ct_typewriter" ${settings.typewriterEnabled ? 'checked' : ''} />
+                <span class="ct-switch-slider"></span>
+            </label>
+        </div>
+
+        <!-- Typewriter Speed -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Typewriter Speed</span>
+                <span class="ct-slider-value" id="ct_speed_val">${settings.typewriterSpeed}ms</span>
+            </div>
+            <input type="range" class="ct-slider" id="ct_typewriter_speed"
+                   min="10" max="100" value="${settings.typewriterSpeed}" />
+        </div>
+
+        <div class="ct-section-label" style="margin-top: 24px;">
+            <i class="fa-solid fa-masks-theater"></i>
+            Sprite Settings
+        </div>
+
+        <!-- Effects Toggle -->
+        <div class="ct-toggle-row">
+            <div>
+                <div class="ct-toggle-label">Sprite Effects</div>
+                <div class="ct-toggle-sublabel">Hearts, sparkles, sweat drops, etc.</div>
+            </div>
+            <label class="ct-switch">
+                <input type="checkbox" id="ct_effects" ${settings.effectsEnabled ? 'checked' : ''} />
+                <span class="ct-switch-slider"></span>
+            </label>
+        </div>
+
+        <!-- Sprite Transition -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Sprite Transition</span>
+            </div>
+            <select class="ct-select" id="ct_sprite_transition">
+                <option value="fade" ${settings.spriteTransition === 'fade' ? 'selected' : ''}>Fade</option>
+                <option value="dissolve" ${settings.spriteTransition === 'dissolve' ? 'selected' : ''}>Dissolve</option>
+                <option value="none" ${settings.spriteTransition === 'none' ? 'selected' : ''}>Instant</option>
+            </select>
+        </div>
+
+        <!-- Transition Duration -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Transition Duration</span>
+                <span class="ct-slider-value" id="ct_trans_val">${settings.spriteTransitionDuration}ms</span>
+            </div>
+            <input type="range" class="ct-slider" id="ct_transition_duration"
+                   min="100" max="1000" step="50" value="${settings.spriteTransitionDuration}" />
+        </div>
+    `;
+}
+
+function getScenesTabHTML() {
+    const settings = getSettings();
+
+    return `
+        <div class="ct-section-label">
+            <i class="fa-solid fa-list-check"></i>
+            Choice Settings
+        </div>
+
+        <!-- Choice Count -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Choices Per Turn</span>
+                <span class="ct-slider-value" id="ct_choice_val">${settings.choiceCount}</span>
+            </div>
+            <input type="range" class="ct-slider" id="ct_choice_count"
+                   min="2" max="4" value="${settings.choiceCount}" />
+        </div>
+
+        <!-- Custom Input Toggle -->
+        <div class="ct-toggle-row">
+            <div>
+                <div class="ct-toggle-label">Custom Input Option</div>
+                <div class="ct-toggle-sublabel">Always show "Type your own..." choice</div>
+            </div>
+            <label class="ct-switch">
+                <input type="checkbox" id="ct_custom_input" ${settings.showCustomInput ? 'checked' : ''} />
+                <span class="ct-switch-slider"></span>
+            </label>
+        </div>
+
+        <!-- Button Style -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Choice Button Style</span>
+            </div>
+            <select class="ct-select" id="ct_choice_style">
+                <option value="rounded" ${settings.choiceButtonStyle === 'rounded' ? 'selected' : ''}>Rounded</option>
+                <option value="square" ${settings.choiceButtonStyle === 'square' ? 'selected' : ''}>Square</option>
+                <option value="pill" ${settings.choiceButtonStyle === 'pill' ? 'selected' : ''}>Pill</option>
+            </select>
+        </div>
+
+        <div class="ct-section-label" style="margin-top: 24px;">
+            <i class="fa-solid fa-panorama"></i>
+            Background Automation
+        </div>
+
+        <!-- Auto Background Toggle -->
+        <div class="ct-toggle-row">
+            <div>
+                <div class="ct-toggle-label">Auto Background Switching</div>
+                <div class="ct-toggle-sublabel">AI can change backgrounds via schema</div>
+            </div>
+            <label class="ct-switch">
+                <input type="checkbox" id="ct_auto_bg" ${settings.autoBackgroundEnabled ? 'checked' : ''} />
+                <span class="ct-switch-slider"></span>
+            </label>
+        </div>
+
+        <!-- Background Transition -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Background Transition</span>
+            </div>
+            <select class="ct-select" id="ct_bg_transition">
+                <option value="fade" ${settings.backgroundTransition === 'fade' ? 'selected' : ''}>Fade</option>
+                <option value="dissolve" ${settings.backgroundTransition === 'dissolve' ? 'selected' : ''}>Dissolve</option>
+                <option value="none" ${settings.backgroundTransition === 'none' ? 'selected' : ''}>Instant</option>
+            </select>
+        </div>
+
+        <div class="ct-section-label" style="margin-top: 24px;">
+            <i class="fa-solid fa-wand-sparkles"></i>
+            Stage Composer
+        </div>
+
+        <div class="ct-action-row" style="justify-content: center;">
+            <button class="ct-btn" id="ct_open_stage">
+                <i class="fa-solid fa-theater-masks"></i>
+                Open Stage Composer
+            </button>
+        </div>
+        <p style="text-align: center; font-size: 11px; color: var(--ct-text-light); margin-top: 10px;">
+            Visually arrange characters and preview scenes
+        </p>
+    `;
+}
+
+// =============================================================================
+// CHARACTER CARD GENERATION
+// =============================================================================
+
+function generateCharacterCard(char, isNPC = false) {
+    const spriteCount = characterSpriteCache[char.folder]?.length || 0;
+    const avatarSrc = char.avatar ? `/characters/${char.avatar}` : '';
+
+    return `
+        <div class="ct-card" data-character="${char.folder}" data-name="${char.name}">
+            <div class="ct-card-avatar">
+                ${avatarSrc
+                    ? `<img src="${avatarSrc}" alt="${char.name}" />`
+                    : `<div class="ct-avatar-placeholder"><i class="fa-solid fa-user"></i></div>`
+                }
+            </div>
+            <div class="ct-card-name">${char.name}</div>
+            <div class="ct-card-badge ${isNPC ? 'npc' : 'card'}">${isNPC ? 'NPC' : 'Card'}</div>
+            <div class="ct-card-stats">
+                <div class="ct-card-stat">
+                    <i class="fa-solid fa-image"></i>
+                    ${spriteCount}
+                </div>
+            </div>
+            <button class="ct-card-action">Manage</button>
+        </div>
+    `;
+}
+
+function generateAddCard() {
+    return `
+        <div class="ct-card ct-card-add" id="ct_add_character">
+            <div class="ct-card-add-icon">
+                <i class="fa-solid fa-plus"></i>
+            </div>
+            <div class="ct-card-add-text">Add Character</div>
+        </div>
+    `;
+}
+
+// =============================================================================
+// DETAIL PANEL
+// =============================================================================
+
+function showCharacterDetail(charFolder, charName) {
+    const detailPanel = document.getElementById('ct_character_detail');
+    if (!detailPanel) return;
+
+    const sprites = characterSpriteCache[charFolder] || [];
+
+    // Group sprites by expression
+    const grouped = {};
+    for (const sprite of sprites) {
+        if (!grouped[sprite.label]) {
+            grouped[sprite.label] = [];
+        }
+        grouped[sprite.label].push(sprite);
+    }
+
+    detailPanel.innerHTML = `
+        <div class="ct-detail-header">
+            <div class="ct-detail-title">
+                <i class="fa-solid fa-user"></i>
+                ${charName}
+            </div>
+            <button class="ct-detail-close" id="ct_close_detail">
+                <i class="fa-solid fa-times"></i>
+            </button>
+        </div>
+
+        <div class="ct-section-label">
+            <i class="fa-solid fa-shirt"></i>
+            Costumes
+        </div>
+        <div class="ct-costume-row">
+            <button class="ct-costume-btn active">Default</button>
+            <button class="ct-costume-btn add">+ Add Costume</button>
+        </div>
+
+        <div class="ct-section-label">
+            <i class="fa-solid fa-face-smile"></i>
+            Expressions (${Object.keys(grouped).length})
+        </div>
+        <div class="ct-sprite-grid">
+            ${Object.entries(grouped).map(([label, files]) => `
+                <div class="ct-sprite-item" title="${label}">
+                    <img src="${files[0].path}" alt="${label}" loading="lazy" />
+                    <div class="ct-sprite-item-label">${label}</div>
+                </div>
+            `).join('')}
+        </div>
+
+        <div class="ct-action-row">
+            <button class="ct-btn" id="ct_upload_sprite">
+                <i class="fa-solid fa-upload"></i>
+                Upload Sprite
+            </button>
+            <button class="ct-btn secondary" id="ct_upload_pack">
+                <i class="fa-solid fa-file-zipper"></i>
+                Upload Pack
+            </button>
+        </div>
+    `;
+
+    detailPanel.classList.add('active');
+
+    // Bind close button
+    document.getElementById('ct_close_detail')?.addEventListener('click', () => {
+        detailPanel.classList.remove('active');
+        selectedCharacter = null;
+        document.querySelectorAll('.ct-card').forEach(c => c.classList.remove('selected'));
+    });
+}
+
+// =============================================================================
+// CAROUSEL POPULATION
+// =============================================================================
+
+async function populateCharacterCarousel() {
+    const carousel = document.getElementById('ct_character_carousel');
+    if (!carousel) return;
+
+    const context = getContext();
+    const characters = context.characters || [];
+
+    // Build character list from cards
+    const charList = [];
+    for (const char of characters) {
+        if (!char.name) continue;
+        const folder = char.avatar?.replace(/\.[^/.]+$/, '') || char.name;
+        charList.push({
+            name: char.name,
+            folder: folder,
+            avatar: char.avatar,
+            isNPC: false
+        });
+
+        // Pre-fetch sprite counts
+        try {
+            const res = await fetch(`/api/sprites/get?name=${encodeURIComponent(folder)}`);
+            if (res.ok) {
+                characterSpriteCache[folder] = await res.json();
+            }
+        } catch (e) {
+            console.debug(`[${EXTENSION_NAME}] Could not fetch sprites for ${folder}`);
+        }
+    }
+
+    // TODO: Also load NPCs from our own storage
+
+    // Generate HTML
+    if (charList.length === 0) {
+        carousel.innerHTML = `
+            <div class="ct-empty-state">
+                <i class="fa-solid fa-user-slash"></i>
+                <div class="ct-empty-state-text">No characters found</div>
+            </div>
+        `;
+        return;
+    }
+
+    carousel.innerHTML = charList.map(c => generateCharacterCard(c, c.isNPC)).join('') + generateAddCard();
+
+    // Bind card clicks
+    carousel.querySelectorAll('.ct-card:not(.ct-card-add)').forEach(card => {
+        card.addEventListener('click', () => {
+            const folder = card.dataset.character;
+            const name = card.dataset.name;
+
+            // Toggle selection
+            if (selectedCharacter === folder) {
+                selectedCharacter = null;
+                card.classList.remove('selected');
+                document.getElementById('ct_character_detail')?.classList.remove('active');
+            } else {
+                document.querySelectorAll('.ct-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedCharacter = folder;
+                showCharacterDetail(folder, name);
+            }
+        });
+    });
+
+    // Add character button
+    document.getElementById('ct_add_character')?.addEventListener('click', () => {
+        // TODO: Show add NPC modal
+        toastr.info('Add Character - Coming soon!');
+    });
+}
+
+async function populateBackgroundCarousel() {
+    const carousel = document.getElementById('ct_background_carousel');
+    if (!carousel) return;
+
+    try {
+        const res = await fetch('/api/backgrounds/all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+
+        if (!res.ok) {
+            carousel.innerHTML = `
+                <div class="ct-empty-state">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <div class="ct-empty-state-text">Could not load backgrounds</div>
+                </div>
+            `;
+            return;
+        }
+
+        const data = await res.json();
+        const backgrounds = data.images || [];
+
+        if (backgrounds.length === 0) {
+            carousel.innerHTML = `
+                <div class="ct-empty-state">
+                    <i class="fa-solid fa-image"></i>
+                    <div class="ct-empty-state-text">No backgrounds found</div>
+                </div>
+            `;
+            return;
+        }
+
+        carousel.innerHTML = backgrounds.slice(0, 20).map(bg => `
+            <div class="ct-card" data-bg="${bg}" style="flex: 0 0 200px;">
+                <div style="height: 100px; border-radius: 8px; overflow: hidden; margin-bottom: 10px; border: 2px solid var(--ct-wood-light);">
+                    <img src="backgrounds/${encodeURIComponent(bg)}" alt="${bg}"
+                         style="width: 100%; height: 100%; object-fit: cover;" loading="lazy" />
+                </div>
+                <div class="ct-card-name" style="font-size: 11px;">${bg.replace(/\.[^/.]+$/, '')}</div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.error(`[${EXTENSION_NAME}] Error loading backgrounds:`, e);
+    }
+}
+
+// =============================================================================
+// EVENT BINDING
+// =============================================================================
+
+function bindEvents() {
+    // Tab switching
+    document.querySelectorAll('.ct-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
+
+            // Update tab buttons
+            document.querySelectorAll('.ct-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.ct-tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.ct-tab-content[data-tab="${tabName}"]`)?.classList.add('active');
+
+            currentTab = tabName;
+
+            // Lazy load tab content
+            if (tabName === 'backgrounds') {
+                populateBackgroundCarousel();
+            }
+        });
+    });
+
+    // Carousel arrows
+    bindCarouselArrows('ct_char_prev', 'ct_char_next', 'ct_character_carousel');
+    bindCarouselArrows('ct_bg_prev', 'ct_bg_next', 'ct_background_carousel');
+
+    // Master enable toggle
+    document.getElementById('ct_master_enable')?.addEventListener('change', (e) => {
+        const enabled = e.target.checked;
+        updateSetting('enabled', enabled);
+        onVNModeToggled(enabled);
+    });
+
+    // Display settings
+    bindSlider('ct_dialogue_opacity', 'dialogueOpacity', 'ct_opacity_val', '%');
+    bindSlider('ct_typewriter_speed', 'typewriterSpeed', 'ct_speed_val', 'ms');
+    bindSlider('ct_transition_duration', 'spriteTransitionDuration', 'ct_trans_val', 'ms');
+    bindSlider('ct_choice_count', 'choiceCount', 'ct_choice_val', '');
+
+    bindSelect('ct_layout_mode', 'layoutMode');
+    bindSelect('ct_sprite_transition', 'spriteTransition');
+    bindSelect('ct_choice_style', 'choiceButtonStyle');
+    bindSelect('ct_bg_transition', 'backgroundTransition');
+
+    bindToggle('ct_typewriter', 'typewriterEnabled');
+    bindToggle('ct_effects', 'effectsEnabled');
+    bindToggle('ct_custom_input', 'showCustomInput');
+    bindToggle('ct_auto_bg', 'autoBackgroundEnabled');
+
+    // Stage composer button
+    document.getElementById('ct_open_stage')?.addEventListener('click', () => {
+        toastr.info('Stage Composer - Coming soon!');
+    });
+}
+
+function bindCarouselArrows(prevId, nextId, carouselId) {
+    const carousel = document.getElementById(carouselId);
+    const scrollAmount = 200;
+
+    document.getElementById(prevId)?.addEventListener('click', () => {
+        carousel?.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    });
+
+    document.getElementById(nextId)?.addEventListener('click', () => {
+        carousel?.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    });
+}
+
+function bindSlider(id, settingKey, displayId, suffix) {
+    const slider = document.getElementById(id);
+    const display = document.getElementById(displayId);
+
+    slider?.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        if (display) display.textContent = val + suffix;
+        updateSetting(settingKey, val);
+    });
+}
+
+function bindSelect(id, settingKey) {
+    document.getElementById(id)?.addEventListener('change', (e) => {
+        updateSetting(settingKey, e.target.value);
+    });
+}
+
+function bindToggle(id, settingKey) {
+    document.getElementById(id)?.addEventListener('change', (e) => {
+        updateSetting(settingKey, e.target.checked);
+    });
+}
+
+// =============================================================================
+// RENDER
+// =============================================================================
+
+export function renderSettings() {
+    const container = document.getElementById('extensions_settings');
+    if (!container) {
+        console.error(`[${EXTENSION_NAME}] Extensions container not found`);
+        return;
+    }
+
+    if (document.getElementById('cotton-tales-settings')) {
+        return; // Already rendered
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = getSettingsHTML();
+    container.appendChild(wrapper.firstElementChild);
+
+    // Load settings into UI
+    const settings = getSettings();
+    const masterToggle = document.getElementById('ct_master_enable');
+    if (masterToggle) masterToggle.checked = settings.enabled;
+
+    // Bind events
+    bindEvents();
+
+    // Populate character carousel
+    populateCharacterCarousel();
+
+    console.log(`[${EXTENSION_NAME}] Settings panel rendered`);
+}
+
+export { populateCharacterCarousel };

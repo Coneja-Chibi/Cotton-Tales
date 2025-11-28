@@ -3,7 +3,6 @@
  * COTTON-TALES - VISUAL NOVEL ENGINE FOR SILLYTAVERN
  * ============================================================================
  * Entry point - lean and clean
- * All logic is in separate modules - see project guidelines
  *
  * @author Coneja Chibi
  * @version 0.1.0-alpha
@@ -11,17 +10,19 @@
  */
 
 import { extension_settings, getContext } from '../../../extensions.js';
-import { eventSource, event_types, saveSettingsDebounced } from '../../../../script.js';
+import { eventSource, event_types } from '../../../../script.js';
 
 // Cotton-Tales modules - Core
-import { EXTENSION_NAME, MODULE_NAME, SETTINGS_KEY } from './core/constants.js';
-import { defaultSettings, getDefaultSettings } from './core/default-settings.js';
+import { EXTENSION_NAME, SETTINGS_KEY } from './core/constants.js';
+import { getDefaultSettings } from './core/default-settings.js';
+import { getSettings, updateSetting } from './core/settings-manager.js';
 
-// Cotton-Tales modules - UI (will be created)
-// import { renderSettings } from './ui/settings-panel.js';
-
-// Cotton-Tales modules - Engine (will be created)
-// import { VNEngine } from './engine/vn-engine.js';
+// Cotton-Tales modules - UI
+import { renderSettings } from './ui/settings-panel.js';
+import {
+    activateLandingPage,
+    deactivateLandingPage,
+} from './ui/landing-page.js';
 
 // =============================================================================
 // SETTINGS MANAGEMENT
@@ -44,61 +45,36 @@ function initializeSettings() {
     console.log(`[${EXTENSION_NAME}] Settings initialized`);
 }
 
-/**
- * Get current extension settings
- * @returns {Object} Current settings
- */
-export function getSettings() {
-    return extension_settings[SETTINGS_KEY] || getDefaultSettings();
-}
-
-/**
- * Update a setting value
- * @param {string} key - Setting key
- * @param {any} value - New value
- */
-export function updateSetting(key, value) {
-    if (extension_settings[SETTINGS_KEY]) {
-        extension_settings[SETTINGS_KEY][key] = value;
-        saveSettingsDebounced();
-    }
-}
+// Re-export settings functions for other modules
+export { getSettings, updateSetting };
 
 // =============================================================================
 // EVENT HANDLERS
 // =============================================================================
 
 /**
- * Handle new messages from AI
- * This is where we'll parse VN schema and trigger the engine
- * @param {number} messageId - The message ID
+ * Handle chat changes - toggle landing page
  */
-async function onMessageReceived(messageId) {
+function onChatChanged() {
     const settings = getSettings();
-    if (!settings.enabled) return;
-
     const context = getContext();
-    const message = context.chat[messageId];
 
-    if (!message || message.is_user) return;
+    // Check if we're on landing page or in active chat
+    const hasActiveChat = context.chatId && context.characterId !== undefined;
 
-    console.log(`[${EXTENSION_NAME}] Processing message ${messageId}`);
-
-    // TODO: Parse message through schema parser
-    // TODO: Trigger VN engine with parsed data
-}
-
-/**
- * Handle chat changes
- */
-async function onChatChanged() {
-    const settings = getSettings();
-    if (!settings.enabled) return;
-
-    console.log(`[${EXTENSION_NAME}] Chat changed, reinitializing...`);
-
-    // TODO: Reset VN state
-    // TODO: Load any saved VN state for this chat
+    if (!hasActiveChat) {
+        // On landing page
+        if (settings.enabled) {
+            setTimeout(() => {
+                activateLandingPage();
+            }, 150);
+        } else {
+            deactivateLandingPage();
+        }
+    } else {
+        // In active chat - deactivate landing page styling
+        deactivateLandingPage();
+    }
 }
 
 // =============================================================================
@@ -107,7 +83,6 @@ async function onChatChanged() {
 
 /**
  * Main initialization function
- * Called when the extension loads
  */
 async function init() {
     console.log(`[${EXTENSION_NAME}] Initializing...`);
@@ -116,14 +91,45 @@ async function init() {
     initializeSettings();
 
     // Register event listeners
-    eventSource.on(event_types.MESSAGE_RECEIVED, onMessageReceived);
     eventSource.on(event_types.CHAT_CHANGED, onChatChanged);
 
-    // TODO: Render settings UI
-    // TODO: Initialize VN engine
-    // TODO: Initialize diagnostics
+    // Render settings UI
+    renderSettings();
+
+    // Check if we should activate landing page on load
+    const settings = getSettings();
+    const context = getContext();
+    const hasActiveChat = context.chatId && context.characterId !== undefined;
+
+    if (settings.enabled && !hasActiveChat) {
+        setTimeout(() => {
+            activateLandingPage();
+        }, 150);
+    }
 
     console.log(`[${EXTENSION_NAME}] Initialization complete`);
+}
+
+/**
+ * Handle when VN mode is toggled on/off
+ * Called from settings panel
+ */
+export function onVNModeToggled(enabled) {
+    const context = getContext();
+    const hasActiveChat = context.chatId && context.characterId !== undefined;
+
+    if (enabled) {
+        // Only apply landing page if not in active chat
+        if (!hasActiveChat) {
+            setTimeout(() => {
+                activateLandingPage();
+            }, 150);
+        }
+        console.log(`[${EXTENSION_NAME}] VN mode enabled`);
+    } else {
+        deactivateLandingPage();
+        console.log(`[${EXTENSION_NAME}] VN mode disabled`);
+    }
 }
 
 // Run initialization when DOM is ready
@@ -137,8 +143,4 @@ if (document.readyState === 'loading') {
 // EXPORTS
 // =============================================================================
 
-// Export for other modules and debugging
-export {
-    EXTENSION_NAME,
-    MODULE_NAME,
-};
+export { EXTENSION_NAME };

@@ -1,9 +1,0 @@
-# UI modules
-#
-# This folder contains UI components:
-# - settings-panel.js  : Extension settings UI
-# - vn-container.js    : Main VN layout container
-# - dialogue-box.js    : ADV-style text box
-# - choice-panel.js    : Choice buttons component
-# - sprite-display.js  : Character sprite display
-# - effects-canvas.js  : Effects overlay canvas
