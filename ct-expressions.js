@@ -1038,6 +1038,74 @@ async function classifyWithVectHare(text, labels) {
 }
 
 /**
+ * Classify expression using LLM API
+ * @param {string} text - Text to classify
+ * @param {Object} settings - Current settings
+ * @param {string} fallback - Fallback expression
+ * @returns {Promise<string>} Expression label
+ */
+async function classifyWithLlm(text, settings, fallback) {
+    const expressionsList = await getExpressionsList({
+        filterAvailable: settings.filterAvailableExpressions
+    });
+    const prompt = await getLlmPrompt(expressionsList);
+    let emotionResponse;
+
+    // Check if a connection profile is selected
+    const profileId = settings.expressionConnectionProfile;
+    if (profileId) {
+        try {
+            const messages = [
+                { role: 'system', content: prompt },
+                { role: 'user', content: text },
+            ];
+
+            inApiCall = true;
+            const result = await ConnectionManagerRequestService.sendRequest(
+                profileId,
+                messages,
+                50,
+                { extractData: true }
+            );
+
+            emotionResponse = result?.response || result?.content || String(result);
+            console.debug(`[${MODULE_NAME}] Connection profile response:`, emotionResponse);
+        } catch (error) {
+            console.error(`[${MODULE_NAME}] Connection profile request failed:`, error);
+            toastr.warning('Expression classification failed. Using fallback.');
+            return fallback;
+        } finally {
+            inApiCall = false;
+        }
+    } else {
+        // Use current chat API
+        try {
+            await waitUntilCondition(() => online_status !== 'no_connection', 3000, 250);
+        } catch (error) {
+            console.warn(`[${MODULE_NAME}] No LLM connection, using fallback`);
+            return fallback;
+        }
+
+        try {
+            inApiCall = true;
+            switch (settings.expressionPromptType) {
+                case PROMPT_TYPE.raw:
+                    emotionResponse = await generateRaw({ prompt: text, systemPrompt: prompt });
+                    break;
+                case PROMPT_TYPE.full:
+                default:
+                    emotionResponse = await generateQuietPrompt({ quietPrompt: prompt });
+                    break;
+            }
+        } finally {
+            inApiCall = false;
+        }
+    }
+
+    return parseLlmResponse(emotionResponse, expressionsList);
+}
+
+/**
  * Main expression classification function
  * Supports multiple APIs: local, extras, llm, webllm, vecthare, none
  *
@@ -1092,66 +1160,7 @@ async function getExpressionLabel(text, apiOverride = null) {
             // LLM - Use current chat API or connection profile for classification
             // =================================================================
             case EXPRESSION_API.llm: {
-                const expressionsList = await getExpressionsList({
-                    filterAvailable: settings.filterAvailableExpressions
-                });
-                const prompt = await getLlmPrompt(expressionsList);
-
-                let emotionResponse;
-
-                // Check if a connection profile is selected
-                const profileId = settings.expressionConnectionProfile;
-                if (profileId) {
-                    try {
-                        // Use ConnectionManagerRequestService to send request via profile
-                        const messages = [
-                            { role: 'system', content: prompt },
-                            { role: 'user', content: text },
-                        ];
-
-                        inApiCall = true;
-                        const result = await ConnectionManagerRequestService.sendRequest(
-                            profileId,
-                            messages,
-                            50, // maxTokens - we only need a single word
-                            { extractData: true }
-                        );
-
-                        emotionResponse = result?.response || result?.content || String(result);
-                        console.debug(`[${MODULE_NAME}] Connection profile response:`, emotionResponse);
-                    } catch (error) {
-                        console.error(`[${MODULE_NAME}] Connection profile request failed:`, error);
-                        toastr.warning('Expression classification failed. Using fallback.');
-                        return fallback;
-                    } finally {
-                        inApiCall = false;
-                    }
-                } else {
-                    // Use current chat API
-                    try {
-                        await waitUntilCondition(() => online_status !== 'no_connection', 3000, 250);
-                    } catch (error) {
-                        console.warn(`[${MODULE_NAME}] No LLM connection, using fallback`);
-                        return fallback;
-                    }
-
-                    try {
-                        inApiCall = true;
-                        switch (settings.expressionPromptType) {
-                            case PROMPT_TYPE.raw:
-                                emotionResponse = await generateRaw({ prompt: text, systemPrompt: prompt });
-                                break;
-                            case PROMPT_TYPE.full:
-                            default:
-                                emotionResponse = await generateQuietPrompt({ quietPrompt: prompt });
-                                break;
-                        }
-                    } finally {
-                        inApiCall = false;
-                    }
-                }
-
-                return parseLlmResponse(emotionResponse, expressionsList);
+                return await classifyWithLlm(text, settings, fallback);
             }
 
             // =================================================================
