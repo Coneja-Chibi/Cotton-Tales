@@ -987,19 +987,37 @@ async function populateCharacterCarousel() {
 
     // Bind variant carousel events
     carousel.querySelectorAll('.ct-card-variants').forEach(variantContainer => {
+        const card = variantContainer.closest('.ct-card');
+        const charFolder = card?.dataset.character;
         const costumes = JSON.parse(variantContainer.dataset.costumes || '[]');
-        if (costumes.length <= 1) return;
+        if (costumes.length <= 1 || !charFolder) return;
 
         let currentIndex = 0;
         const currentLabel = variantContainer.querySelector('.ct-variant-current');
         const dots = variantContainer.querySelectorAll('.ct-variant-dot');
         const prevBtn = variantContainer.querySelector('.ct-variant-prev');
         const nextBtn = variantContainer.querySelector('.ct-variant-next');
+        const cardAvatar = card.querySelector('.ct-card-avatar img');
 
         const updateVariant = (newIndex) => {
             currentIndex = (newIndex + costumes.length) % costumes.length;
-            if (currentLabel) currentLabel.textContent = costumes[currentIndex];
+            const selectedCostume = costumes[currentIndex];
+
+            // Update label and dots
+            if (currentLabel) currentLabel.textContent = selectedCostume;
             dots.forEach((dot, i) => dot.classList.toggle('active', i === currentIndex));
+
+            // Find a sprite from this costume/label and update the card image
+            const sprites = characterSpriteCache[charFolder] || [];
+            const costumeSprite = sprites.find(s => s.label === selectedCostume);
+
+            if (costumeSprite && cardAvatar) {
+                // Use the sprite image as the card cover
+                const spritePath = `/characters/${charFolder}/${costumeSprite.path}`;
+                cardAvatar.src = spritePath;
+                cardAvatar.style.objectFit = 'contain';
+                cardAvatar.style.objectPosition = 'center bottom';
+            }
         };
 
         prevBtn?.addEventListener('click', (e) => { e.stopPropagation(); updateVariant(currentIndex - 1); });

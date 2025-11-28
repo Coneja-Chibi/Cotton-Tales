@@ -1369,16 +1369,31 @@ export async function initExpressions() {
     // Create DOM elements
     createExpressionContainers();
 
-    // Start worker loop
+    // Wrapper for the worker function
     const wrapper = new ModuleWorkerWrapper(moduleWorker);
     const updateFunction = wrapper.update.bind(wrapper);
-    setInterval(updateFunction, UPDATE_INTERVAL);
 
-    // Register event handlers
+    // EVENT-DRIVEN UPDATES - Only classify on user actions, NOT on polling
+    // Trigger classification when AI generates/receives a message
+    eventSource.on(event_types.MESSAGE_RECEIVED, () => {
+        console.debug(`[${MODULE_NAME}] MESSAGE_RECEIVED - triggering expression update`);
+        updateFunction();
+    });
+
+    // Trigger classification when user swipes to a different message
+    eventSource.on(event_types.MESSAGE_SWIPED, () => {
+        console.debug(`[${MODULE_NAME}] MESSAGE_SWIPED - triggering expression update`);
+        updateFunction();
+    });
+
+    // Handle chat changes - only reset state, DON'T trigger classification
     eventSource.on(event_types.CHAT_CHANGED, () => {
+        console.debug(`[${MODULE_NAME}] CHAT_CHANGED - resetting state only (no classification)`);
         removeExpression();
         spriteCache = {};
         lastExpression = {};
+        lastMessage = null;
+        lastCharacter = undefined;
 
         let imgElement = document.getElementById('ct-expression-image');
         if (imgElement instanceof HTMLImageElement) {
@@ -1388,17 +1403,21 @@ export async function initExpressions() {
         if (isVisualNovelMode()) {
             $('#ct-visual-novel-wrapper').empty();
         }
-
-        updateFunction();
+        // NOTE: Removed updateFunction() call here - don't classify on chat open
     });
 
     eventSource.on(event_types.GROUP_UPDATED, updateVisualNovelModeDebounced);
     $(window).on('resize', updateVisualNovelModeDebounced);
 
-    // Initial update
-    moduleWorker();
+    // Initial visibility setup (no classification)
+    const context = getContext();
+    const ctSettings = getSettings();
+    if (!ctSettings.enabled || (context.characterId === undefined && !context.groupId)) {
+        $('#ct-expression-wrapper').hide();
+        $('#ct-visual-novel-wrapper').hide();
+    }
 
-    console.log(`[${MODULE_NAME}] Initialization complete`);
+    console.log(`[${MODULE_NAME}] Initialization complete - event-driven mode`);
 }
 
 // =============================================================================
