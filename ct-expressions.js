@@ -279,9 +279,9 @@ function chooseSpriteForExpression(spriteFolderName, expression, { prevExpressio
     let spriteFile = sprite.files[0];
 
     // Random selection if multiple sprites allowed
-    if (settings.allowMultiple && sprite.files.length > 1) {
+    if (ctSettings.allowMultiple && sprite.files.length > 1) {
         let possibleFiles = sprite.files;
-        if (settings.rerollIfSame && prevExpressionSrc) {
+        if (ctSettings.rerollIfSame && prevExpressionSrc) {
             possibleFiles = possibleFiles.filter(x => x.imageSrc !== prevExpressionSrc);
         }
         spriteFile = possibleFiles[Math.floor(Math.random() * possibleFiles.length)];
@@ -630,6 +630,10 @@ async function visualNovelUpdateLayers(container) {
     if (totalWidth > containerWidth) {
         let totalOverlap = totalWidth - containerWidth;
         let totalWidthWithoutWidest = imagesWidth.reduce((a, b) => a + b, 0) - Math.max(...imagesWidth);
+        // Prevent division by zero - if only one image or all same width, distribute evenly
+        if (totalWidthWithoutWidest <= 0) {
+            totalWidthWithoutWidest = totalWidth || 1;
+        }
         let overlaps = imagesWidth.map(width => (width / totalWidthWithoutWidest) * totalOverlap);
         imagesWidth = imagesWidth.map((width, index) => width - overlaps[index]);
         currentPosition = 0;
@@ -726,14 +730,18 @@ function parseLlmResponse(emotionResponse, labels) {
         // Clean reasoning from response
         emotionResponse = removeReasoningFromString(emotionResponse);
 
-        // Fuzzy search in labels
-        const fuse = new Fuse(labels, { includeScore: true });
-        console.debug(`[${MODULE_NAME}] Fuzzy searching in labels:`, labels);
-        const result = fuse.search(emotionResponse);
+        // Fuzzy search in labels (only if Fuse is available)
+        if (typeof Fuse === 'function') {
+            const fuse = new Fuse(labels, { includeScore: true });
+            console.debug(`[${MODULE_NAME}] Fuzzy searching in labels:`, labels);
+            const result = fuse.search(emotionResponse);
 
-        if (result.length > 0) {
-            console.debug(`[${MODULE_NAME}] Fuzzy found: ${result[0].item} for response:`, emotionResponse);
-            return result[0].item;
+            if (result.length > 0) {
+                console.debug(`[${MODULE_NAME}] Fuzzy found: ${result[0].item} for response:`, emotionResponse);
+                return result[0].item;
+            }
+        } else {
+            console.debug(`[${MODULE_NAME}] Fuse library not available, skipping fuzzy search`);
         }
 
         // Direct string match
@@ -866,11 +874,16 @@ async function buildEmotionEmbeddingsCache(labels) {
 
     console.log(`[${MODULE_NAME}] Building emotion embeddings cache with ${currentSource}...`);
 
-    const cache = {};
-    for (const label of labels) {
-        // Use descriptive text for better semantic matching
+    // Use Promise.all for parallel embedding generation (much faster)
+    const embeddingPromises = labels.map(async (label) => {
         const description = EMOTION_DESCRIPTIONS[label] || label;
         const embedding = await generateEmbedding(description);
+        return { label, embedding };
+    });
+
+    const results = await Promise.all(embeddingPromises);
+    const cache = {};
+    for (const { label, embedding } of results) {
         if (embedding) {
             cache[label] = embedding;
         }

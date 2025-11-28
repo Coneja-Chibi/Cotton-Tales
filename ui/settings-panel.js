@@ -25,6 +25,8 @@ import { ConnectionManagerRequestService } from '../../../shared.js';
 let selectedCharacter = null;
 let characterSpriteCache = {};
 let currentTab = 'characters';
+let modalEventsBound = false;
+let escKeyHandler = null;
 
 // =============================================================================
 // TAG COLORS (BunnyWorks style)
@@ -196,7 +198,7 @@ function getCharactersTabHTML() {
                 <p>Transform your chat into a VN experience</p>
             </div>
             <label class="ct-switch">
-                <input type="checkbox" id="ct_master_enable" />
+                <input type="checkbox" id="ct_modal_master_enable" />
                 <span class="ct-switch-slider"></span>
             </label>
         </div>
@@ -985,44 +987,9 @@ async function populateCharacterCarousel() {
 
     carousel.innerHTML = charList.map(c => generateCharacterCard(c, c.isNPC, c.isActive)).join('') + generateAddCard();
 
-    // Bind variant carousel events
+    // Initialize variant carousel state on each card (stored in dataset to avoid memory leaks)
     carousel.querySelectorAll('.ct-card-variants').forEach(variantContainer => {
-        const card = variantContainer.closest('.ct-card');
-        const charFolder = card?.dataset.character;
-        const costumes = JSON.parse(variantContainer.dataset.costumes || '[]');
-        if (costumes.length <= 1 || !charFolder) return;
-
-        let currentIndex = 0;
-        const currentLabel = variantContainer.querySelector('.ct-variant-current');
-        const dots = variantContainer.querySelectorAll('.ct-variant-dot');
-        const prevBtn = variantContainer.querySelector('.ct-variant-prev');
-        const nextBtn = variantContainer.querySelector('.ct-variant-next');
-        const cardAvatar = card.querySelector('.ct-card-avatar img');
-
-        const updateVariant = (newIndex) => {
-            currentIndex = (newIndex + costumes.length) % costumes.length;
-            const selectedCostume = costumes[currentIndex];
-
-            // Update label and dots
-            if (currentLabel) currentLabel.textContent = selectedCostume;
-            dots.forEach((dot, i) => dot.classList.toggle('active', i === currentIndex));
-
-            // Find a sprite from this costume/label and update the card image
-            const sprites = characterSpriteCache[charFolder] || [];
-            const costumeSprite = sprites.find(s => s.label === selectedCostume);
-
-            if (costumeSprite && cardAvatar) {
-                // Use the sprite image as the card cover
-                const spritePath = `/characters/${charFolder}/${costumeSprite.path}`;
-                cardAvatar.src = spritePath;
-                cardAvatar.style.objectFit = 'contain';
-                cardAvatar.style.objectPosition = 'center bottom';
-            }
-        };
-
-        prevBtn?.addEventListener('click', (e) => { e.stopPropagation(); updateVariant(currentIndex - 1); });
-        nextBtn?.addEventListener('click', (e) => { e.stopPropagation(); updateVariant(currentIndex + 1); });
-        dots.forEach((dot, i) => dot.addEventListener('click', (e) => { e.stopPropagation(); updateVariant(i); }));
+        variantContainer.dataset.currentIndex = '0';
     });
 
     // Bind card clicks
@@ -1105,7 +1072,84 @@ async function populateBackgroundCarousel() {
 // EVENT BINDING
 // =============================================================================
 
+/**
+ * Handle variant carousel navigation via event delegation
+ * @param {HTMLElement} variantContainer - The .ct-card-variants element
+ * @param {number} direction - -1 for prev, +1 for next, or specific index
+ * @param {boolean} isIndex - If true, direction is treated as a specific index
+ */
+function handleVariantNavigation(variantContainer, direction, isIndex = false) {
+    const card = variantContainer.closest('.ct-card');
+    const charFolder = card?.dataset.character;
+    if (!charFolder) return;
+
+    let costumes;
+    try {
+        costumes = JSON.parse(variantContainer.dataset.costumes || '[]');
+    } catch (e) {
+        console.error(`[${EXTENSION_NAME}] Failed to parse costumes data:`, e);
+        return;
+    }
+
+    if (costumes.length <= 1) return;
+
+    let currentIndex = parseInt(variantContainer.dataset.currentIndex || '0', 10);
+    let newIndex;
+
+    if (isIndex) {
+        newIndex = direction;
+    } else {
+        newIndex = (currentIndex + direction + costumes.length) % costumes.length;
+    }
+
+    variantContainer.dataset.currentIndex = String(newIndex);
+    const selectedCostume = costumes[newIndex];
+
+    // Update label
+    const currentLabel = variantContainer.querySelector('.ct-variant-current');
+    if (currentLabel) currentLabel.textContent = selectedCostume;
+
+    // Update dots
+    variantContainer.querySelectorAll('.ct-variant-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === newIndex);
+    });
+
+    // Update card image
+    const cardAvatar = card.querySelector('.ct-card-avatar img');
+    const sprites = characterSpriteCache[charFolder] || [];
+    const costumeSprite = sprites.find(s => s.label === selectedCostume);
+
+    if (costumeSprite && cardAvatar) {
+        const spritePath = `/characters/${charFolder}/${costumeSprite.path}`;
+        cardAvatar.src = spritePath;
+        cardAvatar.style.objectFit = 'contain';
+        cardAvatar.style.objectPosition = 'center bottom';
+    }
+}
+
 function bindEvents() {
+    // Variant carousel - use event delegation on character carousel (no memory leak)
+    const charCarousel = document.getElementById('ct_character_carousel');
+    if (charCarousel) {
+        charCarousel.addEventListener('click', (e) => {
+            const target = e.target.closest('.ct-variant-prev, .ct-variant-next, .ct-variant-dot');
+            if (!target) return;
+
+            e.stopPropagation();
+            const variantContainer = target.closest('.ct-card-variants');
+            if (!variantContainer) return;
+
+            if (target.classList.contains('ct-variant-prev')) {
+                handleVariantNavigation(variantContainer, -1);
+            } else if (target.classList.contains('ct-variant-next')) {
+                handleVariantNavigation(variantContainer, 1);
+            } else if (target.classList.contains('ct-variant-dot')) {
+                const index = parseInt(target.dataset.index || '0', 10);
+                handleVariantNavigation(variantContainer, index, true);
+            }
+        });
+    }
+
     // Tab switching
     document.querySelectorAll('.ct-tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -1132,11 +1176,14 @@ function bindEvents() {
     bindCarouselArrows('ct_char_prev', 'ct_char_next', 'ct_character_carousel');
     bindCarouselArrows('ct_bg_prev', 'ct_bg_next', 'ct_background_carousel');
 
-    // Master enable toggle
-    document.getElementById('ct_master_enable')?.addEventListener('change', (e) => {
+    // Master enable toggle in modal (syncs with drawer toggle)
+    document.getElementById('ct_modal_master_enable')?.addEventListener('change', (e) => {
         const enabled = e.target.checked;
         updateSetting('enabled', enabled);
         onVNModeToggled(enabled);
+        // Sync drawer toggle
+        const drawerToggle = document.getElementById('ct_master_enable');
+        if (drawerToggle) drawerToggle.checked = enabled;
     });
 
     // Display settings
@@ -1413,6 +1460,12 @@ function closeSettingsModal() {
     const overlay = document.getElementById('ct-modal-overlay');
     if (!overlay) return;
 
+    // Clean up escape key handler
+    if (escKeyHandler) {
+        document.removeEventListener('keydown', escKeyHandler);
+        escKeyHandler = null;
+    }
+
     overlay.classList.remove('active');
 
     // Remove after animation
@@ -1422,11 +1475,14 @@ function closeSettingsModal() {
 }
 
 function bindDrawerEvents() {
-    // Master enable toggle in drawer
+    // Master enable toggle in drawer (syncs with modal toggle)
     document.getElementById('ct_master_enable')?.addEventListener('change', (e) => {
         const enabled = e.target.checked;
         updateSetting('enabled', enabled);
         onVNModeToggled(enabled);
+        // Sync modal toggle if it exists
+        const modalToggle = document.getElementById('ct_modal_master_enable');
+        if (modalToggle) modalToggle.checked = enabled;
     });
 
     // Open modal button
@@ -1446,14 +1502,13 @@ function bindModalEvents() {
         }
     });
 
-    // Escape key to close
-    const escHandler = (e) => {
+    // Escape key to close - use module-scoped handler for proper cleanup
+    escKeyHandler = (e) => {
         if (e.key === 'Escape') {
             closeSettingsModal();
-            document.removeEventListener('keydown', escHandler);
         }
     };
-    document.addEventListener('keydown', escHandler);
+    document.addEventListener('keydown', escKeyHandler);
 
     // Sidebar navigation
     document.querySelectorAll('.ct-sidebar-item').forEach(item => {
@@ -1472,8 +1527,11 @@ function bindModalEvents() {
         });
     });
 
-    // Bind all the rest of the events
-    bindEvents();
+    // Bind all the rest of the events (only once per session to avoid leaks)
+    if (!modalEventsBound) {
+        bindEvents();
+        modalEventsBound = true;
+    }
 }
 
 export { populateCharacterCarousel, openSettingsModal, closeSettingsModal };

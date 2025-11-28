@@ -58,6 +58,19 @@ export const DEFAULT_SHOW_CUSTOM_INPUT = true;
 /** Default fallback expression when none specified */
 export const DEFAULT_FALLBACK_EXPRESSION = 'neutral';
 
+// =============================================================================
+// TIMING CONSTANTS
+// =============================================================================
+
+/** Default delay for UI initialization in ms */
+export const UI_INIT_DELAY = 150;
+
+/** Default fetch timeout in ms */
+export const FETCH_TIMEOUT = 30000;
+
+/** Default animation duration in ms */
+export const ANIMATION_DURATION = 300;
+
 /** Default expressions the AI can use */
 export const DEFAULT_EXPRESSIONS = [
     'admiration',
@@ -337,3 +350,29 @@ export const Z_INDEX = {
 
 /** Settings storage key in extension_settings */
 export const SETTINGS_KEY = 'cottonTales';
+
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+/**
+ * Fetch with timeout - wraps fetch with AbortController timeout
+ * @param {string} url - URL to fetch
+ * @param {RequestInit} options - Fetch options
+ * @param {number} timeout - Timeout in ms (default: FETCH_TIMEOUT)
+ * @returns {Promise<Response>}
+ */
+export async function fetchWithTimeout(url, options = {}, timeout = FETCH_TIMEOUT) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+        });
+        return response;
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
