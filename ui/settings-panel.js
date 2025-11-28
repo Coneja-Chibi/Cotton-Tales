@@ -10,7 +10,7 @@
  * ============================================================================
  */
 
-import { getContext } from '../../../extensions.js';
+import { getContext } from '../../../../extensions.js';
 import { EXTENSION_NAME, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT, VECTHARE_TRIGGER, CLASSIFIER_MODELS } from '../core/constants.js';
 import { getSettings, updateSetting } from '../core/settings-manager.js';
 import { onVNModeToggled, openSpriteManager } from '../index.js';
