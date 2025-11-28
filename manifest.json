@@ -1,0 +1,12 @@
+{
+    "display_name": "Cotton-Tales",
+    "loading_order": 150,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "cotton-tales.css",
+    "author": "Coneja Chibi",
+    "version": "0.1.0-alpha",
+    "homePage": "https://github.com/Coneja-Chibi/Cotton-Tales",
+    "description": "Visual Novel engine for SillyTavern - Transform AI chat into an immersive VN experience with structured responses, choice buttons, and cinematic presentation"
+}

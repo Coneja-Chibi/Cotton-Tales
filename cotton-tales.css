@@ -1,0 +1,176 @@
+/**
+ * ============================================================================
+ * COTTON-TALES - MAIN STYLESHEET
+ * ============================================================================
+ * Master CSS entry point - imports component styles
+ * Keep this file lean, actual styles live in /styles/
+ *
+ * @author Coneja Chibi
+ * @version 0.1.0-alpha
+ * ============================================================================
+ */
+
+/* =============================================================================
+   CSS CUSTOM PROPERTIES (Variables)
+   ============================================================================= */
+
+:root {
+    /* Colors - VN Theme */
+    --ct-primary: #8b5cf6;
+    --ct-primary-hover: #7c3aed;
+    --ct-secondary: #ec4899;
+    --ct-accent: #f59e0b;
+
+    /* Background colors */
+    --ct-bg-dark: rgba(0, 0, 0, 0.85);
+    --ct-bg-medium: rgba(30, 30, 40, 0.9);
+    --ct-bg-light: rgba(50, 50, 60, 0.8);
+
+    /* Text colors */
+    --ct-text-primary: #ffffff;
+    --ct-text-secondary: #a0a0b0;
+    --ct-text-muted: #707080;
+
+    /* Borders */
+    --ct-border-color: rgba(255, 255, 255, 0.1);
+    --ct-border-radius: 8px;
+    --ct-border-radius-lg: 12px;
+
+    /* Shadows */
+    --ct-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --ct-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+    --ct-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+
+    /* Transitions */
+    --ct-transition-fast: 150ms ease;
+    --ct-transition-normal: 300ms ease;
+    --ct-transition-slow: 500ms ease;
+
+    /* Z-index layers */
+    --ct-z-background: 1;
+    --ct-z-sprites: 10;
+    --ct-z-effects: 20;
+    --ct-z-dialogue: 100;
+    --ct-z-choices: 110;
+    --ct-z-overlay: 200;
+    --ct-z-modal: 300;
+
+    /* Spacing */
+    --ct-spacing-xs: 4px;
+    --ct-spacing-sm: 8px;
+    --ct-spacing-md: 16px;
+    --ct-spacing-lg: 24px;
+    --ct-spacing-xl: 32px;
+}
+
+/* =============================================================================
+   VN CONTAINER - Main Wrapper
+   ============================================================================= */
+
+#cotton-tales-container {
+    display: none; /* Hidden by default, shown when VN mode enabled */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: var(--ct-z-background);
+    overflow: hidden;
+}
+
+#cotton-tales-container.active {
+    display: block;
+}
+
+/* =============================================================================
+   SETTINGS PANEL
+   ============================================================================= */
+
+#cotton-tales-settings {
+    padding: var(--ct-spacing-md);
+}
+
+#cotton-tales-settings .ct-settings-section {
+    margin-bottom: var(--ct-spacing-lg);
+    padding: var(--ct-spacing-md);
+    background: var(--ct-bg-light);
+    border-radius: var(--ct-border-radius);
+    border: 1px solid var(--ct-border-color);
+}
+
+#cotton-tales-settings .ct-settings-section h4 {
+    margin: 0 0 var(--ct-spacing-md) 0;
+    color: var(--ct-text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--ct-spacing-sm);
+}
+
+#cotton-tales-settings .ct-settings-section h4 i {
+    color: var(--ct-primary);
+}
+
+/* =============================================================================
+   PLACEHOLDER STYLES
+   These will be expanded as components are built
+   ============================================================================= */
+
+/* Dialogue Box placeholder */
+.ct-dialogue-box {
+    /* Will be styled in styles/dialogue.css */
+}
+
+/* Choice Panel placeholder */
+.ct-choice-panel {
+    /* Will be styled in styles/choices.css */
+}
+
+/* Sprite Display placeholder */
+.ct-sprite-display {
+    /* Will be styled in styles/sprites.css */
+}
+
+/* Effects Layer placeholder */
+.ct-effects-layer {
+    /* Will be styled in styles/effects.css */
+}
+
+/* =============================================================================
+   UTILITY CLASSES
+   ============================================================================= */
+
+.ct-hidden {
+    display: none !important;
+}
+
+.ct-fade-in {
+    animation: ctFadeIn var(--ct-transition-normal) forwards;
+}
+
+.ct-fade-out {
+    animation: ctFadeOut var(--ct-transition-normal) forwards;
+}
+
+@keyframes ctFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes ctFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* =============================================================================
+   COMPONENT IMPORTS
+   Uncomment as files are created
+   ============================================================================= */
+
+/* @import './styles/base.css'; */
+/* @import './styles/dialogue.css'; */
+/* @import './styles/choices.css'; */
+/* @import './styles/sprites.css'; */
+/* @import './styles/effects.css'; */
+/* @import './styles/settings.css'; */

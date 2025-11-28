@@ -1,0 +1,6 @@
+# HTML Templates
+#
+# Reusable HTML templates for UI components:
+# - settings.html      : Settings panel template
+# - dialogue-box.html  : Dialogue box template
+# - choice-button.html : Choice button template

@@ -1,0 +1,7 @@
+# Diagnostics
+#
+# This folder contains health checks and diagnostics:
+# - index.js           : Main diagnostics runner
+# - sprite-checks.js   : Verify sprite availability
+# - schema-checks.js   : Verify AI schema compliance
+# - settings-checks.js : Validate settings configuration

@@ -1,0 +1,9 @@
+# ST Bridges
+#
+# This folder contains the ONLY files that interact with SillyTavern:
+# - st-events.js       : Listen to ST events, translate to our system
+# - st-sprites.js      : Read sprite folders from ST structure
+# - st-backgrounds.js  : Read background files from ST
+# - st-chat.js         : Send messages through ST's system
+#
+# Keep ST dependencies isolated here!
