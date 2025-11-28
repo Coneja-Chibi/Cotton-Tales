@@ -38,6 +38,95 @@ let selectedOutfit = 'default';
 let characterList = []; // { name, avatar, isNpc, sprites, outfits, triggers }
 
 // =============================================================================
+// INPUT MODAL (replaces blocking prompt())
+// =============================================================================
+
+/**
+ * Show a non-blocking input modal dialog
+ * @param {string} title - Modal title
+ * @param {string} placeholder - Input placeholder text
+ * @param {string} defaultValue - Default input value
+ * @returns {Promise<string|null>} User input or null if cancelled
+ */
+function showInputModal(title, placeholder = '', defaultValue = '') {
+    return new Promise((resolve) => {
+        const modalHtml = `
+            <div class="ct-input-modal-overlay" id="ct_input_modal_overlay">
+                <div class="ct-input-modal">
+                    <div class="ct-input-modal-header">
+                        <span>${escapeHtml(title)}</span>
+                        <button class="ct-input-modal-close" id="ct_input_modal_close">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="ct-input-modal-body">
+                        <input type="text"
+                               class="ct-input-modal-input"
+                               id="ct_input_modal_input"
+                               placeholder="${escapeHtml(placeholder)}"
+                               value="${escapeHtml(defaultValue)}" />
+                    </div>
+                    <div class="ct-input-modal-footer">
+                        <button class="ct-btn secondary" id="ct_input_modal_cancel">Cancel</button>
+                        <button class="ct-btn primary" id="ct_input_modal_confirm">OK</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add modal to DOM
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = modalHtml;
+        document.body.appendChild(wrapper.firstElementChild);
+
+        const overlay = document.getElementById('ct_input_modal_overlay');
+        const input = document.getElementById('ct_input_modal_input');
+        const closeBtn = document.getElementById('ct_input_modal_close');
+        const cancelBtn = document.getElementById('ct_input_modal_cancel');
+        const confirmBtn = document.getElementById('ct_input_modal_confirm');
+
+        // Focus input
+        setTimeout(() => input?.focus(), 50);
+
+        const cleanup = (result) => {
+            overlay?.remove();
+            resolve(result);
+        };
+
+        // Event handlers
+        closeBtn?.addEventListener('click', () => cleanup(null));
+        cancelBtn?.addEventListener('click', () => cleanup(null));
+        confirmBtn?.addEventListener('click', () => cleanup(input?.value?.trim() || null));
+
+        // Enter key confirms, Escape cancels
+        input?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                cleanup(input?.value?.trim() || null);
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                cleanup(null);
+            }
+        });
+
+        // Click outside closes
+        overlay?.addEventListener('click', (e) => {
+            if (e.target === overlay) cleanup(null);
+        });
+    });
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// =============================================================================
 // DATA MANAGEMENT
 // =============================================================================
 
@@ -553,10 +642,10 @@ function navigateCharacter(direction) {
 }
 
 async function addNpc() {
-    const name = prompt('Enter NPC name:');
+    const name = await showInputModal('Add NPC', 'Enter NPC name...');
     if (!name) return;
 
-    const folderName = prompt('Sprite folder name (leave blank to use NPC name):', name);
+    const folderName = await showInputModal('Sprite Folder', 'Leave blank to use NPC name', name);
 
     characterList.push({
         name: name,
@@ -582,7 +671,7 @@ async function addNpc() {
 }
 
 async function addOutfit() {
-    const name = prompt('Enter outfit name:');
+    const name = await showInputModal('Add Outfit', 'Enter outfit name...');
     if (!name) return;
 
     const char = characterList[currentCharacterIndex];
@@ -613,7 +702,7 @@ async function removeTrigger(trigger) {
 }
 
 async function addTrigger() {
-    const trigger = prompt('Enter trigger phrase:');
+    const trigger = await showInputModal('Add Trigger', 'Enter trigger phrase...');
     if (!trigger) return;
 
     const char = characterList[currentCharacterIndex];
@@ -625,7 +714,7 @@ async function addTrigger() {
 }
 
 async function addOutfitTrigger(outfit) {
-    const trigger = prompt(`Enter trigger phrase for "${outfit}":`);
+    const trigger = await showInputModal(`Add Trigger for "${outfit}"`, 'Enter trigger phrase...');
     if (!trigger) return;
 
     const char = characterList[currentCharacterIndex];

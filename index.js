@@ -26,7 +26,7 @@ import {
 import { openSpriteManager, closeSpriteManager } from './ui/sprite-manager.js';
 
 // Cotton-Tales modules - Expressions
-import { initExpressions, setExpressionsVisible } from './ct-expressions.js';
+import { initExpressions, setExpressionsVisible, cleanupExpressions } from './ct-expressions.js';
 
 // =============================================================================
 // SETTINGS MANAGEMENT
@@ -236,8 +236,33 @@ if (document.readyState === 'loading') {
     init();
 }
 
+/**
+ * Full extension cleanup - call when extension is disabled/unloaded
+ * Removes all event listeners, DOM elements, and resets state
+ */
+export function cleanup() {
+    console.log(`[${EXTENSION_NAME}] Running full cleanup...`);
+
+    // Remove event listeners registered in init()
+    eventSource.removeListener(event_types.CHAT_CHANGED, onChatChanged);
+    eventSource.removeListener(event_types.CHARACTER_PAGE_LOADED, populateCharacterCarousel);
+
+    // Cleanup expressions module
+    cleanupExpressions();
+
+    // Cleanup UI
+    disableVNLayout();
+    deactivateLandingPage();
+    closeSpriteManager();
+
+    // Remove settings UI
+    $('#cotton-tales-settings').remove();
+
+    console.log(`[${EXTENSION_NAME}] Full cleanup complete`);
+}
+
 // =============================================================================
 // EXPORTS
 // =============================================================================
 
-export { EXTENSION_NAME, openSpriteManager, closeSpriteManager };
+export { EXTENSION_NAME, openSpriteManager, closeSpriteManager, cleanup };

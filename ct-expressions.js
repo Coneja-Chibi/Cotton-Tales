@@ -93,6 +93,14 @@ let lastServerResponseTime = 0;
 /** @type {{[characterName: string]: string}} */
 export let lastExpression = {};
 
+// Store event handler references for cleanup
+let eventHandlers = {
+    messageReceived: null,
+    messageSwiped: null,
+    chatChanged: null,
+    groupUpdated: null,
+};
+
 // =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
@@ -1397,21 +1405,18 @@ export async function initExpressions() {
     const wrapper = new ModuleWorkerWrapper(moduleWorker);
     const updateFunction = wrapper.update.bind(wrapper);
 
-    // EVENT-DRIVEN UPDATES - Only classify on user actions, NOT on polling
-    // Trigger classification when AI generates/receives a message
-    eventSource.on(event_types.MESSAGE_RECEIVED, () => {
+    // Define event handlers (store references for cleanup)
+    eventHandlers.messageReceived = () => {
         console.debug(`[${MODULE_NAME}] MESSAGE_RECEIVED - triggering expression update`);
         updateFunction();
-    });
+    };
 
-    // Trigger classification when user swipes to a different message
-    eventSource.on(event_types.MESSAGE_SWIPED, () => {
+    eventHandlers.messageSwiped = () => {
         console.debug(`[${MODULE_NAME}] MESSAGE_SWIPED - triggering expression update`);
         updateFunction();
-    });
+    };
 
-    // Handle chat changes - only reset state, DON'T trigger classification
-    eventSource.on(event_types.CHAT_CHANGED, () => {
+    eventHandlers.chatChanged = () => {
         console.debug(`[${MODULE_NAME}] CHAT_CHANGED - resetting state only (no classification)`);
         removeExpression();
         spriteCache = {};
@@ -1427,10 +1432,15 @@ export async function initExpressions() {
         if (isVisualNovelMode()) {
             $('#ct-visual-novel-wrapper').empty();
         }
-        // NOTE: Removed updateFunction() call here - don't classify on chat open
-    });
+    };
 
-    eventSource.on(event_types.GROUP_UPDATED, updateVisualNovelModeDebounced);
+    eventHandlers.groupUpdated = updateVisualNovelModeDebounced;
+
+    // Register event handlers
+    eventSource.on(event_types.MESSAGE_RECEIVED, eventHandlers.messageReceived);
+    eventSource.on(event_types.MESSAGE_SWIPED, eventHandlers.messageSwiped);
+    eventSource.on(event_types.CHAT_CHANGED, eventHandlers.chatChanged);
+    eventSource.on(event_types.GROUP_UPDATED, eventHandlers.groupUpdated);
     $(window).on('resize', updateVisualNovelModeDebounced);
 
     // Initial visibility setup (no classification)
@@ -1442,6 +1452,49 @@ export async function initExpressions() {
     }
 
     console.log(`[${MODULE_NAME}] Initialization complete - event-driven mode`);
+}
+
+/**
+ * Cleanup function - remove event listeners and DOM elements
+ * Call this when the extension is disabled or unloaded
+ */
+export function cleanupExpressions() {
+    console.log(`[${MODULE_NAME}] Cleaning up...`);
+
+    // Remove event listeners
+    if (eventHandlers.messageReceived) {
+        eventSource.removeListener(event_types.MESSAGE_RECEIVED, eventHandlers.messageReceived);
+    }
+    if (eventHandlers.messageSwiped) {
+        eventSource.removeListener(event_types.MESSAGE_SWIPED, eventHandlers.messageSwiped);
+    }
+    if (eventHandlers.chatChanged) {
+        eventSource.removeListener(event_types.CHAT_CHANGED, eventHandlers.chatChanged);
+    }
+    if (eventHandlers.groupUpdated) {
+        eventSource.removeListener(event_types.GROUP_UPDATED, eventHandlers.groupUpdated);
+    }
+    $(window).off('resize', updateVisualNovelModeDebounced);
+
+    // Clear handler references
+    eventHandlers = {
+        messageReceived: null,
+        messageSwiped: null,
+        chatChanged: null,
+        groupUpdated: null,
+    };
+
+    // Remove DOM elements
+    $('#ct-expression-wrapper').remove();
+    $('#ct-visual-novel-wrapper').remove();
+
+    // Clear caches
+    spriteCache = {};
+    lastExpression = {};
+    emotionEmbeddingsCache = null;
+    emotionEmbeddingsCacheSource = null;
+
+    console.log(`[${MODULE_NAME}] Cleanup complete`);
 }
 
 // =============================================================================
