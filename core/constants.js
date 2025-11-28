@@ -140,7 +140,7 @@ export const CLASSIFIER_MODELS = {
     roberta_go_emotions: {
         id: 'roberta_go_emotions',
         name: 'RoBERTa GoEmotions',
-        repo: 'SamLowe/roberta-base-go_emotions-onnx',
+        repo: 'Chi-Bi/roberta-go-emotions-onnx',
         labels: 28,
         labelList: ['admiration', 'amusement', 'anger', 'annoyance', 'approval', 'caring', 'confusion', 'curiosity', 'desire', 'disappointment', 'disapproval', 'disgust', 'embarrassment', 'excitement', 'fear', 'gratitude', 'grief', 'joy', 'love', 'nervousness', 'optimism', 'pride', 'realization', 'relief', 'remorse', 'sadness', 'surprise', 'neutral'],
         f1: 0.54,
@@ -150,7 +150,7 @@ export const CLASSIFIER_MODELS = {
     distilroberta_dialogue: {
         id: 'distilroberta_dialogue',
         name: 'DistilRoBERTa Dialogue',
-        repo: 'MicahB/emotion_text_classifier',
+        repo: 'Chi-Bi/emotion-text-classifier-onnx',
         labels: 7,
         labelList: ['anger', 'disgust', 'fear', 'joy', 'neutral', 'sadness', 'surprise'],
         f1: 0.815,
@@ -160,34 +160,31 @@ export const CLASSIFIER_MODELS = {
     bert_emotion_rp: {
         id: 'bert_emotion_rp',
         name: 'BERT Emotion (RP)',
-        repo: 'boltuix/bert-emotion',
+        repo: 'Chi-Bi/bert-emotion-onnx',
         labels: 13,
         labelList: ['anger', 'disgust', 'fear', 'guilt', 'joy', 'love', 'sadness', 'shame', 'surprise', 'desire', 'sarcasm', 'neutral', 'embarrassment'],
         f1: 0.93,
         description: '13 labels including sarcasm, shame, guilt, desire. Perfect for roleplay.',
-        needsConversion: true,
     },
     /** bhadresh-savani DistilBERT - 6 labels, highest accuracy */
     distilbert_high_accuracy: {
         id: 'distilbert_high_accuracy',
         name: 'DistilBERT (Highest Accuracy)',
-        repo: 'bhadresh-savani/distilbert-base-uncased-emotion',
+        repo: 'Chi-Bi/distilbert-emotion-onnx',
         labels: 6,
         labelList: ['sadness', 'joy', 'love', 'anger', 'fear', 'surprise'],
         f1: 0.938,
         description: '6 basic emotions with highest accuracy (F1: 0.938). Simple but reliable.',
-        needsConversion: true,
     },
     /** tae898 EmoBERTa - dialogue emotion recognition */
     emoberta_dialogue: {
         id: 'emoberta_dialogue',
         name: 'EmoBERTa Large',
-        repo: 'tae898/emoberta-large',
+        repo: 'Chi-Bi/emoberta-large-onnx',
         labels: 7,
         labelList: ['neutral', 'joy', 'surprise', 'anger', 'sadness', 'disgust', 'fear'],
         f1: 0.656,
         description: 'Large RoBERTa model trained on dialogue emotion recognition.',
-        needsConversion: true,
     },
 };
 
