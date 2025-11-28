@@ -36,6 +36,8 @@ let isOpen = false;
 let currentCharacterIndex = 0;
 let selectedOutfit = 'default';
 let characterList = []; // { name, avatar, isNpc, sprites, outfits, triggers }
+let modalEventsBound = false;
+let keyboardHandler = null;
 
 // =============================================================================
 // INPUT MODAL (replaces blocking prompt())
@@ -173,8 +175,8 @@ async function getCharactersForCard() {
         });
     }
 
-    // Load sprites for each character
-    for (const char of result) {
+    // Load sprites for all characters in parallel
+    await Promise.all(result.map(async (char) => {
         try {
             const sprites = await getSpritesList(char.folderName);
             char.sprites = sprites;
@@ -192,7 +194,7 @@ async function getCharactersForCard() {
         } catch (e) {
             console.debug(`[${MODULE_NAME}] Failed to load sprites for ${char.name}:`, e);
         }
-    }
+    }));
 
     return result;
 }
@@ -768,12 +770,21 @@ export function closeSpriteManager() {
         modal.classList.remove('open');
     }
     isOpen = false;
+
+    // Remove keyboard listener to prevent memory leak
+    if (keyboardHandler) {
+        document.removeEventListener('keydown', keyboardHandler);
+        keyboardHandler = null;
+    }
+    modalEventsBound = false;
 }
 
 /**
- * Bind event listeners to modal
+ * Bind event listeners to modal (only once)
  */
 function bindModalEvents() {
+    if (modalEventsBound) return;
+
     const modal = document.getElementById('ct-sprite-manager-modal');
     if (!modal) return;
 
@@ -801,13 +812,16 @@ function bindModalEvents() {
     // Add trigger button
     modal.querySelector('.ct-sm-add-trigger')?.addEventListener('click', addTrigger);
 
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
+    // Keyboard navigation - store reference for cleanup
+    keyboardHandler = (e) => {
         if (!isOpen) return;
         if (e.key === 'Escape') closeSpriteManager();
         if (e.key === 'ArrowLeft') navigateCharacter(-1);
         if (e.key === 'ArrowRight') navigateCharacter(1);
-    });
+    };
+    document.addEventListener('keydown', keyboardHandler);
+
+    modalEventsBound = true;
 }
 
 // =============================================================================

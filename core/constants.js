@@ -17,6 +17,9 @@
 /** Extension name for logging and UI */
 export const EXTENSION_NAME = 'Cotton-Tales';
 
+/** Extension version (keep in sync with manifest.json) */
+export const VERSION = '0.1.0-alpha';
+
 /** Module name for ST extension system */
 export const MODULE_NAME = 'cotton-tales';
 

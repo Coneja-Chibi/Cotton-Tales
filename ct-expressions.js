@@ -92,6 +92,24 @@ let lastServerResponseTime = 0;
 
 /** @type {{[characterName: string]: string}} */
 export let lastExpression = {};
+/** Maximum number of characters to track expressions for */
+const MAX_EXPRESSION_CACHE_SIZE = 20;
+
+/**
+ * Set last expression for a character with LRU eviction
+ * @param {string} characterKey - Character name/folder
+ * @param {string} expression - Expression label
+ */
+function setLastExpression(characterKey, expression) {
+    // Evict oldest if at max size and this is a new key
+    if (!lastExpression[characterKey]) {
+        const keys = Object.keys(lastExpression);
+        if (keys.length >= MAX_EXPRESSION_CACHE_SIZE) {
+            delete lastExpression[keys[0]];
+        }
+    }
+    lastExpression[characterKey] = expression;
+}
 
 // Store event handler references for cleanup
 let eventHandlers = {
@@ -1313,7 +1331,7 @@ async function moduleWorker() {
  * Public API to set expression
  */
 async function sendExpressionCall(spriteFolderName, expression, { force = false, vnMode = null } = {}) {
-    lastExpression[spriteFolderName.split('/')[0]] = expression;
+    setLastExpression(spriteFolderName.split('/')[0], expression);
 
     if (vnMode === null) {
         vnMode = isVisualNovelMode();

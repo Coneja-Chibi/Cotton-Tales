@@ -18,7 +18,7 @@ import { getDefaultSettings } from './core/default-settings.js';
 import { getSettings, updateSetting } from './core/settings-manager.js';
 
 // Cotton-Tales modules - UI
-import { renderSettings, populateCharacterCarousel } from './ui/settings-panel.js';
+import { renderSettings, populateCharacterCarousel, registerCallbacks } from './ui/settings-panel.js';
 import {
     activateLandingPage,
     deactivateLandingPage,
@@ -93,6 +93,40 @@ function disableVNLayout() {
     console.debug(`[${EXTENSION_NAME}] VN layout disabled`);
 }
 
+/**
+ * Apply VN state based on current context and settings
+ * Centralized logic to avoid duplication
+ * @param {boolean} enabled - Whether VN mode should be enabled
+ * @param {Object} options - Additional options
+ * @param {boolean} [options.updateExpressions=false] - Whether to update expression visibility
+ */
+function applyVNState(enabled, { updateExpressions = false } = {}) {
+    const context = getContext();
+    const hasActiveChat = context.chatId && context.characterId !== undefined;
+
+    if (enabled) {
+        if (!hasActiveChat) {
+            // On landing page - activate landing page styling
+            disableVNLayout();
+            setTimeout(() => activateLandingPage(), 150);
+        } else {
+            // In active chat - enable VN layout
+            deactivateLandingPage();
+            enableVNLayout();
+            if (updateExpressions) {
+                setExpressionsVisible(true);
+            }
+        }
+    } else {
+        // Disable everything
+        if (updateExpressions) {
+            setExpressionsVisible(false);
+        }
+        disableVNLayout();
+        deactivateLandingPage();
+    }
+}
+
 // =============================================================================
 // EVENT HANDLERS
 // =============================================================================
@@ -102,70 +136,37 @@ function disableVNLayout() {
  */
 function onChatChanged() {
     const settings = getSettings();
-    const context = getContext();
-
-    // Check if we're on landing page or in active chat
-    const hasActiveChat = context.chatId && context.characterId !== undefined;
-
-    if (!hasActiveChat) {
-        // On landing page - disable VN layout
-        disableVNLayout();
-
-        if (settings.enabled) {
-            setTimeout(() => {
-                activateLandingPage();
-            }, 150);
-        } else {
-            deactivateLandingPage();
-        }
-    } else {
-        // In active chat - deactivate landing page styling
-        deactivateLandingPage();
-
-        // Enable VN layout if Cotton-Tales is enabled
-        if (settings.enabled) {
-            enableVNLayout();
-        } else {
-            disableVNLayout();
-        }
-    }
+    applyVNState(settings.enabled);
 }
 
 // =============================================================================
 // INITIALIZATION
 // =============================================================================
 
-/**
- * Load additional CSS file
- */
-function loadCSS(filename) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.type = 'text/css';
-    link.href = `/scripts/extensions/third-party/Cotton-Tales/${filename}`;
-    document.head.appendChild(link);
-}
+/** @type {HTMLLinkElement[]} */
+const loadedStylesheets = [];
 
 /**
- * Load CSS from ui subfolder
+ * Load CSS file from extension directory
+ * @param {string} path - Path relative to Cotton-Tales folder (e.g., 'styles/landing-page.css')
+ * @returns {Promise<void>} Resolves when loaded, rejects on error
  */
-function loadUiCSS(filename) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.type = 'text/css';
-    link.href = `/scripts/extensions/third-party/Cotton-Tales/ui/${filename}`;
-    document.head.appendChild(link);
-}
-
-/**
- * Load CSS from styles subfolder
- */
-function loadStylesCSS(filename) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.type = 'text/css';
-    link.href = `/scripts/extensions/third-party/Cotton-Tales/styles/${filename}`;
-    document.head.appendChild(link);
+function loadCSS(path) {
+    return new Promise((resolve, reject) => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = `/scripts/extensions/third-party/Cotton-Tales/${path}`;
+        link.onload = () => {
+            loadedStylesheets.push(link);
+            resolve();
+        };
+        link.onerror = () => {
+            console.error(`[${EXTENSION_NAME}] Failed to load CSS: ${path}`);
+            reject(new Error(`Failed to load CSS: ${path}`));
+        };
+        document.head.appendChild(link);
+    });
 }
 
 /**
@@ -174,13 +175,25 @@ function loadStylesCSS(filename) {
 async function init() {
     console.log(`[${EXTENSION_NAME}] Initializing...`);
 
-    // Load CSS
-    loadCSS('ct-expressions.css');
-    loadUiCSS('sprite-manager.css');
-    loadStylesCSS('landing-page.css');
+    // Load CSS (parallel loading with error handling)
+    try {
+        await Promise.all([
+            loadCSS('ct-expressions.css'),
+            loadCSS('ui/sprite-manager.css'),
+            loadCSS('styles/landing-page.css'),
+        ]);
+    } catch (err) {
+        console.warn(`[${EXTENSION_NAME}] Some stylesheets failed to load, extension may not display correctly`);
+    }
 
     // Initialize settings
     initializeSettings();
+
+    // Register callbacks for settings panel (breaks circular dependency)
+    registerCallbacks({
+        onVNModeToggled,
+        openSpriteManager,
+    });
 
     // Register event listeners
     eventSource.on(event_types.CHAT_CHANGED, onChatChanged);
@@ -194,19 +207,8 @@ async function init() {
 
     // Check initial state and apply appropriate mode
     const settings = getSettings();
-    const context = getContext();
-    const hasActiveChat = context.chatId && context.characterId !== undefined;
-
     if (settings.enabled) {
-        if (!hasActiveChat) {
-            // On landing page
-            setTimeout(() => {
-                activateLandingPage();
-            }, 150);
-        } else {
-            // In active chat - enable VN layout
-            enableVNLayout();
-        }
+        applyVNState(true);
     }
 
     console.log(`[${EXTENSION_NAME}] Initialization complete`);
@@ -217,28 +219,8 @@ async function init() {
  * Called from settings panel
  */
 export function onVNModeToggled(enabled) {
-    const context = getContext();
-    const hasActiveChat = context.chatId && context.characterId !== undefined;
-
-    if (enabled) {
-        if (!hasActiveChat) {
-            // On landing page - activate landing page styling
-            setTimeout(() => {
-                activateLandingPage();
-            }, 150);
-        } else {
-            // In active chat - enable VN layout immediately
-            enableVNLayout();
-            setExpressionsVisible(true);
-        }
-        console.log(`[${EXTENSION_NAME}] VN mode enabled`);
-    } else {
-        // Immediately hide expressions and disable layout
-        setExpressionsVisible(false);
-        disableVNLayout();
-        deactivateLandingPage();
-        console.log(`[${EXTENSION_NAME}] VN mode disabled`);
-    }
+    applyVNState(enabled, { updateExpressions: true });
+    console.log(`[${EXTENSION_NAME}] VN mode ${enabled ? 'enabled' : 'disabled'}`);
 }
 
 // Run initialization when DOM is ready
@@ -269,6 +251,10 @@ export function cleanup() {
 
     // Remove settings UI
     $('#cotton-tales-settings').remove();
+
+    // Remove loaded stylesheets
+    loadedStylesheets.forEach(link => link.remove());
+    loadedStylesheets.length = 0;
 
     console.log(`[${EXTENSION_NAME}] Full cleanup complete`);
 }

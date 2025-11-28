@@ -12,11 +12,44 @@
 
 import { getContext } from '../../../../extensions.js';
 import { getRequestHeaders } from '../../../../../script.js';
-import { EXTENSION_NAME, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT, VECTHARE_TRIGGER, CLASSIFIER_MODELS } from '../core/constants.js';
+import { EXTENSION_NAME, VERSION, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT, VECTHARE_TRIGGER, CLASSIFIER_MODELS } from '../core/constants.js';
 import { getSettings, updateSetting } from '../core/settings-manager.js';
-import { onVNModeToggled, openSpriteManager } from '../index.js';
 import { isVectHareAvailable, clearEmotionEmbeddingsCache } from '../ct-expressions.js';
 import { ConnectionManagerRequestService } from '../../../shared.js';
+
+// =============================================================================
+// CALLBACK REGISTRATION (breaks circular dependency with index.js)
+// =============================================================================
+
+/** @type {((enabled: boolean) => void) | null} */
+let onVNModeToggledCallback = null;
+/** @type {(() => void) | null} */
+let openSpriteManagerCallback = null;
+
+/**
+ * Register callbacks from index.js to break circular dependency
+ * @param {Object} callbacks
+ * @param {(enabled: boolean) => void} callbacks.onVNModeToggled
+ * @param {() => void} callbacks.openSpriteManager
+ */
+export function registerCallbacks(callbacks) {
+    onVNModeToggledCallback = callbacks.onVNModeToggled;
+    openSpriteManagerCallback = callbacks.openSpriteManager;
+}
+
+/** Call onVNModeToggled if registered */
+function onVNModeToggled(enabled) {
+    if (onVNModeToggledCallback) {
+        onVNModeToggledCallback(enabled);
+    }
+}
+
+/** Call openSpriteManager if registered */
+function openSpriteManager() {
+    if (openSpriteManagerCallback) {
+        openSpriteManagerCallback();
+    }
+}
 
 // =============================================================================
 // STATE
@@ -52,6 +85,20 @@ function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+}
+
+/**
+ * Escape JSON for safe use in HTML data attribute
+ * @param {any} data - Data to serialize
+ * @returns {string} HTML-attribute-safe JSON string
+ */
+function escapeJsonAttr(data) {
+    return JSON.stringify(data)
+        .replace(/&/g, '&amp;')
+        .replace(/'/g, '&#39;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 }
 
 // =============================================================================
@@ -113,7 +160,7 @@ function getSettingsHTML() {
                         </button>
 
                         <div class="ct-drawer-footer">
-                            Cotton-Tales v0.1.0
+                            ${EXTENSION_NAME} v${VERSION}
                         </div>
                     </div>
                 </div>
@@ -806,7 +853,7 @@ function generateCharacterCard(char, isNPC = false, isActive = false) {
                 ` : ''}
 
                 ${hasCostumes ? `
-                    <div class="ct-card-variants" data-costumes='${JSON.stringify(costumes)}'>
+                    <div class="ct-card-variants" data-costumes="${escapeJsonAttr(costumes)}">
                         <div class="ct-variants-label">Alternates</div>
                         <div class="ct-variants-carousel">
                             <button class="ct-variant-arrow ct-variant-prev">
