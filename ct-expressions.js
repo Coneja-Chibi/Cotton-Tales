@@ -85,6 +85,8 @@ let lastCharacter = undefined;
 let lastMessage = null;
 /** @type {{[characterKey: string]: Object[]}} */
 let spriteCache = {};
+/** Maximum number of characters to cache sprites for */
+const MAX_SPRITE_CACHE_SIZE = 20;
 let inApiCall = false;
 let lastServerResponseTime = 0;
 
@@ -216,6 +218,15 @@ async function validateImages(spriteFolderName, forceRedraw = false) {
 
     if (spriteCache[spriteFolderName] && !forceRedraw) {
         return;
+    }
+
+    // Evict oldest entries if cache is too large
+    const cacheKeys = Object.keys(spriteCache);
+    if (cacheKeys.length >= MAX_SPRITE_CACHE_SIZE) {
+        // Remove first (oldest) entry
+        const oldestKey = cacheKeys[0];
+        delete spriteCache[oldestKey];
+        console.debug(`[${MODULE_NAME}] Evicted ${oldestKey} from sprite cache (max size reached)`);
     }
 
     const sprites = await getSpritesList(spriteFolderName);
