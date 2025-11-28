@@ -1,0 +1,121 @@
+/**
+ * ============================================================================
+ * COTTON-TALES CSS VARIABLES
+ * ============================================================================
+ * BunnyWorks Y2K aesthetic - dark background with vibrant pastels
+ * Inspired by: https://bunnyworks.me
+ *
+ * @author Coneja Chibi
+ * @version 0.2.0
+ * ============================================================================
+ */
+
+:root {
+    /* ==========================================================================
+       CORE PALETTE - Y2K Pastel Vaporwave
+       ========================================================================== */
+
+    /* Background layers */
+    --ct-bg-base: #0a0a0a;
+    --ct-bg-primary: #0f0a1a;
+    --ct-bg-secondary: #1a1428;
+    --ct-bg-tertiary: #251d35;
+    --ct-bg-card: #2a2240;
+    --ct-bg-card-hover: #352b4d;
+    --ct-bg-elevated: #3d3355;
+
+    /* Primary accent - Pink */
+    --ct-pink: #FFB3D9;
+    --ct-pink-vibrant: #ff6b9d;
+    --ct-pink-soft: #FFD1E3;
+    --ct-pink-glow: rgba(255, 107, 157, 0.4);
+
+    /* Secondary accent - Purple */
+    --ct-purple: #D4ADFC;
+    --ct-purple-vibrant: #b76cff;
+    --ct-purple-soft: #E8D4FF;
+    --ct-purple-glow: rgba(183, 108, 255, 0.4);
+
+    /* Tertiary accent - Cyan */
+    --ct-cyan: #A8D8FF;
+    --ct-cyan-vibrant: #5ce1e6;
+    --ct-cyan-glow: rgba(92, 225, 230, 0.4);
+
+    /* Additional accents */
+    --ct-mint: #B8F4D3;
+    --ct-peach: #FFD4B8;
+    --ct-orange: #ffb347;
+    --ct-orange-glow: rgba(255, 179, 71, 0.4);
+    --ct-yellow: #FFF5A8;
+    --ct-green: #7dffaf;
+    --ct-lavender: #E8D4FF;
+
+    /* RGB pulsing colors */
+    --ct-rgb-red: #FF6B9D;
+    --ct-rgb-orange: #FFB088;
+    --ct-rgb-yellow: #FFE799;
+    --ct-rgb-green: #88F5D0;
+    --ct-rgb-cyan: #88E6FF;
+    --ct-rgb-blue: #9D7FDB;
+    --ct-rgb-indigo: #D493D4;
+    --ct-rgb-violet: #FF99C8;
+
+    /* ==========================================================================
+       TEXT COLORS
+       ========================================================================== */
+
+    --ct-text-primary: #ffffff;
+    --ct-text-secondary: #c4bdd4;
+    --ct-text-muted: #8b82a0;
+    --ct-text-dim: #5d5875;
+
+    /* ==========================================================================
+       BORDERS
+       ========================================================================== */
+
+    --ct-border: rgba(183, 108, 255, 0.2);
+    --ct-border-strong: rgba(183, 108, 255, 0.35);
+    --ct-border-glow: rgba(183, 108, 255, 0.6);
+    --ct-border-pink: rgba(255, 107, 157, 0.4);
+
+    /* ==========================================================================
+       SHADOWS & GLOWS
+       ========================================================================== */
+
+    --ct-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --ct-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --ct-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+    --ct-glow-sm: 0 0 15px;
+    --ct-glow-md: 0 0 25px;
+    --ct-glow-lg: 0 0 40px;
+
+    /* ==========================================================================
+       GRADIENTS
+       ========================================================================== */
+
+    --ct-gradient-pink-purple: linear-gradient(135deg, #ff6b9d 0%, #b76cff 100%);
+    --ct-gradient-cyan-blue: linear-gradient(135deg, #5ce1e6 0%, #6b9fff 100%);
+    --ct-gradient-orange-pink: linear-gradient(135deg, #ffb347 0%, #ff6b9d 100%);
+    --ct-gradient-card: linear-gradient(145deg, #2a2240 0%, #1f1832 100%);
+    --ct-gradient-card-hover: linear-gradient(145deg, #352b4d 0%, #2a2240 100%);
+    --ct-gradient-header: linear-gradient(180deg, rgba(183, 108, 255, 0.1) 0%, transparent 100%);
+
+    /* ==========================================================================
+       TIMING
+       ========================================================================== */
+
+    --ct-transition-fast: 150ms ease;
+    --ct-transition: 200ms ease;
+    --ct-transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ==========================================================================
+       SPACING
+       ========================================================================== */
+
+    --ct-radius-sm: 6px;
+    --ct-radius: 10px;
+    --ct-radius-lg: 16px;
+    --ct-radius-xl: 24px;
+    --ct-radius-full: 9999px;
+}

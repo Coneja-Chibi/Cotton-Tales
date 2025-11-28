@@ -11,6 +11,7 @@
  */
 
 import { getContext } from '../../../../extensions.js';
+import { getRequestHeaders } from '../../../../../script.js';
 import { EXTENSION_NAME, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT, VECTHARE_TRIGGER, CLASSIFIER_MODELS } from '../core/constants.js';
 import { getSettings, updateSetting } from '../core/settings-manager.js';
 import { onVNModeToggled, openSpriteManager } from '../index.js';
@@ -749,6 +750,8 @@ async function populateCharacterCarousel() {
     const context = getContext();
     const characters = context.characters || [];
 
+    console.debug(`[${EXTENSION_NAME}] populateCharacterCarousel: found ${characters.length} characters`);
+
     // Build character list from cards
     const charList = [];
     for (const char of characters) {
@@ -821,7 +824,7 @@ async function populateBackgroundCarousel() {
     try {
         const res = await fetch('/api/backgrounds/all', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getRequestHeaders(),
             body: JSON.stringify({})
         });
 

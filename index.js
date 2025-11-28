@@ -18,7 +18,7 @@ import { getDefaultSettings } from './core/default-settings.js';
 import { getSettings, updateSetting } from './core/settings-manager.js';
 
 // Cotton-Tales modules - UI
-import { renderSettings } from './ui/settings-panel.js';
+import { renderSettings, populateCharacterCarousel } from './ui/settings-panel.js';
 import {
     activateLandingPage,
     deactivateLandingPage,
@@ -152,6 +152,7 @@ async function init() {
 
     // Register event listeners
     eventSource.on(event_types.CHAT_CHANGED, onChatChanged);
+    eventSource.on(event_types.CHARACTER_PAGE_LOADED, populateCharacterCarousel);
 
     // Render settings UI
     renderSettings();

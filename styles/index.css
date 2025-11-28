@@ -1,0 +1,21 @@
+/**
+ * ============================================================================
+ * COTTON-TALES CSS INDEX
+ * ============================================================================
+ * Main entry point - imports all modular CSS files
+ *
+ * Structure:
+ * - variables.css   : Color palette and design tokens
+ * - settings-panel.css : Extension settings UI
+ * - vn-mode.css     : Visual novel presentation layer
+ * - landing-page.css: Landing page transformation
+ *
+ * Note: SillyTavern doesn't support @import in extension CSS,
+ * so this file concatenates all styles inline.
+ *
+ * @author Coneja Chibi
+ * @version 0.2.0
+ * ============================================================================
+ */
+
+/* This file is a build target - use build script to concatenate modules */

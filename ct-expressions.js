@@ -750,12 +750,14 @@ function parseLlmResponse(emotionResponse, labels) {
 }
 
 /**
- * Check if VectHare is available and enabled
- * @returns {boolean} Whether VectHare is available
+ * Check if VectHare extension is installed
+ * @returns {boolean} Whether VectHare is installed (settings object exists)
  */
 function isVectHareAvailable() {
     try {
-        return !!(window.extension_settings?.vecthare?.enabled_chats);
+        // Check if VectHare's settings exist in extension_settings
+        // This indicates the extension is installed, regardless of whether chat sync is enabled
+        return !!(window.extension_settings?.vecthare);
     } catch {
         return false;
     }

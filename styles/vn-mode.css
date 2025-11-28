@@ -1,0 +1,289 @@
+/**
+ * ============================================================================
+ * COTTON-TALES VN MODE DISPLAY
+ * ============================================================================
+ * Visual Novel presentation layer - ADV mode styles
+ *
+ * @author Coneja Chibi
+ * @version 0.2.0
+ * ============================================================================
+ */
+
+/* =============================================================================
+   MAIN VN CONTAINER
+   ============================================================================= */
+
+#cotton-tales-vn {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9500;
+    overflow: hidden;
+    background: #000;
+}
+
+#cotton-tales-vn.active {
+    display: block;
+}
+
+/* Body class when VN mode is active */
+body.ct-vn-mode {
+    overflow: hidden;
+}
+
+/* =============================================================================
+   BACKGROUND LAYER
+   ============================================================================= */
+
+.ct-vn-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.ct-vn-background .ct-bg-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* =============================================================================
+   SPRITE LAYER
+   ============================================================================= */
+
+.ct-vn-sprites {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.ct-sprite-slot {
+    position: relative;
+    height: 85%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.ct-sprite-slot.left {
+    position: absolute;
+    left: 5%;
+}
+
+.ct-sprite-slot.right {
+    position: absolute;
+    right: 5%;
+}
+
+.ct-sprite-image {
+    max-height: 100%;
+    max-width: 50vw;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5));
+}
+
+/* Sprite animation classes */
+.ct-sprite-clone {
+    position: absolute;
+}
+
+/* =============================================================================
+   DIALOGUE BOX
+   ============================================================================= */
+
+.ct-vn-dialogue {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 0 5%;
+    padding-bottom: 30px;
+}
+
+/* Namebox */
+.ct-dialogue-namebox {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(42, 34, 64, 0.95) 0%, rgba(26, 20, 40, 0.98) 100%);
+    border: 2px solid var(--ct-purple-vibrant);
+    border-bottom: none;
+    border-radius: var(--ct-radius-lg) var(--ct-radius-lg) 0 0;
+    padding: 8px 24px;
+    margin-left: 40px;
+    margin-bottom: -2px;
+    position: relative;
+    z-index: 2;
+    box-shadow: var(--ct-glow-sm) var(--ct-purple-glow);
+}
+
+.ct-speaker-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Dialogue Content Box */
+.ct-dialogue-content {
+    background: linear-gradient(180deg, rgba(20, 15, 30, 0.95) 0%, rgba(10, 8, 18, 0.98) 100%);
+    border: 3px solid var(--ct-purple-vibrant);
+    border-radius: var(--ct-radius-lg);
+    padding: 24px 32px;
+    min-height: 120px;
+    position: relative;
+    box-shadow:
+        0 -4px 30px var(--ct-purple-glow),
+        var(--ct-shadow-lg),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.ct-dialogue-text {
+    font-size: 18px;
+    line-height: 1.7;
+    color: #f0f0f5;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Advance indicator */
+.ct-dialogue-indicator {
+    position: absolute;
+    bottom: 12px;
+    right: 20px;
+    color: var(--ct-purple-vibrant);
+    font-size: 14px;
+    animation: ctBounce 1s ease-in-out infinite;
+}
+
+@keyframes ctBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(5px); }
+}
+
+/* =============================================================================
+   CHOICE PANEL
+   ============================================================================= */
+
+.ct-vn-choices {
+    position: absolute;
+    bottom: 180px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 110;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 400px;
+    max-width: 600px;
+}
+
+.ct-choice-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, rgba(30, 20, 50, 0.95) 0%, rgba(20, 15, 35, 0.98) 100%);
+    border: 2px solid var(--ct-purple);
+    border-radius: var(--ct-radius-lg);
+    cursor: pointer;
+    transition: var(--ct-transition);
+    text-align: left;
+    box-shadow: var(--ct-shadow);
+}
+
+.ct-choice-btn:hover {
+    background: linear-gradient(135deg, rgba(183, 108, 255, 0.3) 0%, rgba(255, 107, 157, 0.2) 100%);
+    border-color: var(--ct-pink-vibrant);
+    transform: translateX(8px);
+    box-shadow: var(--ct-glow-md) var(--ct-pink-glow), var(--ct-shadow-lg);
+}
+
+.ct-choice-btn:active {
+    transform: translateX(4px) scale(0.98);
+}
+
+.ct-choice-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--ct-gradient-pink-purple);
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.ct-choice-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #e0e0f0;
+    line-height: 1.4;
+}
+
+/* =============================================================================
+   VN CONTROLS
+   ============================================================================= */
+
+.ct-vn-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 150;
+    display: flex;
+    gap: 8px;
+}
+
+.ct-control-btn {
+    width: 44px;
+    height: 44px;
+    background: rgba(20, 15, 30, 0.8);
+    border: 2px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    color: var(--ct-text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    transition: var(--ct-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+}
+
+.ct-control-btn:hover {
+    background: rgba(183, 108, 255, 0.2);
+    border-color: var(--ct-purple-vibrant);
+    color: #fff;
+    box-shadow: var(--ct-glow-sm) var(--ct-purple-glow);
+}
+
+.ct-control-btn.active {
+    background: rgba(255, 107, 157, 0.3);
+    border-color: var(--ct-pink-vibrant);
+    color: var(--ct-pink-vibrant);
+}
+
+/* =============================================================================
+   UTILITY CLASSES
+   ============================================================================= */
+
+.ct-hidden {
+    display: none !important;
+}
