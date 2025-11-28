@@ -265,4 +265,4 @@ export function cleanup() {
 // EXPORTS
 // =============================================================================
 
-export { EXTENSION_NAME, openSpriteManager, closeSpriteManager, cleanup };
+export { EXTENSION_NAME, openSpriteManager, closeSpriteManager };
