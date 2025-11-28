@@ -136,34 +136,63 @@ export const DEFAULT_LLM_PROMPT = 'Classify the emotion of the last message. Out
  * Users can mirror these to their own HuggingFace for reliability
  */
 export const CLASSIFIER_MODELS = {
-    /** ST's default - DistilBERT GoEmotions (28 labels) */
-    st_default: {
-        id: 'st_default',
-        name: 'ST Default (DistilBERT)',
-        repo: 'Cohee/distilbert-base-uncased-go-emotions-onnx',
-        labels: 28,
-        description: 'SillyTavern\'s built-in classifier. 28 emotion labels from GoEmotions dataset.',
-    },
-    /** RoBERTa GoEmotions - higher quality (28 labels) */
+    /** RoBERTa GoEmotions - high quality 28 labels */
     roberta_go_emotions: {
         id: 'roberta_go_emotions',
         name: 'RoBERTa GoEmotions',
         repo: 'SamLowe/roberta-base-go_emotions-onnx',
         labels: 28,
-        description: 'Higher quality RoBERTa model. Same 28 labels but better accuracy (F1: 0.54).',
+        labelList: ['admiration', 'amusement', 'anger', 'annoyance', 'approval', 'caring', 'confusion', 'curiosity', 'desire', 'disappointment', 'disapproval', 'disgust', 'embarrassment', 'excitement', 'fear', 'gratitude', 'grief', 'joy', 'love', 'nervousness', 'optimism', 'pride', 'realization', 'relief', 'remorse', 'sadness', 'surprise', 'neutral'],
+        f1: 0.54,
+        description: 'High quality RoBERTa model. 28 GoEmotions labels with good accuracy.',
     },
-    /** DistilRoBERTa Dialogue - trained on conversational data (7 labels) */
+    /** MicahB DistilRoBERTa - trained on dialogue (7 labels) */
     distilroberta_dialogue: {
         id: 'distilroberta_dialogue',
         name: 'DistilRoBERTa Dialogue',
         repo: 'MicahB/emotion_text_classifier',
         labels: 7,
-        description: 'Trained on dialogue/conversation. 7 Ekman emotions (F1: 0.815). Best for RP.',
+        labelList: ['anger', 'disgust', 'fear', 'joy', 'neutral', 'sadness', 'surprise'],
+        f1: 0.815,
+        description: 'Trained on dialogue/conversation. 7 Ekman emotions. Great for RP chat.',
+    },
+    /** boltuix BERT - 13 labels with RP-specific emotions */
+    bert_emotion_rp: {
+        id: 'bert_emotion_rp',
+        name: 'BERT Emotion (RP)',
+        repo: 'boltuix/bert-emotion',
+        labels: 13,
+        labelList: ['anger', 'disgust', 'fear', 'guilt', 'joy', 'love', 'sadness', 'shame', 'surprise', 'desire', 'sarcasm', 'neutral', 'embarrassment'],
+        f1: 0.93,
+        description: '13 labels including sarcasm, shame, guilt, desire. Perfect for roleplay.',
+        needsConversion: true,
+    },
+    /** bhadresh-savani DistilBERT - 6 labels, highest accuracy */
+    distilbert_high_accuracy: {
+        id: 'distilbert_high_accuracy',
+        name: 'DistilBERT (Highest Accuracy)',
+        repo: 'bhadresh-savani/distilbert-base-uncased-emotion',
+        labels: 6,
+        labelList: ['sadness', 'joy', 'love', 'anger', 'fear', 'surprise'],
+        f1: 0.938,
+        description: '6 basic emotions with highest accuracy (F1: 0.938). Simple but reliable.',
+        needsConversion: true,
+    },
+    /** tae898 EmoBERTa - dialogue emotion recognition */
+    emoberta_dialogue: {
+        id: 'emoberta_dialogue',
+        name: 'EmoBERTa Large',
+        repo: 'tae898/emoberta-large',
+        labels: 7,
+        labelList: ['neutral', 'joy', 'surprise', 'anger', 'sadness', 'disgust', 'fear'],
+        f1: 0.656,
+        description: 'Large RoBERTa model trained on dialogue emotion recognition.',
+        needsConversion: true,
     },
 };
 
 /** Default classifier model */
-export const DEFAULT_CLASSIFIER_MODEL = 'st_default';
+export const DEFAULT_CLASSIFIER_MODEL = 'roberta_go_emotions';
 
 /** Special fallback options */
 export const FALLBACK_OPTIONS = {
