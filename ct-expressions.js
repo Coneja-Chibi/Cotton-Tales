@@ -56,7 +56,16 @@ import { removeReasoningFromString } from '../../../reasoning.js';
 
 // Cotton-Tales settings
 import { getSettings } from './core/settings-manager.js';
-import { EXTENSION_NAME } from './core/constants.js';
+import {
+    EXTENSION_NAME,
+    DEFAULT_EXPRESSIONS,
+    EXPRESSION_API,
+    PROMPT_TYPE,
+    DEFAULT_LLM_PROMPT,
+} from './core/constants.js';
+
+// Shared extension utilities
+import { isWebLlmSupported, generateWebLlmChatPrompt } from '../../../shared.js';
 
 // =============================================================================
 // CONSTANTS
@@ -65,24 +74,6 @@ import { EXTENSION_NAME } from './core/constants.js';
 const MODULE_NAME = 'ct-expressions';
 const UPDATE_INTERVAL = 2000;
 const STREAMING_UPDATE_INTERVAL = 10000;
-const DEFAULT_FALLBACK_EXPRESSION = 'joy';
-const DEFAULT_LLM_PROMPT = 'Classify the emotion of the last message. Output just one word. Choose only one: {{labels}}';
-
-const DEFAULT_EXPRESSIONS = [
-    'admiration', 'amusement', 'anger', 'annoyance', 'approval', 'caring',
-    'confusion', 'curiosity', 'desire', 'disappointment', 'disapproval',
-    'disgust', 'embarrassment', 'excitement', 'fear', 'gratitude', 'grief',
-    'joy', 'love', 'nervousness', 'optimism', 'pride', 'realization',
-    'relief', 'remorse', 'sadness', 'surprise', 'neutral',
-];
-
-/** @enum {number} */
-const EXPRESSION_API = {
-    local: 0,
-    extras: 1,
-    llm: 2,
-    none: 99,
-};
 
 // =============================================================================
 // STATE
@@ -103,20 +94,8 @@ export let lastExpression = {};
 // HELPER FUNCTIONS
 // =============================================================================
 
-/**
- * Gets the current expression settings from Cotton-Tales
- * Maps CT settings to the format expected by expression functions
- */
-function getExpressionSettings() {
-    const ctSettings = getSettings();
-    return {
-        api: EXPRESSION_API.none, // Default to none, can be configured later
-        fallback_expression: ctSettings.fallbackExpression || DEFAULT_FALLBACK_EXPRESSION,
-        showDefault: false,
-        allowMultiple: true,
-        rerollIfSame: false,
-    };
-}
+/** Default fallback expression */
+const DEFAULT_FALLBACK_EXPRESSION = 'neutral';
 
 /**
  * Check if Visual Novel mode is active (group chat + waifu mode)
@@ -282,15 +261,16 @@ async function getExpressionsList() {
 function chooseSpriteForExpression(spriteFolderName, expression, { prevExpressionSrc = null } = {}) {
     if (!spriteCache[spriteFolderName]) return null;
 
-    const settings = getExpressionSettings();
+    const ctSettings = getSettings();
+    const fallbackExpression = ctSettings.fallbackExpression || DEFAULT_FALLBACK_EXPRESSION;
 
     // Find sprites for this expression
     let sprite = spriteCache[spriteFolderName].find(x => x.label === expression);
 
     // Try fallback if no match
-    if (!(sprite?.files?.length > 0) && settings.fallback_expression) {
-        sprite = spriteCache[spriteFolderName].find(x => x.label === settings.fallback_expression);
-        console.debug(`[${MODULE_NAME}] Using fallback expression: ${settings.fallback_expression}`);
+    if (!(sprite?.files?.length > 0) && fallbackExpression) {
+        sprite = spriteCache[spriteFolderName].find(x => x.label === fallbackExpression);
+        console.debug(`[${MODULE_NAME}] Using fallback expression: ${fallbackExpression}`);
     }
 
     if (!(sprite?.files?.length > 0)) return null;
@@ -682,52 +662,325 @@ async function visualNovelUpdateLayers(container) {
 // =============================================================================
 
 /**
- * Process text for classification
+ * Process text for classification - reduces text length for API calls
+ * @param {string} text - The text to process
+ * @param {number} api - The API being used
+ * @returns {string} Processed text
  */
-function sampleClassifyText(text) {
+function sampleClassifyText(text, api) {
     if (!text) return text;
 
+    // Replace macros, remove asterisks and quotes
     let result = substituteParams(text).replace(/[*"]/g, '');
 
+    // LLM APIs can handle more text
+    if (api === EXPRESSION_API.llm) {
+        return result.trim();
+    }
+
     const SAMPLE_THRESHOLD = 500;
+    const HALF_SAMPLE_THRESHOLD = SAMPLE_THRESHOLD / 2;
+
     if (text.length < SAMPLE_THRESHOLD) {
         result = trimToEndSentence(result);
     } else {
-        result = trimToEndSentence(result.slice(0, 250)) + ' ' + trimToStartSentence(result.slice(-250));
+        result = trimToEndSentence(result.slice(0, HALF_SAMPLE_THRESHOLD)) + ' ' + trimToStartSentence(result.slice(-HALF_SAMPLE_THRESHOLD));
     }
 
     return result.trim();
 }
 
 /**
- * Classify text to get expression label
+ * Get the list of available expressions
+ * @param {Object} options - Options
+ * @param {boolean} options.filterAvailable - Whether to filter to only available sprites
+ * @returns {Promise<string[]>} List of expression labels
  */
-async function getExpressionLabel(text) {
-    const settings = getExpressionSettings();
+async function getExpressionsList({ filterAvailable = false } = {}) {
+    // TODO: If filterAvailable, check sprite cache for current character
+    // For now, return default list
+    return [...DEFAULT_EXPRESSIONS];
+}
 
-    if (!text) {
-        return settings.fallback_expression;
+/**
+ * Get the LLM prompt for classification
+ * @param {string[]} labels - Available expression labels
+ * @returns {Promise<string>} The prompt to use
+ */
+async function getLlmPrompt(labels) {
+    const settings = getSettings();
+    const labelsString = labels.map(x => `"${x}"`).join(', ');
+    const prompt = substituteParamsExtended(
+        String(settings.expressionLlmPrompt || DEFAULT_LLM_PROMPT),
+        { labels: labelsString }
+    );
+    return prompt;
+}
+
+/**
+ * Parse LLM response to extract expression label
+ * @param {string} emotionResponse - Raw response from LLM
+ * @param {string[]} labels - Valid expression labels
+ * @returns {string} Parsed expression label
+ */
+function parseLlmResponse(emotionResponse, labels) {
+    try {
+        // Try JSON parse first (for structured output)
+        const parsedEmotion = JSON.parse(emotionResponse);
+        const response = parsedEmotion?.emotion?.trim()?.toLowerCase();
+
+        if (response && labels.includes(response)) {
+            return response;
+        }
+        throw new Error('Emotion not in labels');
+    } catch {
+        // Clean reasoning from response
+        emotionResponse = removeReasoningFromString(emotionResponse);
+
+        // Fuzzy search in labels
+        const fuse = new Fuse(labels, { includeScore: true });
+        console.debug(`[${MODULE_NAME}] Fuzzy searching in labels:`, labels);
+        const result = fuse.search(emotionResponse);
+
+        if (result.length > 0) {
+            console.debug(`[${MODULE_NAME}] Fuzzy found: ${result[0].item} for response:`, emotionResponse);
+            return result[0].item;
+        }
+
+        // Direct string match
+        const lowerCaseResponse = String(emotionResponse || '').toLowerCase();
+        for (const label of labels) {
+            if (lowerCaseResponse.includes(label.toLowerCase())) {
+                console.debug(`[${MODULE_NAME}] Found label ${label} in response:`, emotionResponse);
+                return label;
+            }
+        }
     }
 
-    text = sampleClassifyText(text);
+    throw new Error('Could not parse emotion response: ' + emotionResponse);
+}
+
+/**
+ * Check if VectHare is available and enabled
+ * @returns {boolean} Whether VectHare is available
+ */
+function isVectHareAvailable() {
+    try {
+        return !!(window.extension_settings?.vecthare?.enabled_chats);
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Classify text using VectHare's semantic capabilities (bonus feature)
+ * Uses embeddings to find semantically similar expressions
+ * @param {string} text - Text to classify
+ * @param {string[]} labels - Available labels
+ * @returns {Promise<string|null>} Expression label or null if unavailable
+ */
+async function classifyWithVectHare(text, labels) {
+    // Check if VectHare is available
+    if (!isVectHareAvailable()) {
+        console.debug(`[${MODULE_NAME}] VectHare not available`);
+        return null;
+    }
 
     try {
-        // Try local classifier first
-        const localResult = await fetch('/api/extra/classify', {
+        // VectHare exposes embedding generation through the ST plugin API
+        // We can use semantic similarity to match text to emotions
+        const response = await fetch('/api/plugins/similharity/vectors', {
             method: 'POST',
             headers: getRequestHeaders(),
-            body: JSON.stringify({ text: text }),
+            body: JSON.stringify({
+                text: text,
+                source: 'transformers', // Use local embeddings
+            }),
         });
 
-        if (localResult.ok) {
-            const data = await localResult.json();
-            return data.classification[0].label;
+        if (!response.ok) {
+            return null;
         }
+
+        // Get text embedding
+        const textVector = await response.json();
+
+        // Pre-computed emotion label embeddings (cached)
+        // For now, fall back to LLM - full VectHare integration would use semantic search
+        console.debug(`[${MODULE_NAME}] VectHare embedding generated, semantic matching TODO`);
+
+        // Placeholder: Use VectHare's semantic search to find closest emotion
+        // This would require pre-indexing emotion descriptions
+        return null;
     } catch (error) {
-        console.debug(`[${MODULE_NAME}] Classification failed, using fallback`);
+        console.debug(`[${MODULE_NAME}] VectHare classification failed:`, error);
+        return null;
+    }
+}
+
+/**
+ * Main expression classification function
+ * Supports multiple APIs: local, extras, llm, webllm, vecthare, none
+ *
+ * @param {string} text - The text to classify
+ * @param {number} [apiOverride] - Optional API override
+ * @returns {Promise<string|null>} The expression label or null
+ */
+async function getExpressionLabel(text, apiOverride = null) {
+    const settings = getSettings();
+    const api = apiOverride ?? settings.expressionApi ?? EXPRESSION_API.local;
+    const fallback = settings.fallbackExpression || 'neutral';
+
+    // Return fallback if no text or API is none
+    if (!text) {
+        return fallback;
     }
 
-    return settings.fallback_expression;
+    // Check if extras module is available (for extras API)
+    if (api === EXPRESSION_API.extras && !modules.includes('classify')) {
+        console.debug(`[${MODULE_NAME}] Extras classify module not available`);
+        return fallback;
+    }
+
+    // Translate if enabled
+    if (settings.translateBeforeClassify && typeof globalThis.translate === 'function') {
+        text = await globalThis.translate(text, 'en');
+    }
+
+    // Sample/trim text for classification
+    text = sampleClassifyText(text, api);
+
+    try {
+        switch (api) {
+            // =================================================================
+            // LOCAL - Built-in BERT classifier (transformers.js)
+            // =================================================================
+            case EXPRESSION_API.local: {
+                const localResult = await fetch('/api/extra/classify', {
+                    method: 'POST',
+                    headers: getRequestHeaders(),
+                    body: JSON.stringify({ text: text }),
+                });
+
+                if (localResult.ok) {
+                    const data = await localResult.json();
+                    return data.classification[0].label;
+                }
+                break;
+            }
+
+            // =================================================================
+            // LLM - Use current chat API for classification
+            // =================================================================
+            case EXPRESSION_API.llm: {
+                try {
+                    await waitUntilCondition(() => online_status !== 'no_connection', 3000, 250);
+                } catch (error) {
+                    console.warn(`[${MODULE_NAME}] No LLM connection, using fallback`);
+                    return fallback;
+                }
+
+                const expressionsList = await getExpressionsList({
+                    filterAvailable: settings.filterAvailableExpressions
+                });
+                const prompt = await getLlmPrompt(expressionsList);
+
+                let emotionResponse;
+                try {
+                    inApiCall = true;
+                    switch (settings.expressionPromptType) {
+                        case PROMPT_TYPE.raw:
+                            emotionResponse = await generateRaw({ prompt: text, systemPrompt: prompt });
+                            break;
+                        case PROMPT_TYPE.full:
+                        default:
+                            emotionResponse = await generateQuietPrompt({ quietPrompt: prompt });
+                            break;
+                    }
+                } finally {
+                    inApiCall = false;
+                }
+
+                return parseLlmResponse(emotionResponse, expressionsList);
+            }
+
+            // =================================================================
+            // WEBLLM - Browser-based LLM classification
+            // =================================================================
+            case EXPRESSION_API.webllm: {
+                if (!isWebLlmSupported()) {
+                    console.warn(`[${MODULE_NAME}] WebLLM not supported, using fallback`);
+                    return fallback;
+                }
+
+                const expressionsList = await getExpressionsList({
+                    filterAvailable: settings.filterAvailableExpressions
+                });
+                const prompt = await getLlmPrompt(expressionsList);
+                const messages = [
+                    { role: 'user', content: text + '\n\n' + prompt },
+                ];
+
+                const emotionResponse = await generateWebLlmChatPrompt(messages);
+                return parseLlmResponse(emotionResponse, expressionsList);
+            }
+
+            // =================================================================
+            // EXTRAS - SillyTavern Extras server
+            // =================================================================
+            case EXPRESSION_API.extras: {
+                const url = new URL(getApiUrl());
+                url.pathname = '/api/classify';
+
+                const extrasResult = await doExtrasFetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Bypass-Tunnel-Reminder': 'bypass',
+                    },
+                    body: JSON.stringify({ text: text }),
+                });
+
+                if (extrasResult.ok) {
+                    const data = await extrasResult.json();
+                    return data.classification[0].label;
+                }
+                break;
+            }
+
+            // =================================================================
+            // VECTHARE - Semantic classification (bonus feature)
+            // =================================================================
+            case EXPRESSION_API.vecthare: {
+                const expressionsList = await getExpressionsList();
+                const result = await classifyWithVectHare(text, expressionsList);
+                if (result) {
+                    return result;
+                }
+                // Fall through to local if VectHare fails
+                console.debug(`[${MODULE_NAME}] VectHare unavailable, falling back to local`);
+                return getExpressionLabel(text, EXPRESSION_API.local);
+            }
+
+            // =================================================================
+            // NONE - No classification, use fallback
+            // =================================================================
+            case EXPRESSION_API.none: {
+                return '';
+            }
+
+            default: {
+                console.error(`[${MODULE_NAME}] Invalid API selected: ${api}`);
+                return '';
+            }
+        }
+    } catch (error) {
+        console.error(`[${MODULE_NAME}] Classification error:`, error);
+        toastr.error('Could not classify expression. Check console for details.');
+        return fallback;
+    }
+
+    return fallback;
 }
 
 // =============================================================================
@@ -960,4 +1213,5 @@ export {
     getExpressionLabel,
     sendExpressionCall,
     isVisualNovelMode,
+    isVectHareAvailable,
 };

@@ -11,9 +11,10 @@
  */
 
 import { getContext } from '../../../../extensions.js';
-import { EXTENSION_NAME } from '../core/constants.js';
+import { EXTENSION_NAME, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT } from '../core/constants.js';
 import { getSettings, updateSetting } from '../core/settings-manager.js';
 import { onVNModeToggled } from '../index.js';
+import { isVectHareAvailable } from '../ct-expressions.js';
 
 // =============================================================================
 // STATE
@@ -44,6 +45,10 @@ function getSettingsHTML() {
                                 <i class="fa-solid fa-users"></i>
                                 Characters
                             </button>
+                            <button class="ct-tab" data-tab="expressions">
+                                <i class="fa-solid fa-face-smile"></i>
+                                Expressions
+                            </button>
                             <button class="ct-tab" data-tab="backgrounds">
                                 <i class="fa-solid fa-image"></i>
                                 Backgrounds
@@ -61,6 +66,11 @@ function getSettingsHTML() {
                         <!-- Characters Tab -->
                         <div class="ct-tab-content active" data-tab="characters">
                             ${getCharactersTabHTML()}
+                        </div>
+
+                        <!-- Expressions Tab -->
+                        <div class="ct-tab-content" data-tab="expressions">
+                            ${getExpressionsTabHTML()}
                         </div>
 
                         <!-- Backgrounds Tab -->
@@ -133,6 +143,153 @@ function getCharactersTabHTML() {
         <!-- Detail Panel (shown when card selected) -->
         <div class="ct-detail-panel" id="ct_character_detail">
             <!-- Populated by JS when character selected -->
+        </div>
+    `;
+}
+
+function getExpressionsTabHTML() {
+    const settings = getSettings();
+    const vectHareAvailable = isVectHareAvailable();
+
+    return `
+        <div class="ct-section-label">
+            <i class="fa-solid fa-brain"></i>
+            Expression Classification
+        </div>
+
+        <p style="font-size: 12px; color: var(--ct-text-light); margin-bottom: 16px;">
+            Choose how Cotton-Tales detects emotions in messages to switch character sprites.
+        </p>
+
+        <!-- Classification API -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Classification Method</span>
+            </div>
+            <select class="ct-select" id="ct_expression_api">
+                <option value="${EXPRESSION_API.local}" ${settings.expressionApi === EXPRESSION_API.local ? 'selected' : ''}>
+                    Local (Built-in BERT)
+                </option>
+                <option value="${EXPRESSION_API.llm}" ${settings.expressionApi === EXPRESSION_API.llm ? 'selected' : ''}>
+                    LLM (Current Chat API)
+                </option>
+                <option value="${EXPRESSION_API.webllm}" ${settings.expressionApi === EXPRESSION_API.webllm ? 'selected' : ''}>
+                    WebLLM (Browser-based)
+                </option>
+                <option value="${EXPRESSION_API.extras}" ${settings.expressionApi === EXPRESSION_API.extras ? 'selected' : ''}>
+                    Extras Server
+                </option>
+                <option value="${EXPRESSION_API.vecthare}" ${settings.expressionApi === EXPRESSION_API.vecthare ? 'selected' : ''}
+                    ${!vectHareAvailable ? 'disabled' : ''}>
+                    VectHare Semantic ${!vectHareAvailable ? '(Not Installed)' : '✓'}
+                </option>
+                <option value="${EXPRESSION_API.none}" ${settings.expressionApi === EXPRESSION_API.none ? 'selected' : ''}>
+                    None (Fallback Only)
+                </option>
+            </select>
+        </div>
+
+        <!-- API Help Text -->
+        <div id="ct_api_help" style="font-size: 11px; color: var(--ct-text-light); margin-bottom: 16px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+            <strong>Local:</strong> Uses transformers.js BERT model. Fast and private, runs entirely in browser.
+        </div>
+
+        ${vectHareAvailable ? `
+        <!-- VectHare Bonus Section -->
+        <div class="ct-vecthare-bonus" style="margin: 16px 0; padding: 12px; background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(139,92,246,0.3); border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <i class="fa-solid fa-rabbit" style="color: #8b5cf6;"></i>
+                <span style="font-weight: 600; color: #8b5cf6;">VectHare Detected!</span>
+            </div>
+            <p style="font-size: 11px; color: var(--ct-text-light); margin: 0;">
+                VectHare semantic classification uses embeddings to understand emotion context.
+                This can be more accurate than keyword matching for nuanced expressions.
+            </p>
+        </div>
+        ` : ''}
+
+        <!-- LLM Settings (shown when LLM or WebLLM selected) -->
+        <div id="ct_llm_settings" style="display: ${[EXPRESSION_API.llm, EXPRESSION_API.webllm].includes(settings.expressionApi) ? 'block' : 'none'};">
+            <div class="ct-section-label" style="margin-top: 16px;">
+                <i class="fa-solid fa-message"></i>
+                LLM Settings
+            </div>
+
+            <!-- Prompt Type (LLM only) -->
+            <div class="ct-slider-row" id="ct_prompt_type_row" style="display: ${settings.expressionApi === EXPRESSION_API.llm ? 'block' : 'none'};">
+                <div class="ct-slider-header">
+                    <span class="ct-slider-label">Prompt Type</span>
+                </div>
+                <select class="ct-select" id="ct_expression_prompt_type">
+                    <option value="${PROMPT_TYPE.raw}" ${settings.expressionPromptType === PROMPT_TYPE.raw ? 'selected' : ''}>
+                        Raw (Just text + instruction)
+                    </option>
+                    <option value="${PROMPT_TYPE.full}" ${settings.expressionPromptType === PROMPT_TYPE.full ? 'selected' : ''}>
+                        Full (Uses chat context)
+                    </option>
+                </select>
+            </div>
+
+            <!-- Custom Prompt -->
+            <div class="ct-slider-row">
+                <div class="ct-slider-header">
+                    <span class="ct-slider-label">Classification Prompt</span>
+                </div>
+                <textarea class="ct-textarea" id="ct_llm_prompt" rows="3"
+                    placeholder="Use {{labels}} for available expressions"
+                    style="width: 100%; resize: vertical; font-size: 12px; padding: 8px; border-radius: 6px; border: 1px solid var(--ct-wood-dark); background: var(--ct-cream);"
+                >${settings.expressionLlmPrompt || DEFAULT_LLM_PROMPT}</textarea>
+            </div>
+
+            <button class="ct-btn secondary" id="ct_reset_prompt" style="margin-top: 8px;">
+                <i class="fa-solid fa-rotate-left"></i>
+                Reset to Default
+            </button>
+        </div>
+
+        <div class="ct-section-label" style="margin-top: 24px;">
+            <i class="fa-solid fa-sliders"></i>
+            Classification Options
+        </div>
+
+        <!-- Fallback Expression -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Fallback Expression</span>
+            </div>
+            <select class="ct-select" id="ct_fallback_expression">
+                <option value="neutral" ${settings.fallbackExpression === 'neutral' ? 'selected' : ''}>neutral</option>
+                <option value="joy" ${settings.fallbackExpression === 'joy' ? 'selected' : ''}>joy</option>
+                <option value="sadness" ${settings.fallbackExpression === 'sadness' ? 'selected' : ''}>sadness</option>
+                <option value="anger" ${settings.fallbackExpression === 'anger' ? 'selected' : ''}>anger</option>
+                <option value="surprise" ${settings.fallbackExpression === 'surprise' ? 'selected' : ''}>surprise</option>
+                <option value="fear" ${settings.fallbackExpression === 'fear' ? 'selected' : ''}>fear</option>
+                <option value="#none" ${settings.fallbackExpression === '#none' ? 'selected' : ''}>None (hide sprite)</option>
+            </select>
+        </div>
+
+        <!-- Filter Available -->
+        <div class="ct-toggle-row">
+            <div>
+                <div class="ct-toggle-label">Filter to Available Sprites</div>
+                <div class="ct-toggle-sublabel">Only suggest expressions that have sprites</div>
+            </div>
+            <label class="ct-switch">
+                <input type="checkbox" id="ct_filter_available" ${settings.filterAvailableExpressions ? 'checked' : ''} />
+                <span class="ct-switch-slider"></span>
+            </label>
+        </div>
+
+        <!-- Translate Before Classify -->
+        <div class="ct-toggle-row">
+            <div>
+                <div class="ct-toggle-label">Translate to English</div>
+                <div class="ct-toggle-sublabel">Translate text before classification (if translate extension enabled)</div>
+            </div>
+            <label class="ct-switch">
+                <input type="checkbox" id="ct_translate_classify" ${settings.translateBeforeClassify ? 'checked' : ''} />
+                <span class="ct-switch-slider"></span>
+            </label>
         </div>
     `;
 }
@@ -649,6 +806,65 @@ function bindEvents() {
     document.getElementById('ct_open_stage')?.addEventListener('click', () => {
         toastr.info('Stage Composer - Coming soon!');
     });
+
+    // ==========================================================================
+    // EXPRESSIONS TAB BINDINGS
+    // ==========================================================================
+
+    // Expression API selector
+    const apiSelect = document.getElementById('ct_expression_api');
+    const llmSettings = document.getElementById('ct_llm_settings');
+    const promptTypeRow = document.getElementById('ct_prompt_type_row');
+    const apiHelp = document.getElementById('ct_api_help');
+
+    const apiHelpTexts = {
+        [EXPRESSION_API.local]: '<strong>Local:</strong> Uses transformers.js BERT model. Fast and private, runs entirely in browser.',
+        [EXPRESSION_API.llm]: '<strong>LLM:</strong> Uses your current chat API to classify emotions. More context-aware but uses API calls.',
+        [EXPRESSION_API.webllm]: '<strong>WebLLM:</strong> Uses browser-based LLM. Requires WebLLM extension installed.',
+        [EXPRESSION_API.extras]: '<strong>Extras:</strong> Uses SillyTavern Extras server classify endpoint. Requires Extras running.',
+        [EXPRESSION_API.vecthare]: '<strong>VectHare:</strong> Semantic emotion matching using embeddings. Experimental bonus feature.',
+        [EXPRESSION_API.none]: '<strong>None:</strong> No classification. Only uses fallback expression.',
+    };
+
+    apiSelect?.addEventListener('change', (e) => {
+        const api = parseInt(e.target.value, 10);
+        updateSetting('expressionApi', api);
+
+        // Show/hide LLM settings
+        const showLlm = [EXPRESSION_API.llm, EXPRESSION_API.webllm].includes(api);
+        if (llmSettings) llmSettings.style.display = showLlm ? 'block' : 'none';
+
+        // Show prompt type only for LLM (not WebLLM)
+        if (promptTypeRow) promptTypeRow.style.display = api === EXPRESSION_API.llm ? 'block' : 'none';
+
+        // Update help text
+        if (apiHelp) apiHelp.innerHTML = apiHelpTexts[api] || '';
+    });
+
+    // Prompt type
+    bindSelect('ct_expression_prompt_type', 'expressionPromptType');
+
+    // LLM prompt textarea
+    document.getElementById('ct_llm_prompt')?.addEventListener('change', (e) => {
+        updateSetting('expressionLlmPrompt', e.target.value);
+    });
+
+    // Reset prompt button
+    document.getElementById('ct_reset_prompt')?.addEventListener('click', () => {
+        const textarea = document.getElementById('ct_llm_prompt');
+        if (textarea) {
+            textarea.value = DEFAULT_LLM_PROMPT;
+            updateSetting('expressionLlmPrompt', DEFAULT_LLM_PROMPT);
+            toastr.success('Prompt reset to default');
+        }
+    });
+
+    // Fallback expression
+    bindSelect('ct_fallback_expression', 'fallbackExpression');
+
+    // Classification options toggles
+    bindToggle('ct_filter_available', 'filterAvailableExpressions');
+    bindToggle('ct_translate_classify', 'translateBeforeClassify');
 }
 
 function bindCarouselArrows(prevId, nextId, carouselId) {

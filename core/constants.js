@@ -91,6 +91,51 @@ export const DEFAULT_EXPRESSIONS = [
 ];
 
 // =============================================================================
+// EXPRESSION CLASSIFICATION API
+// =============================================================================
+
+/**
+ * Available APIs for expression classification
+ * @enum {number}
+ */
+export const EXPRESSION_API = {
+    /** Local BERT classifier (transformers.js) */
+    local: 0,
+    /** SillyTavern Extras server */
+    extras: 1,
+    /** LLM-based classification (uses current chat API) */
+    llm: 2,
+    /** WebLLM browser-based classification */
+    webllm: 3,
+    /** VectHare semantic classification (bonus - if installed) */
+    vecthare: 4,
+    /** No classification - use fallback only */
+    none: 99,
+};
+
+/**
+ * LLM prompt types for expression classification
+ * @enum {string}
+ */
+export const PROMPT_TYPE = {
+    /** Raw prompt - just the text and instruction */
+    raw: 'raw',
+    /** Full prompt - uses chat context */
+    full: 'full',
+};
+
+/** Default LLM prompt for expression classification */
+export const DEFAULT_LLM_PROMPT = 'Classify the emotion of the last message. Output just one word. Choose only one: {{labels}}';
+
+/** Special fallback options */
+export const FALLBACK_OPTIONS = {
+    /** No fallback - leave blank */
+    NONE: '#none',
+    /** Emoji-based fallback */
+    EMOJI: '#emoji',
+};
+
+// =============================================================================
 // EFFECTS
 // =============================================================================
 

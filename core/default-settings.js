@@ -21,6 +21,9 @@ import {
     DEFAULT_TYPEWRITER_SPEED,
     TRANSITION_TYPE,
     DIALOGUE_POSITION,
+    EXPRESSION_API,
+    PROMPT_TYPE,
+    DEFAULT_LLM_PROMPT,
 } from './constants.js';
 
 /**
@@ -88,6 +91,25 @@ export const defaultSettings = {
 
     /** Fallback expression when none specified */
     fallbackExpression: DEFAULT_FALLBACK_EXPRESSION,
+
+    // ==========================================================================
+    // EXPRESSION CLASSIFICATION SETTINGS
+    // ==========================================================================
+
+    /** Which API to use for expression classification */
+    expressionApi: EXPRESSION_API.local,
+
+    /** LLM prompt type (raw or full context) */
+    expressionPromptType: PROMPT_TYPE.raw,
+
+    /** Custom LLM prompt for classification */
+    expressionLlmPrompt: DEFAULT_LLM_PROMPT,
+
+    /** Only show expressions that have sprites available */
+    filterAvailableExpressions: false,
+
+    /** Translate text to English before classification */
+    translateBeforeClassify: false,
 
     // ==========================================================================
     // BACKGROUND SETTINGS
