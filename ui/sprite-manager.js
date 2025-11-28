@@ -17,7 +17,7 @@
  */
 
 import { getRequestHeaders, getThumbnailUrl, characters, this_chid } from '../../../../../script.js';
-import { getContext } from '../../../../extensions.js';
+import { getContext } from '../../../extensions.js';
 import { getSettings, saveSettings } from '../core/settings-manager.js';
 import { EXTENSION_NAME, DEFAULT_EXPRESSIONS } from '../core/constants.js';
 import { getSpritesList, spriteCache, validateImages } from '../ct-expressions.js';
