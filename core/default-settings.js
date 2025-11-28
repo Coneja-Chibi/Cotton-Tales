@@ -25,6 +25,7 @@ import {
     PROMPT_TYPE,
     DEFAULT_LLM_PROMPT,
     VECTHARE_TRIGGER,
+    DEFAULT_CLASSIFIER_MODEL,
 } from './constants.js';
 
 /**
@@ -99,6 +100,15 @@ export const defaultSettings = {
 
     /** Which API to use for expression classification */
     expressionApi: EXPRESSION_API.local,
+
+    /** Which classifier model to use (for local API) */
+    classifierModel: DEFAULT_CLASSIFIER_MODEL,
+
+    /** Use quantized model (smaller, faster) vs full precision (slightly more accurate) */
+    useQuantizedModel: true,
+
+    /** Custom HuggingFace repo override (if user mirrors models) */
+    customClassifierRepo: '',
 
     /** LLM prompt type (raw or full context) */
     expressionPromptType: PROMPT_TYPE.raw,

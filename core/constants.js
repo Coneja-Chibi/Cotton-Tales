@@ -127,6 +127,44 @@ export const PROMPT_TYPE = {
 /** Default LLM prompt for expression classification */
 export const DEFAULT_LLM_PROMPT = 'Classify the emotion of the last message. Output just one word. Choose only one: {{labels}}';
 
+// =============================================================================
+// CLASSIFIER MODELS
+// =============================================================================
+
+/**
+ * Available emotion classifier models
+ * Users can mirror these to their own HuggingFace for reliability
+ */
+export const CLASSIFIER_MODELS = {
+    /** ST's default - DistilBERT GoEmotions (28 labels) */
+    st_default: {
+        id: 'st_default',
+        name: 'ST Default (DistilBERT)',
+        repo: 'Cohee/distilbert-base-uncased-go-emotions-onnx',
+        labels: 28,
+        description: 'SillyTavern\'s built-in classifier. 28 emotion labels from GoEmotions dataset.',
+    },
+    /** RoBERTa GoEmotions - higher quality (28 labels) */
+    roberta_go_emotions: {
+        id: 'roberta_go_emotions',
+        name: 'RoBERTa GoEmotions',
+        repo: 'SamLowe/roberta-base-go_emotions-onnx',
+        labels: 28,
+        description: 'Higher quality RoBERTa model. Same 28 labels but better accuracy (F1: 0.54).',
+    },
+    /** DistilRoBERTa Dialogue - trained on conversational data (7 labels) */
+    distilroberta_dialogue: {
+        id: 'distilroberta_dialogue',
+        name: 'DistilRoBERTa Dialogue',
+        repo: 'MicahB/emotion_text_classifier',
+        labels: 7,
+        description: 'Trained on dialogue/conversation. 7 Ekman emotions (F1: 0.815). Best for RP.',
+    },
+};
+
+/** Default classifier model */
+export const DEFAULT_CLASSIFIER_MODEL = 'st_default';
+
 /** Special fallback options */
 export const FALLBACK_OPTIONS = {
     /** No fallback - leave blank */

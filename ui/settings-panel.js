@@ -11,7 +11,7 @@
  */
 
 import { getContext } from '../../../extensions.js';
-import { EXTENSION_NAME, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT, VECTHARE_TRIGGER } from '../core/constants.js';
+import { EXTENSION_NAME, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT, VECTHARE_TRIGGER, CLASSIFIER_MODELS } from '../core/constants.js';
 import { getSettings, updateSetting } from '../core/settings-manager.js';
 import { onVNModeToggled, openSpriteManager } from '../index.js';
 import { isVectHareAvailable, clearEmotionEmbeddingsCache } from '../ct-expressions.js';
@@ -204,6 +204,59 @@ function getExpressionsTabHTML() {
         <!-- API Help Text -->
         <div id="ct_api_help" style="font-size: 11px; color: var(--ct-text-light); margin-bottom: 16px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px;">
             <strong>Local:</strong> Uses transformers.js BERT model. Fast and private, runs entirely in browser.
+        </div>
+
+        <!-- Local Classifier Settings (shown when Local selected) -->
+        <div id="ct_local_classifier_settings" style="display: ${settings.expressionApi === EXPRESSION_API.local ? 'block' : 'none'}; margin-bottom: 16px; padding: 12px; background: rgba(0,0,0,0.15); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+            <div class="ct-section-label" style="margin-bottom: 12px; padding-bottom: 8px;">
+                <i class="fa-solid fa-microchip"></i>
+                Classifier Model
+            </div>
+
+            <!-- Model Selector -->
+            <div class="ct-slider-row" style="margin-bottom: 12px;">
+                <div class="ct-slider-header">
+                    <span class="ct-slider-label">Model</span>
+                </div>
+                <select class="ct-select" id="ct_classifier_model">
+                    ${Object.values(CLASSIFIER_MODELS).map(model => `
+                        <option value="${model.id}" ${settings.classifierModel === model.id ? 'selected' : ''}>
+                            ${model.name} (${model.labels} labels)
+                        </option>
+                    `).join('')}
+                </select>
+            </div>
+
+            <!-- Model Description -->
+            <div id="ct_model_description" style="font-size: 11px; color: var(--ct-text-light); margin-bottom: 12px; padding: 6px 8px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                ${CLASSIFIER_MODELS[settings.classifierModel]?.description || ''}
+            </div>
+
+            <!-- Quantization Toggle -->
+            <div class="ct-toggle-row" style="padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div>
+                    <div class="ct-toggle-label">Use Quantized Model</div>
+                    <div class="ct-toggle-sublabel">Smaller & faster, slightly less accurate</div>
+                </div>
+                <label class="ct-switch">
+                    <input type="checkbox" id="ct_use_quantized" ${settings.useQuantizedModel ? 'checked' : ''} />
+                    <span class="ct-switch-slider"></span>
+                </label>
+            </div>
+
+            <!-- Custom Repo Override -->
+            <div class="ct-slider-row" style="margin-top: 12px;">
+                <div class="ct-slider-header">
+                    <span class="ct-slider-label">Custom HuggingFace Repo</span>
+                </div>
+                <input type="text" class="ct-input" id="ct_custom_classifier_repo"
+                    placeholder="username/repo-name (leave blank for default)"
+                    value="${settings.customClassifierRepo || ''}"
+                    style="width: 100%; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--ct-wood-dark); background: var(--ct-cream); font-size: 12px;" />
+            </div>
+            <p style="font-size: 10px; color: var(--ct-text-light); margin-top: 4px;">
+                Mirror models to your own HuggingFace for reliability. Leave blank to use original repos.
+            </p>
         </div>
 
         ${vectHareAvailable ? `
@@ -894,6 +947,7 @@ function bindEvents() {
     };
 
     const vecthareSettings = document.getElementById('ct_vecthare_settings');
+    const localClassifierSettings = document.getElementById('ct_local_classifier_settings');
 
     apiSelect?.addEventListener('change', (e) => {
         const api = parseInt(e.target.value, 10);
@@ -907,8 +961,43 @@ function bindEvents() {
         const showVecthare = api === EXPRESSION_API.vecthare;
         if (vecthareSettings) vecthareSettings.style.display = showVecthare ? 'block' : 'none';
 
+        // Show/hide Local classifier settings
+        const showLocal = api === EXPRESSION_API.local;
+        if (localClassifierSettings) localClassifierSettings.style.display = showLocal ? 'block' : 'none';
+
         // Update help text
         if (apiHelp) apiHelp.innerHTML = apiHelpTexts[api] || '';
+    });
+
+    // ==========================================================================
+    // LOCAL CLASSIFIER SETTINGS BINDINGS
+    // ==========================================================================
+
+    // Classifier model selector
+    const classifierModelSelect = document.getElementById('ct_classifier_model');
+    const modelDescription = document.getElementById('ct_model_description');
+
+    classifierModelSelect?.addEventListener('change', (e) => {
+        const modelId = e.target.value;
+        updateSetting('classifierModel', modelId);
+
+        // Update description
+        if (modelDescription && CLASSIFIER_MODELS[modelId]) {
+            modelDescription.textContent = CLASSIFIER_MODELS[modelId].description;
+        }
+
+        toastr.info(`Classifier model changed to ${CLASSIFIER_MODELS[modelId]?.name || modelId}. Reload may be required.`);
+    });
+
+    // Quantization toggle
+    bindToggle('ct_use_quantized', 'useQuantizedModel');
+
+    // Custom repo input
+    document.getElementById('ct_custom_classifier_repo')?.addEventListener('change', (e) => {
+        updateSetting('customClassifierRepo', e.target.value.trim());
+        if (e.target.value.trim()) {
+            toastr.info('Custom classifier repo set. Reload required to apply.');
+        }
     });
 
     // Connection profile dropdown - use ConnectionManagerRequestService
