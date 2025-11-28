@@ -158,6 +158,17 @@ function loadUiCSS(filename) {
 }
 
 /**
+ * Load CSS from styles subfolder
+ */
+function loadStylesCSS(filename) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = `/scripts/extensions/third-party/Cotton-Tales/styles/${filename}`;
+    document.head.appendChild(link);
+}
+
+/**
  * Main initialization function
  */
 async function init() {
@@ -166,6 +177,7 @@ async function init() {
     // Load CSS
     loadCSS('ct-expressions.css');
     loadUiCSS('sprite-manager.css');
+    loadStylesCSS('landing-page.css');
 
     // Initialize settings
     initializeSettings();

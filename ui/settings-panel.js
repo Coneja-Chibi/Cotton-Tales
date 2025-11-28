@@ -1151,8 +1151,8 @@ function handleVariantNavigation(variantContainer, direction, isIndex = false) {
     const costumeSprite = sprites.find(s => s.label === selectedCostume);
 
     if (costumeSprite && cardAvatar) {
-        const spritePath = `/characters/${charFolder}/${costumeSprite.path}`;
-        cardAvatar.src = spritePath;
+        // costumeSprite.path is already the full path from API (e.g., /characters/Name/sprite.png)
+        cardAvatar.src = costumeSprite.path;
         cardAvatar.style.objectFit = 'contain';
         cardAvatar.style.objectPosition = 'center bottom';
     }
