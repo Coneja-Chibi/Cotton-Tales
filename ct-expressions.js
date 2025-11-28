@@ -66,7 +66,7 @@ import {
 } from './core/constants.js';
 
 // Shared extension utilities
-import { isWebLlmSupported, generateWebLlmChatPrompt, ConnectionManagerRequestService } from '../../../shared.js';
+import { isWebLlmSupported, generateWebLlmChatPrompt, ConnectionManagerRequestService } from '../../shared.js';
 
 // =============================================================================
 // CONSTANTS
