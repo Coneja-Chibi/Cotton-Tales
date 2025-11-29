@@ -441,21 +441,9 @@ function generateModalHtml() {
                                 </div>
                                 <p class="ct-sm-method-hint">
                                     <i class="fa-solid fa-vector-square"></i>
-                                    VectHare uses AI embeddings to semantically match text to emotions.
-                                    It understands context, not just keywords.
+                                    VectHare uses semantic embedding to match text to emotions.
+                                    Add <strong>keywords</strong> to boost detection and adjust <strong>weights</strong> (1.0-3.0x) below.
                                 </p>
-                            </div>
-                            <div class="ct-sm-vecthare-emotions">
-                                <div class="ct-sm-vecthare-section-label">
-                                    <i class="fa-solid fa-sparkles"></i>
-                                    <span>Custom Emotions</span>
-                                    <button class="ct-sm-btn-add-emotion" id="ct_sm_add_emotion" title="Add custom emotion">
-                                        <i class="fa-solid fa-plus"></i>
-                                    </button>
-                                </div>
-                                <div class="ct-sm-emotion-chips" id="ct_sm_emotion_chips">
-                                    <!-- Populated dynamically -->
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -652,8 +640,13 @@ function getExpectedLabels() {
             const charProfile = settings.characterExpressionProfiles?.[charFolder];
             const customList = charProfile?.customLabels || [];
 
+            console.log('[CT getExpectedLabels LLM] charFolder:', charFolder);
+            console.log('[CT getExpectedLabels LLM] charProfile:', charProfile);
+            console.log('[CT getExpectedLabels LLM] customList:', customList);
+
             // If user has custom labels, show those
             if (customList.length > 0) {
+                console.log('[CT getExpectedLabels LLM] Returning customList with', customList.length, 'items');
                 return customList;
             }
 
@@ -661,6 +654,7 @@ function getExpectedLabels() {
             // Plus basic emotions if they want to add sprites
             const basicEmotions = ['neutral', 'joy', 'sadness', 'anger', 'fear', 'surprise', 'love'];
             const combined = new Set([...existingSpriteLabels, ...basicEmotions]);
+            console.log('[CT getExpectedLabels LLM] Using fallback basicEmotions');
             return [...combined].sort();
         }
         case 'vecthare': {
@@ -721,6 +715,10 @@ function renderExpressionGrid(char) {
     // Get ALL expected labels for current method
     const expectedLabels = getExpectedLabels();
 
+    // Get settings for VectHare emotion configs
+    const settings = getSettings();
+    const charFolder = char?.folderName || '';
+
     // Render a tile for EACH expected label
     for (const expression of expectedLabels) {
         const expressionLower = expression.toLowerCase();
@@ -728,14 +726,20 @@ function renderExpressionGrid(char) {
         const hasSprite = files.length > 0;
         const previewFile = files[0];
 
+        // In LLM mode, ALL labels can be removed (user controls the label set)
+        const canRemoveLabel = selectedMethod === 'llm';
+
+        // VectHare mode: render expanded tiles with keyword/weight configuration
+        if (selectedMethod === 'vecthare') {
+            const tile = renderVectHareExpressionTile(expression, files, hasSprite, previewFile, settings, charFolder);
+            container.appendChild(tile);
+            continue;
+        }
+
+        // BERT/LLM mode: standard compact tiles
         const tile = document.createElement('div');
         tile.className = `ct-sm-expression-tile ${hasSprite ? 'has-sprite' : 'empty'}`;
         tile.dataset.expression = expression;
-
-        // Check if this is a removable custom label (LLM mode only, not in BERT presets)
-        const isCustomLabel = selectedMethod === 'llm' && !DEFAULT_EXPRESSIONS.includes(expression);
-        const bertLabels = Object.values(CLASSIFIER_MODELS).flatMap(m => m.labelList);
-        const isFromBertPreset = bertLabels.includes(expression);
 
         tile.innerHTML = `
             <div class="ct-sm-expression-preview ${hasSprite ? '' : 'ct-sm-empty-slot'}">
@@ -749,7 +753,7 @@ function renderExpressionGrid(char) {
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 ` : ''}
-                ${isCustomLabel && !isFromBertPreset ? `
+                ${canRemoveLabel ? `
                     <button class="ct-sm-remove-label" data-label="${expression}" title="Remove label">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
@@ -797,6 +801,236 @@ function renderExpressionGrid(char) {
             container.appendChild(tile);
         }
     }
+}
+
+/**
+ * Render a VectHare-specific expression tile with inline keyword/weight configuration
+ * @param {string} expression - Expression label
+ * @param {Array} files - Sprite files for this expression
+ * @param {boolean} hasSprite - Whether sprite exists
+ * @param {Object} previewFile - First sprite file for preview
+ * @param {Object} settings - Current settings
+ * @param {string} charFolder - Character folder name
+ * @returns {HTMLElement} Configured tile element
+ */
+function renderVectHareExpressionTile(expression, files, hasSprite, previewFile, settings, charFolder) {
+    // Get existing emotion config for this expression (per-character or global)
+    const charEmotionConfig = settings.characterEmotions?.[charFolder]?.customEmotions?.[expression];
+    const globalEmotionConfig = settings.customEmotions?.[expression];
+    const emotionConfig = charEmotionConfig || globalEmotionConfig || null;
+
+    // Extract keywords and weight from config
+    const keywords = emotionConfig?.keywords || {};
+    const keywordList = Object.keys(keywords);
+    const avgWeight = keywordList.length > 0
+        ? (Object.values(keywords).reduce((a, b) => a + b, 0) / keywordList.length).toFixed(1)
+        : '1.5';
+
+    const tile = document.createElement('div');
+    tile.className = `ct-sm-expression-tile ct-sm-vecthare-tile ${hasSprite ? 'has-sprite' : 'empty'}`;
+    tile.dataset.expression = expression;
+
+    tile.innerHTML = `
+        <div class="ct-sm-vh-tile-header">
+            <div class="ct-sm-expression-preview ${hasSprite ? '' : 'ct-sm-empty-slot'}" data-upload-trigger>
+                ${hasSprite
+                    ? `<img src="${previewFile.imageSrc}" alt="${expression}">`
+                    : `<i class="fa-solid fa-plus"></i>`
+                }
+                ${files.length > 1 ? `<span class="ct-sm-expression-count">${files.length}</span>` : ''}
+                ${hasSprite ? `
+                    <button class="ct-sm-delete-sprite" data-expression="${expression}" title="Delete sprite">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                ` : ''}
+            </div>
+            <div class="ct-sm-vh-label-row">
+                <span class="ct-sm-expression-label">${expression}</span>
+                <button class="ct-sm-vh-remove-emotion" data-emotion="${expression}" title="Remove emotion">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+        <div class="ct-sm-vh-config">
+            <div class="ct-sm-vh-keywords-row">
+                <label class="ct-sm-vh-label">
+                    <i class="fa-solid fa-tags"></i>
+                    Keywords
+                </label>
+                <input type="text"
+                    class="ct-sm-vh-keywords-input"
+                    data-expression="${expression}"
+                    placeholder="happy, excited, joy..."
+                    value="${keywordList.join(', ')}"
+                    title="Comma-separated keywords that trigger this emotion"
+                />
+            </div>
+            <div class="ct-sm-vh-weight-row">
+                <label class="ct-sm-vh-label">
+                    <i class="fa-solid fa-weight-scale"></i>
+                    Weight
+                </label>
+                <input type="range"
+                    class="ct-sm-vh-weight-slider"
+                    data-expression="${expression}"
+                    min="1.0"
+                    max="3.0"
+                    step="0.1"
+                    value="${avgWeight}"
+                    title="Keyword boost multiplier (1.0 = normal, 3.0 = strong)"
+                />
+                <span class="ct-sm-vh-weight-value">${avgWeight}x</span>
+            </div>
+        </div>
+    `;
+
+    // Event: Click preview to upload sprite
+    tile.querySelector('[data-upload-trigger]').addEventListener('click', (e) => {
+        if (e.target.closest('.ct-sm-delete-sprite')) {
+            e.stopPropagation();
+            deleteSpriteForExpression(expression, previewFile);
+            return;
+        }
+        uploadSpriteForExpression(expression);
+    });
+
+    // Event: Remove emotion button
+    tile.querySelector('.ct-sm-vh-remove-emotion').addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeVectHareEmotion(expression);
+    });
+
+    // Event: Keywords input blur - save keywords
+    const keywordsInput = tile.querySelector('.ct-sm-vh-keywords-input');
+    keywordsInput.addEventListener('blur', () => {
+        saveVectHareKeywords(expression, keywordsInput.value, charFolder);
+    });
+    keywordsInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            keywordsInput.blur();
+        }
+    });
+
+    // Event: Weight slider change
+    const weightSlider = tile.querySelector('.ct-sm-vh-weight-slider');
+    const weightValue = tile.querySelector('.ct-sm-vh-weight-value');
+    weightSlider.addEventListener('input', () => {
+        weightValue.textContent = `${weightSlider.value}x`;
+    });
+    weightSlider.addEventListener('change', () => {
+        saveVectHareWeight(expression, parseFloat(weightSlider.value), charFolder);
+    });
+
+    return tile;
+}
+
+/**
+ * Save VectHare keywords for an expression
+ * @param {string} expression - Expression name
+ * @param {string} keywordsStr - Comma-separated keywords
+ * @param {string} charFolder - Character folder
+ */
+async function saveVectHareKeywords(expression, keywordsStr, charFolder) {
+    const settings = getSettings();
+
+    // Parse keywords
+    const keywords = keywordsStr
+        .split(',')
+        .map(k => k.trim().toLowerCase())
+        .filter(k => k.length > 0);
+
+    // Get existing weight or default
+    const existingConfig = settings.characterEmotions?.[charFolder]?.customEmotions?.[expression];
+    const existingWeight = existingConfig?.keywords
+        ? Object.values(existingConfig.keywords)[0] || 1.5
+        : 1.5;
+
+    // Build keywords object with weight
+    const keywordsObj = {};
+    keywords.forEach(k => { keywordsObj[k] = existingWeight; });
+
+    // Ensure structure exists
+    if (!settings.characterEmotions) settings.characterEmotions = {};
+    if (!settings.characterEmotions[charFolder]) {
+        settings.characterEmotions[charFolder] = { customEmotions: {} };
+    }
+    if (!settings.characterEmotions[charFolder].customEmotions) {
+        settings.characterEmotions[charFolder].customEmotions = {};
+    }
+
+    // Update or create emotion config
+    settings.characterEmotions[charFolder].customEmotions[expression] = {
+        ...settings.characterEmotions[charFolder].customEmotions[expression],
+        keywords: keywordsObj,
+        baseEmotions: [expression], // Map to self by default
+        enabled: true,
+        updatedAt: Date.now()
+    };
+
+    await saveSettings();
+    console.log(`[CT VectHare] Saved keywords for ${expression}:`, keywords);
+}
+
+/**
+ * Save VectHare weight for an expression
+ * @param {string} expression - Expression name
+ * @param {number} weight - Weight multiplier (1.0-3.0)
+ * @param {string} charFolder - Character folder
+ */
+async function saveVectHareWeight(expression, weight, charFolder) {
+    const settings = getSettings();
+
+    // Ensure structure exists
+    if (!settings.characterEmotions) settings.characterEmotions = {};
+    if (!settings.characterEmotions[charFolder]) {
+        settings.characterEmotions[charFolder] = { customEmotions: {} };
+    }
+    if (!settings.characterEmotions[charFolder].customEmotions) {
+        settings.characterEmotions[charFolder].customEmotions = {};
+    }
+
+    const existing = settings.characterEmotions[charFolder].customEmotions[expression] || {};
+    const existingKeywords = existing.keywords || {};
+
+    // Update all keyword weights
+    const updatedKeywords = {};
+    Object.keys(existingKeywords).forEach(k => { updatedKeywords[k] = weight; });
+
+    settings.characterEmotions[charFolder].customEmotions[expression] = {
+        ...existing,
+        keywords: updatedKeywords,
+        baseEmotions: existing.baseEmotions || [expression],
+        enabled: true,
+        updatedAt: Date.now()
+    };
+
+    await saveSettings();
+    console.log(`[CT VectHare] Saved weight for ${expression}:`, weight);
+}
+
+/**
+ * Remove a VectHare emotion configuration
+ * @param {string} expression - Expression to remove
+ */
+async function removeVectHareEmotion(expression) {
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
+
+    // Remove from character-specific config
+    if (settings.characterEmotions?.[charFolder]?.customEmotions?.[expression]) {
+        delete settings.characterEmotions[charFolder].customEmotions[expression];
+        await saveSettings();
+    }
+
+    // Remove from global config
+    if (settings.customEmotions?.[expression]) {
+        delete settings.customEmotions[expression];
+        await saveSettings();
+    }
+
+    renderExpressionGrid(char);
+    toastr.success(`Removed emotion: ${expression}`);
 }
 
 /**
@@ -1432,9 +1666,6 @@ function bindModalEvents() {
     // Add custom label button (LLM mode)
     modal.querySelector('#ct_sm_add_label')?.addEventListener('click', addCustomLabel);
 
-    // Add custom emotion button (VectHare mode)
-    modal.querySelector('#ct_sm_add_emotion')?.addEventListener('click', addVectHareEmotion);
-
     // Keyboard navigation - store reference for cleanup
     keyboardHandler = (e) => {
         if (!isOpen) return;
@@ -1471,10 +1702,9 @@ function selectMethod(method) {
         renderLLMSuggestions();
     }
 
-    // Render VectHare status and emotions if in VectHare mode
+    // Render VectHare status if in VectHare mode
     if (method === 'vecthare') {
         renderVectHareStatus();
-        renderVectHareEmotions();
     }
 
     // Re-render expression grid with new labels
@@ -1579,124 +1809,13 @@ function renderVectHareStatus() {
 }
 
 /**
- * Render VectHare custom emotion chips
- */
-function renderVectHareEmotions() {
-    const container = document.getElementById('ct_sm_emotion_chips');
-    if (!container) return;
-
-    const settings = getSettings();
-    const char = characterList[currentCharacterIndex];
-    const charFolder = char?.folderName || '';
-
-    // Get global and character-specific custom emotions
-    const globalEmotions = settings.customEmotions || {};
-    const charEmotions = settings.characterEmotions?.[charFolder]?.customEmotions || {};
-
-    // Merge them
-    const allEmotions = { ...globalEmotions, ...charEmotions };
-    const emotionNames = Object.keys(allEmotions);
-
-    if (emotionNames.length === 0) {
-        container.innerHTML = `
-            <div class="ct-sm-no-emotions">
-                <i class="fa-solid fa-ghost"></i>
-                <span>No custom emotions defined. Click + to add one.</span>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = emotionNames.map(name => `
-        <div class="ct-sm-emotion-chip" data-emotion="${name}">
-            <span class="ct-sm-emotion-name">${name}</span>
-            <button class="ct-sm-emotion-remove" data-emotion="${name}" title="Remove emotion">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-    `).join('');
-
-    // Bind remove handlers
-    container.querySelectorAll('.ct-sm-emotion-remove').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const emotionName = btn.dataset.emotion;
-            await removeVectHareEmotion(emotionName);
-        });
-    });
-}
-
-/**
- * Add a custom VectHare emotion
- */
-async function addVectHareEmotion() {
-    const emotionName = await showInputModal('Add Custom Emotion', 'Enter emotion name (e.g., smug, flustered)');
-    if (!emotionName) return;
-
-    const normalized = emotionName.toLowerCase().trim().replace(/\s+/g, '_');
-
-    const settings = getSettings();
-    const char = characterList[currentCharacterIndex];
-    const charFolder = char?.folderName || '';
-
-    // Add to character-specific emotions
-    if (!settings.characterEmotions) {
-        settings.characterEmotions = {};
-    }
-    if (!settings.characterEmotions[charFolder]) {
-        settings.characterEmotions[charFolder] = { customEmotions: {} };
-    }
-
-    if (settings.characterEmotions[charFolder].customEmotions[normalized]) {
-        toastr.warning(`Emotion "${normalized}" already exists`);
-        return;
-    }
-
-    // Add with default keyword boost
-    settings.characterEmotions[charFolder].customEmotions[normalized] = {
-        keywords: [normalized],
-        boost: 1.0
-    };
-
-    await saveSettings();
-    renderVectHareEmotions();
-    renderExpressionGrid(char);
-    toastr.success(`Added emotion: ${normalized}`);
-}
-
-/**
- * Remove a VectHare custom emotion
- */
-async function removeVectHareEmotion(emotionName) {
-    const settings = getSettings();
-    const char = characterList[currentCharacterIndex];
-    const charFolder = char?.folderName || '';
-
-    // Remove from character-specific emotions
-    if (settings.characterEmotions?.[charFolder]?.customEmotions?.[emotionName]) {
-        delete settings.characterEmotions[charFolder].customEmotions[emotionName];
-        await saveSettings();
-        renderVectHareEmotions();
-        renderExpressionGrid(char);
-        toastr.success(`Removed emotion: ${emotionName}`);
-    }
-
-    // Also check global emotions
-    if (settings.customEmotions?.[emotionName]) {
-        delete settings.customEmotions[emotionName];
-        await saveSettings();
-        renderVectHareEmotions();
-        renderExpressionGrid(char);
-        toastr.success(`Removed emotion: ${emotionName}`);
-    }
-}
-
-/**
  * Import labels from a BERT model into LLM custom labels
  */
 async function importLabelsFromBert() {
     const sourceSelect = document.getElementById('ct_sm_llm_source');
     const sourceModel = sourceSelect?.value;
+
+    console.log('[CT Import] Starting import, sourceModel:', sourceModel);
 
     if (!sourceModel) {
         toastr.warning('Select a preset to import from');
@@ -1704,6 +1823,8 @@ async function importLabelsFromBert() {
     }
 
     const model = CLASSIFIER_MODELS[sourceModel];
+    console.log('[CT Import] Found model:', model?.name, 'with', model?.labelList?.length, 'labels');
+
     if (!model?.labelList) {
         toastr.error('Model not found');
         return;
@@ -1712,6 +1833,7 @@ async function importLabelsFromBert() {
     const settings = getSettings();
     const char = characterList[currentCharacterIndex];
     const charFolder = char?.folderName || '';
+    console.log('[CT Import] charFolder:', charFolder, 'char:', char?.name);
 
     // Initialize character profile if needed
     if (!settings.characterExpressionProfiles) {
@@ -1726,10 +1848,19 @@ async function importLabelsFromBert() {
     const merged = [...new Set([...existing, ...model.labelList])];
     settings.characterExpressionProfiles[charFolder].customLabels = merged;
 
+    console.log('[CT Import] Merged labels:', merged.length, 'labels:', merged);
+
     // Also update session state
     customLabels = merged;
 
     await saveSettings();
+
+    // Verify settings were saved correctly
+    const verifySettings = getSettings();
+    console.log('[CT Import] Verify after save - characterExpressionProfiles:', verifySettings.characterExpressionProfiles);
+    console.log('[CT Import] Verify after save - charFolder customLabels:', verifySettings.characterExpressionProfiles?.[charFolder]?.customLabels);
+
+    console.log('[CT Import] Settings saved, calling renderExpressionGrid');
     renderExpressionGrid(char);
 
     toastr.success(`Imported ${model.labels} labels from ${model.name}`);

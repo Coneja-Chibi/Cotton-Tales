@@ -1142,6 +1142,218 @@
 }
 
 /* =============================================================================
+   VECTHARE EXPRESSION TILES - Expanded with inline keyword/weight config
+   ============================================================================= */
+
+/* VectHare tiles are larger to accommodate config UI */
+.ct-sm-vecthare-tile {
+    aspect-ratio: auto !important;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    gap: 10px;
+    min-height: 200px;
+}
+
+.ct-sm-vh-tile-header {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+/* Smaller preview in VectHare mode */
+.ct-sm-vecthare-tile .ct-sm-expression-preview {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    border-radius: var(--ct-radius);
+    border: 2px solid var(--ct-border);
+    background: linear-gradient(145deg, rgba(10, 10, 15, 0.8), rgba(20, 20, 30, 0.6));
+}
+
+.ct-sm-vecthare-tile .ct-sm-expression-preview img {
+    border-radius: calc(var(--ct-radius) - 2px);
+}
+
+.ct-sm-vecthare-tile .ct-sm-expression-preview.ct-sm-empty-slot {
+    cursor: pointer;
+}
+
+.ct-sm-vecthare-tile .ct-sm-expression-preview.ct-sm-empty-slot i {
+    font-size: 24px;
+    color: var(--ct-text-muted);
+    opacity: 0.5;
+}
+
+.ct-sm-vecthare-tile .ct-sm-expression-preview:hover {
+    border-color: var(--bw-pink);
+    box-shadow: 0 0 12px var(--bw-pink-glow);
+}
+
+/* Label row with remove button */
+.ct-sm-vh-label-row {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.ct-sm-vecthare-tile .ct-sm-expression-label {
+    position: static;
+    background: transparent;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--bw-pink);
+    text-shadow: 0 0 8px var(--bw-pink-glow);
+    text-align: left;
+    border: none;
+    border-radius: 0;
+}
+
+.ct-sm-vh-remove-emotion {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: rgba(255, 100, 100, 0.15);
+    border: 1px solid rgba(255, 100, 100, 0.3);
+    border-radius: var(--ct-radius);
+    color: #ff6b6b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    opacity: 0.6;
+}
+
+.ct-sm-vh-remove-emotion:hover {
+    background: rgba(255, 100, 100, 0.3);
+    border-color: rgba(255, 100, 100, 0.6);
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Configuration section */
+.ct-sm-vh-config {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ct-border);
+}
+
+.ct-sm-vh-keywords-row,
+.ct-sm-vh-weight-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ct-sm-vh-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ct-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ct-sm-vh-label i {
+    font-size: 10px;
+    color: var(--bw-pink);
+    opacity: 0.8;
+}
+
+.ct-sm-vh-keywords-input {
+    width: 100%;
+    padding: 8px 10px;
+    background: rgba(10, 10, 15, 0.8);
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    color: var(--ct-text);
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.ct-sm-vh-keywords-input::placeholder {
+    color: var(--ct-text-muted);
+    opacity: 0.5;
+}
+
+.ct-sm-vh-keywords-input:focus {
+    outline: none;
+    border-color: var(--bw-pink);
+    box-shadow: 0 0 8px var(--bw-pink-glow);
+}
+
+.ct-sm-vh-weight-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+
+.ct-sm-vh-weight-row .ct-sm-vh-label {
+    min-width: 60px;
+}
+
+.ct-sm-vh-weight-slider {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: linear-gradient(90deg, rgba(255, 107, 107, 0.3), rgba(255, 107, 157, 0.3), rgba(255, 159, 67, 0.3));
+    border-radius: 3px;
+    outline: none;
+}
+
+.ct-sm-vh-weight-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, var(--bw-pink), var(--bw-coral));
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 0 8px var(--bw-pink-glow);
+    transition: all 0.2s ease;
+}
+
+.ct-sm-vh-weight-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 12px var(--bw-pink-glow);
+}
+
+.ct-sm-vh-weight-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, var(--bw-pink), var(--bw-coral));
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid #fff;
+    box-shadow: 0 0 8px var(--bw-pink-glow);
+}
+
+.ct-sm-vh-weight-value {
+    min-width: 40px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--bw-orange);
+    text-shadow: 0 0 6px var(--bw-orange-glow);
+    text-align: right;
+}
+
+/* VectHare tile hover state */
+.ct-sm-vecthare-tile:hover {
+    transform: translateY(-2px);
+    animation: none; /* Disable shift animation for VectHare tiles */
+}
+
+/* =============================================================================
    TRIGGERS SECTION
    ============================================================================= */
 
