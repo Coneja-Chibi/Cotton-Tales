@@ -21,3 +21,6 @@ build/
 # Local config
 .env
 .env.local
+
+# Markdown files
+*.md
