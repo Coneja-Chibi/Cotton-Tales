@@ -655,6 +655,211 @@
 }
 
 /* =============================================================================
+   EXPRESSION METHOD SELECTOR
+   ============================================================================= */
+
+.ct-sm-method-section {
+    margin-bottom: 16px;
+}
+
+.ct-sm-method-tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.ct-sm-method-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--ct-bg-card);
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    color: var(--ct-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--ct-transition);
+}
+
+.ct-sm-method-tab:hover {
+    background: var(--ct-bg-card-hover);
+    border-color: var(--ct-purple);
+}
+
+.ct-sm-method-tab.active {
+    background: linear-gradient(135deg, var(--ct-purple), var(--ct-pink-vibrant));
+    border-color: transparent;
+    color: white;
+}
+
+.ct-sm-method-tab i {
+    font-size: 14px;
+}
+
+.ct-sm-method-options {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--ct-radius);
+}
+
+.ct-sm-model-select {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--ct-bg-card);
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    color: var(--ct-text-primary);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.ct-sm-model-select:hover {
+    border-color: var(--ct-purple);
+}
+
+.ct-sm-llm-source {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ct-sm-llm-label {
+    font-size: 11px;
+    color: var(--ct-text-secondary);
+    white-space: nowrap;
+}
+
+.ct-sm-btn-small {
+    padding: 6px 12px;
+    background: var(--ct-purple);
+    border: none;
+    border-radius: var(--ct-radius);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--ct-transition);
+}
+
+.ct-sm-btn-small:hover {
+    background: var(--ct-pink-vibrant);
+}
+
+.ct-sm-method-hint {
+    font-size: 11px;
+    color: var(--ct-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ct-sm-method-hint i {
+    color: var(--ct-purple);
+}
+
+/* Empty expression slots */
+.ct-sm-expression-tile.empty .ct-sm-expression-preview {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px dashed var(--ct-border);
+}
+
+.ct-sm-expression-tile.empty:hover .ct-sm-expression-preview {
+    border-color: var(--ct-cyan-vibrant);
+    background: rgba(92, 225, 230, 0.1);
+}
+
+.ct-sm-empty-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ct-text-dim);
+    font-size: 24px;
+}
+
+.ct-sm-empty-slot i {
+    opacity: 0.5;
+    transition: var(--ct-transition);
+}
+
+.ct-sm-expression-tile.empty:hover .ct-sm-empty-slot i {
+    opacity: 1;
+    color: var(--ct-cyan-vibrant);
+}
+
+/* Remove label button */
+.ct-sm-remove-label {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    background: rgba(239, 68, 68, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: var(--ct-transition);
+}
+
+.ct-sm-expression-tile:hover .ct-sm-remove-label {
+    opacity: 1;
+}
+
+.ct-sm-remove-label:hover {
+    background: #ef4444;
+    transform: scale(1.1);
+}
+
+/* Extra badge for unmatched sprites */
+.ct-sm-extra-badge {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    padding: 2px 6px;
+    background: rgba(245, 158, 11, 0.9);
+    border-radius: 4px;
+    font-size: 8px;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+}
+
+/* Add custom label section */
+.ct-sm-add-custom-label {
+    margin-top: 12px;
+    text-align: center;
+}
+
+.ct-sm-btn-add-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px dashed var(--ct-border);
+    border-radius: var(--ct-radius);
+    color: var(--ct-text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--ct-transition);
+}
+
+.ct-sm-btn-add-label:hover {
+    background: var(--ct-bg-card);
+    border-color: var(--ct-cyan-vibrant);
+    border-style: solid;
+    color: var(--ct-cyan-vibrant);
+}
+
+/* =============================================================================
    RESPONSIVE
    ============================================================================= */
 

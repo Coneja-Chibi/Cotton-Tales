@@ -19,7 +19,7 @@
 import { getRequestHeaders, getThumbnailUrl, characters, this_chid } from '../../../../../script.js';
 import { getContext } from '../../../../extensions.js';
 import { getSettings, saveSettings } from '../core/settings-manager.js';
-import { EXTENSION_NAME, DEFAULT_EXPRESSIONS } from '../core/constants.js';
+import { EXTENSION_NAME, DEFAULT_EXPRESSIONS, CLASSIFIER_MODELS, EXPRESSION_API } from '../core/constants.js';
 import { getSpritesList, spriteCache, validateImages } from '../ct-expressions.js';
 
 // =============================================================================
@@ -38,6 +38,11 @@ let selectedOutfit = 'default';
 let characterList = []; // { name, avatar, isNpc, sprites, outfits, triggers }
 let modalEventsBound = false;
 let keyboardHandler = null;
+
+// Expression method state
+let selectedMethod = 'bert'; // 'bert' | 'llm' | 'vecthare'
+let selectedBertModel = 'roberta_go_emotions';
+let customLabels = []; // For LLM/VectHare - user-added labels
 
 // =============================================================================
 // INPUT MODAL (replaces blocking prompt())
@@ -371,6 +376,56 @@ function generateModalHtml() {
                     </div>
                 </div>
 
+                <!-- Expression Method Selector -->
+                <div class="ct-sm-section ct-sm-method-section">
+                    <div class="ct-sm-section-header">
+                        <i class="fa-solid fa-brain"></i>
+                        <span>Expression Method</span>
+                    </div>
+                    <div class="ct-sm-method-tabs">
+                        <button class="ct-sm-method-tab" data-method="bert" title="Local BERT classifier">
+                            <i class="fa-solid fa-microchip"></i>
+                            <span>BERT</span>
+                        </button>
+                        <button class="ct-sm-method-tab" data-method="llm" title="LLM via connection">
+                            <i class="fa-solid fa-comments"></i>
+                            <span>LLM</span>
+                        </button>
+                        <button class="ct-sm-method-tab" data-method="vecthare" title="VectHare semantic">
+                            <i class="fa-solid fa-vector-square"></i>
+                            <span>VectHare</span>
+                        </button>
+                    </div>
+                    <!-- BERT Model Selector (shown when BERT selected) -->
+                    <div class="ct-sm-method-options ct-sm-bert-options" style="display: none;">
+                        <select class="ct-sm-model-select" id="ct_sm_bert_model">
+                            ${Object.values(CLASSIFIER_MODELS).map(m => `
+                                <option value="${m.id}">${m.name} (${m.labels} labels)</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <!-- LLM Options (shown when LLM selected) -->
+                    <div class="ct-sm-method-options ct-sm-llm-options" style="display: none;">
+                        <div class="ct-sm-llm-source">
+                            <span class="ct-sm-llm-label">Import from:</span>
+                            <select class="ct-sm-model-select" id="ct_sm_llm_source">
+                                <option value="">-- Select preset --</option>
+                                ${Object.values(CLASSIFIER_MODELS).map(m => `
+                                    <option value="${m.id}">${m.name} (${m.labels})</option>
+                                `).join('')}
+                            </select>
+                            <button class="ct-sm-btn-small" id="ct_sm_import_labels">Import</button>
+                        </div>
+                    </div>
+                    <!-- VectHare Options (shown when VectHare selected) -->
+                    <div class="ct-sm-method-options ct-sm-vecthare-options" style="display: none;">
+                        <p class="ct-sm-method-hint">
+                            <i class="fa-solid fa-info-circle"></i>
+                            VectHare uses semantic matching. Add custom emotions with keyword boosts below.
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Expression Grid -->
                 <div class="ct-sm-section">
                     <div class="ct-sm-section-header">
@@ -379,6 +434,13 @@ function generateModalHtml() {
                         <span class="ct-sm-outfit-label">— Default</span>
                     </div>
                     <div class="ct-sm-expression-grid"></div>
+                    <!-- Add Custom Label (for LLM/VectHare) -->
+                    <div class="ct-sm-add-custom-label" style="display: none;">
+                        <button class="ct-sm-btn-add-label" id="ct_sm_add_label">
+                            <i class="fa-solid fa-plus"></i>
+                            Add Custom Label
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Triggers Section -->
@@ -526,11 +588,48 @@ function renderOutfitCarousel(char) {
 }
 
 /**
+ * Get the list of expression labels based on current method
+ */
+function getExpectedLabels() {
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
+
+    switch (selectedMethod) {
+        case 'bert': {
+            // BERT: Fixed labels from the selected model
+            const model = CLASSIFIER_MODELS[selectedBertModel];
+            return model?.labelList || DEFAULT_EXPRESSIONS;
+        }
+        case 'llm': {
+            // LLM: User's custom labels for this character (or defaults)
+            const charProfile = settings.characterExpressionProfiles?.[charFolder];
+            if (charProfile?.customLabels?.length > 0) {
+                return charProfile.customLabels;
+            }
+            // Fall back to custom labels in session or defaults
+            return customLabels.length > 0 ? customLabels : DEFAULT_EXPRESSIONS;
+        }
+        case 'vecthare': {
+            // VectHare: Default expressions + any custom emotions defined
+            const customEmotions = settings.customEmotions || {};
+            const charEmotions = settings.characterEmotions?.[charFolder]?.customEmotions || {};
+            const allCustom = [...Object.keys(customEmotions), ...Object.keys(charEmotions)];
+            return [...DEFAULT_EXPRESSIONS, ...allCustom.filter(e => !DEFAULT_EXPRESSIONS.includes(e))];
+        }
+        default:
+            return DEFAULT_EXPRESSIONS;
+    }
+}
+
+/**
  * Render expression grid for selected outfit
+ * Shows ALL expected labels with upload slots, filled or empty
  */
 function renderExpressionGrid(char) {
     const container = document.querySelector('.ct-sm-expression-grid');
     const outfitLabel = document.querySelector('.ct-sm-outfit-label');
+    const addCustomLabelSection = document.querySelector('.ct-sm-add-custom-label');
     if (!container) return;
 
     container.innerHTML = '';
@@ -539,7 +638,12 @@ function renderExpressionGrid(char) {
         outfitLabel.textContent = `— ${selectedOutfit}`;
     }
 
-    // Filter sprites for selected outfit
+    // Show/hide custom label button based on method
+    if (addCustomLabelSection) {
+        addCustomLabelSection.style.display = (selectedMethod === 'llm' || selectedMethod === 'vecthare') ? 'block' : 'none';
+    }
+
+    // Get all sprites for this outfit
     const outfitSprites = char.sprites.filter(s => {
         if (selectedOutfit === 'default') {
             return !s.label?.includes('/');
@@ -547,48 +651,151 @@ function renderExpressionGrid(char) {
         return s.label?.startsWith(selectedOutfit + '/');
     });
 
-    // Group by expression label
-    const expressionMap = new Map();
+    // Group existing sprites by expression label
+    const existingSpriteMap = new Map();
     for (const sprite of outfitSprites) {
         const label = sprite.label?.split('/').pop() || sprite.label;
-        if (!expressionMap.has(label)) {
-            expressionMap.set(label, []);
+        if (!existingSpriteMap.has(label)) {
+            existingSpriteMap.set(label, []);
         }
-        expressionMap.get(label).push(...(sprite.files || []));
+        existingSpriteMap.get(label).push(...(sprite.files || []));
     }
 
-    for (const [expression, files] of expressionMap) {
+    // Get ALL expected labels for current method
+    const expectedLabels = getExpectedLabels();
+
+    // Render a tile for EACH expected label
+    for (const expression of expectedLabels) {
+        const files = existingSpriteMap.get(expression) || [];
+        const hasSprite = files.length > 0;
         const previewFile = files[0];
+
         const tile = document.createElement('div');
-        tile.className = 'ct-sm-expression-tile';
+        tile.className = `ct-sm-expression-tile ${hasSprite ? 'has-sprite' : 'empty'}`;
         tile.dataset.expression = expression;
 
+        // Check if this is a removable custom label (LLM mode only, not in BERT presets)
+        const isCustomLabel = selectedMethod === 'llm' && !DEFAULT_EXPRESSIONS.includes(expression);
+        const bertLabels = Object.values(CLASSIFIER_MODELS).flatMap(m => m.labelList);
+        const isFromBertPreset = bertLabels.includes(expression);
+
         tile.innerHTML = `
-            <div class="ct-sm-expression-preview">
-                ${previewFile
+            <div class="ct-sm-expression-preview ${hasSprite ? '' : 'ct-sm-empty-slot'}">
+                ${hasSprite
                     ? `<img src="${previewFile.imageSrc}" alt="${expression}">`
-                    : `<i class="fa-solid fa-image"></i>`
+                    : `<i class="fa-solid fa-plus"></i>`
                 }
                 ${files.length > 1 ? `<span class="ct-sm-expression-count">${files.length}</span>` : ''}
+                ${isCustomLabel && !isFromBertPreset ? `
+                    <button class="ct-sm-remove-label" data-label="${expression}" title="Remove label">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                ` : ''}
             </div>
             <div class="ct-sm-expression-label">${expression}</div>
         `;
 
-        tile.addEventListener('click', () => previewExpression(expression, files));
+        // Click to upload sprite for this expression
+        tile.addEventListener('click', (e) => {
+            if (e.target.closest('.ct-sm-remove-label')) {
+                e.stopPropagation();
+                removeCustomLabel(expression);
+                return;
+            }
+            uploadSpriteForExpression(expression);
+        });
+
         container.appendChild(tile);
     }
 
-    // Add expression button
-    const addTile = document.createElement('div');
-    addTile.className = 'ct-sm-expression-tile ct-sm-expression-add';
-    addTile.innerHTML = `
-        <div class="ct-sm-expression-preview">
-            <i class="fa-solid fa-plus"></i>
-        </div>
-        <div class="ct-sm-expression-label">Add</div>
-    `;
-    addTile.addEventListener('click', () => addExpression());
-    container.appendChild(addTile);
+    // Also show any extra sprites that don't match expected labels
+    for (const [expression, files] of existingSpriteMap) {
+        if (!expectedLabels.includes(expression)) {
+            const previewFile = files[0];
+            const tile = document.createElement('div');
+            tile.className = 'ct-sm-expression-tile has-sprite extra';
+            tile.dataset.expression = expression;
+
+            tile.innerHTML = `
+                <div class="ct-sm-expression-preview">
+                    <img src="${previewFile.imageSrc}" alt="${expression}">
+                    ${files.length > 1 ? `<span class="ct-sm-expression-count">${files.length}</span>` : ''}
+                    <span class="ct-sm-extra-badge">Extra</span>
+                </div>
+                <div class="ct-sm-expression-label">${expression}</div>
+            `;
+
+            tile.addEventListener('click', () => uploadSpriteForExpression(expression));
+            container.appendChild(tile);
+        }
+    }
+}
+
+/**
+ * Upload a sprite for a specific expression label
+ */
+async function uploadSpriteForExpression(expressionLabel) {
+    const char = characterList[currentCharacterIndex];
+    if (!char) {
+        toastr.error('No character selected');
+        return;
+    }
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const { uploadSprite } = await import('../core/upload-manager.js');
+            toastr.info(`Uploading ${expressionLabel}...`);
+
+            // Build path based on outfit
+            const targetLabel = selectedOutfit === 'default'
+                ? expressionLabel
+                : `${selectedOutfit}/${expressionLabel}`;
+
+            await uploadSprite(char.folderName, targetLabel, file);
+
+            // Refresh sprites
+            char.sprites = await getSpritesList(char.folderName);
+            renderExpressionGrid(char);
+
+            toastr.success(`Uploaded: ${expressionLabel}`);
+        } catch (error) {
+            toastr.error(`Failed: ${error.message}`);
+        }
+    });
+
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
+}
+
+/**
+ * Remove a custom label (LLM mode only)
+ */
+async function removeCustomLabel(label) {
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
+
+    // Remove from character profile
+    if (settings.characterExpressionProfiles?.[charFolder]?.customLabels) {
+        settings.characterExpressionProfiles[charFolder].customLabels =
+            settings.characterExpressionProfiles[charFolder].customLabels.filter(l => l !== label);
+        await saveSettings();
+    }
+
+    // Remove from session state
+    customLabels = customLabels.filter(l => l !== label);
+
+    renderExpressionGrid(char);
+    toastr.success(`Removed label: ${label}`);
 }
 
 /**
@@ -998,8 +1205,9 @@ async function deleteNpc(npcIndex) {
 
 /**
  * Open the sprite manager modal
+ * @param {string|null} targetCharacterFolder - Optional folder name to navigate to
  */
-export async function openSpriteManager() {
+export async function openSpriteManager(targetCharacterFolder = null) {
     if (isOpen) return;
 
     // Create modal if doesn't exist
@@ -1015,9 +1223,20 @@ export async function openSpriteManager() {
     currentCharacterIndex = 0;
     selectedOutfit = 'default';
 
+    // If a target character was specified, find and select it
+    if (targetCharacterFolder) {
+        const targetIndex = characterList.findIndex(c => c.folderName === targetCharacterFolder);
+        if (targetIndex !== -1) {
+            currentCharacterIndex = targetIndex;
+        }
+    }
+
     // Show modal
     modal.classList.add('open');
     isOpen = true;
+
+    // Initialize method selector to default state
+    selectMethod(selectedMethod);
 
     // Render
     renderCurrentCharacter();
@@ -1076,6 +1295,27 @@ function bindModalEvents() {
     // Add trigger button
     modal.querySelector('.ct-sm-add-trigger')?.addEventListener('click', addTrigger);
 
+    // Expression Method tabs
+    modal.querySelectorAll('.ct-sm-method-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const method = tab.dataset.method;
+            selectMethod(method);
+        });
+    });
+
+    // BERT model selector
+    modal.querySelector('#ct_sm_bert_model')?.addEventListener('change', (e) => {
+        selectedBertModel = e.target.value;
+        const char = characterList[currentCharacterIndex];
+        if (char) renderExpressionGrid(char);
+    });
+
+    // LLM import labels button
+    modal.querySelector('#ct_sm_import_labels')?.addEventListener('click', importLabelsFromBert);
+
+    // Add custom label button
+    modal.querySelector('#ct_sm_add_label')?.addEventListener('click', addCustomLabel);
+
     // Keyboard navigation - store reference for cleanup
     keyboardHandler = (e) => {
         if (!isOpen) return;
@@ -1086,6 +1326,113 @@ function bindModalEvents() {
     document.addEventListener('keydown', keyboardHandler);
 
     modalEventsBound = true;
+}
+
+/**
+ * Select expression method and update UI
+ */
+function selectMethod(method) {
+    selectedMethod = method;
+
+    const modal = document.getElementById('ct-sprite-manager-modal');
+    if (!modal) return;
+
+    // Update tab active states
+    modal.querySelectorAll('.ct-sm-method-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.method === method);
+    });
+
+    // Show/hide method options
+    modal.querySelector('.ct-sm-bert-options').style.display = method === 'bert' ? 'block' : 'none';
+    modal.querySelector('.ct-sm-llm-options').style.display = method === 'llm' ? 'block' : 'none';
+    modal.querySelector('.ct-sm-vecthare-options').style.display = method === 'vecthare' ? 'block' : 'none';
+
+    // Re-render expression grid with new labels
+    const char = characterList[currentCharacterIndex];
+    if (char) renderExpressionGrid(char);
+}
+
+/**
+ * Import labels from a BERT model into LLM custom labels
+ */
+async function importLabelsFromBert() {
+    const sourceSelect = document.getElementById('ct_sm_llm_source');
+    const sourceModel = sourceSelect?.value;
+
+    if (!sourceModel) {
+        toastr.warning('Select a preset to import from');
+        return;
+    }
+
+    const model = CLASSIFIER_MODELS[sourceModel];
+    if (!model?.labelList) {
+        toastr.error('Model not found');
+        return;
+    }
+
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
+
+    // Initialize character profile if needed
+    if (!settings.characterExpressionProfiles) {
+        settings.characterExpressionProfiles = {};
+    }
+    if (!settings.characterExpressionProfiles[charFolder]) {
+        settings.characterExpressionProfiles[charFolder] = { customLabels: [] };
+    }
+
+    // Merge labels (no duplicates)
+    const existing = settings.characterExpressionProfiles[charFolder].customLabels || [];
+    const merged = [...new Set([...existing, ...model.labelList])];
+    settings.characterExpressionProfiles[charFolder].customLabels = merged;
+
+    // Also update session state
+    customLabels = merged;
+
+    await saveSettings();
+    renderExpressionGrid(char);
+
+    toastr.success(`Imported ${model.labels} labels from ${model.name}`);
+}
+
+/**
+ * Add a custom label (LLM/VectHare mode)
+ */
+async function addCustomLabel() {
+    const labelName = await showInputModal('Add Custom Label', 'Enter label name (e.g., smug, flustered)');
+    if (!labelName) return;
+
+    const normalized = labelName.toLowerCase().trim().replace(/\s+/g, '_');
+
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
+
+    // For VectHare, we'd open the custom emotion editor
+    if (selectedMethod === 'vecthare') {
+        // TODO: Open VectHare emotion editor modal
+        toastr.info('VectHare emotion editor coming soon - for now, use the Custom Emotions tab in settings');
+        return;
+    }
+
+    // For LLM, add to character profile
+    if (!settings.characterExpressionProfiles) {
+        settings.characterExpressionProfiles = {};
+    }
+    if (!settings.characterExpressionProfiles[charFolder]) {
+        settings.characterExpressionProfiles[charFolder] = { customLabels: [] };
+    }
+
+    if (!settings.characterExpressionProfiles[charFolder].customLabels.includes(normalized)) {
+        settings.characterExpressionProfiles[charFolder].customLabels.push(normalized);
+        customLabels = settings.characterExpressionProfiles[charFolder].customLabels;
+        await saveSettings();
+        renderExpressionGrid(char);
+        toastr.success(`Added label: ${normalized}`);
+    } else {
+        toastr.warning(`Label "${normalized}" already exists`);
+    }
 }
 
 // =============================================================================

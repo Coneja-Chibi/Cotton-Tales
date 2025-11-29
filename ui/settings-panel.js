@@ -45,9 +45,9 @@ function onVNModeToggled(enabled) {
 }
 
 /** Call openSpriteManager if registered */
-function openSpriteManager() {
+function openSpriteManager(characterFolder = null) {
     if (openSpriteManagerCallback) {
-        openSpriteManagerCallback();
+        openSpriteManagerCallback(characterFolder);
     }
 }
 
@@ -1325,9 +1325,17 @@ async function populateCharacterCarousel() {
         variantContainer.dataset.currentIndex = '0';
     });
 
-    // Bind card clicks
+    // Bind card clicks (but not on the MANAGE button)
     carousel.querySelectorAll('.ct-card:not(.ct-card-add)').forEach(card => {
-        card.addEventListener('click', () => {
+        card.addEventListener('click', (e) => {
+            // If clicked on MANAGE button, open sprite manager instead
+            if (e.target.closest('.ct-card-action')) {
+                e.stopPropagation();
+                const folder = card.dataset.character;
+                openSpriteManager(folder);
+                return;
+            }
+
             const folder = card.dataset.character;
             const name = card.dataset.name;
 
