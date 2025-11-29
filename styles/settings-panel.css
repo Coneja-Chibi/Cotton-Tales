@@ -741,16 +741,16 @@
 .ct-card-content {
     background: linear-gradient(to bottom right, rgba(8, 8, 12, 0.9), rgba(15, 15, 25, 0.8));
     backdrop-filter: blur(5px);
-    padding: 16px 20px;
+    padding: 10px 12px;
     text-align: center;
 }
 
-/* Card Avatar */
+/* Card Avatar - Large and prominent like BunnyWorks */
 .ct-card-avatar {
-    width: 120px;
-    height: 120px;
-    margin: 0 auto 12px;
-    border-radius: 16px;
+    width: 100%;
+    aspect-ratio: 3/4;
+    margin: 0 auto 10px;
+    border-radius: 12px;
     border: 2px solid var(--ct-border-strong);
     background: linear-gradient(135deg, rgba(183, 108, 255, 0.1), rgba(255, 107, 157, 0.1));
     overflow: hidden;
