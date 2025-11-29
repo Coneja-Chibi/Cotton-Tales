@@ -1783,3 +1783,62 @@
         transform: translateY(0);
     }
 }
+
+/* =============================================================================
+   EXPRESSION CLASSIFICATION PROFILES
+   ============================================================================= */
+
+/* Expression chips display for model labels */
+.ct-expression-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.ct-expression-chip {
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 12px;
+    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 500;
+    color: #a78bfa;
+    text-transform: lowercase;
+    transition: all 0.2s ease;
+}
+
+.ct-expression-chip:hover {
+    background: rgba(139, 92, 246, 0.25);
+    border-color: rgba(139, 92, 246, 0.5);
+    transform: translateY(-1px);
+}
+
+/* Custom expression mapping table */
+.ct-mapping-table {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ct-custom-expr-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    animation: ctSlideUp 0.2s ease;
+}
+
+.ct-custom-expr-row .ct-expr-label,
+.ct-custom-expr-row .ct-expr-sprite {
+    flex: 1;
+}
+
+.ct-custom-expr-row .ct-remove-expr {
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.ct-custom-expr-row .ct-remove-expr:hover {
+    background: rgba(239, 68, 68, 0.3) !important;
+    transform: scale(1.05);
+}
