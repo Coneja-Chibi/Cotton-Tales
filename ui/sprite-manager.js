@@ -131,6 +131,74 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+/**
+ * Show a confirmation dialog
+ * @param {string} title - Modal title
+ * @param {string} message - Confirmation message
+ * @returns {Promise<boolean>} True if confirmed, false if cancelled
+ */
+function showConfirmModal(title, message) {
+    return new Promise((resolve) => {
+        const modalHtml = `
+            <div class="ct-input-modal-overlay" id="ct_confirm_modal_overlay">
+                <div class="ct-input-modal">
+                    <div class="ct-input-modal-header">
+                        <span>${escapeHtml(title)}</span>
+                        <button class="ct-input-modal-close" id="ct_confirm_modal_close">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="ct-input-modal-body">
+                        <p style="margin: 0; padding: 12px 0;">${escapeHtml(message)}</p>
+                    </div>
+                    <div class="ct-input-modal-footer">
+                        <button class="ct-btn secondary" id="ct_confirm_modal_cancel">Cancel</button>
+                        <button class="ct-btn danger" id="ct_confirm_modal_confirm">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Add modal to DOM
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = modalHtml;
+        document.body.appendChild(wrapper.firstElementChild);
+
+        const overlay = document.getElementById('ct_confirm_modal_overlay');
+        const closeBtn = document.getElementById('ct_confirm_modal_close');
+        const cancelBtn = document.getElementById('ct_confirm_modal_cancel');
+        const confirmBtn = document.getElementById('ct_confirm_modal_confirm');
+
+        let isClosing = false;
+        const cleanup = (result) => {
+            if (isClosing) return;
+            isClosing = true;
+            overlay?.remove();
+            resolve(result);
+        };
+
+        // Event handlers
+        closeBtn?.addEventListener('click', () => cleanup(false));
+        cancelBtn?.addEventListener('click', () => cleanup(false));
+        confirmBtn?.addEventListener('click', () => cleanup(true));
+
+        // Escape cancels
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                cleanup(false);
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+
+        // Click outside closes
+        overlay?.addEventListener('click', (e) => {
+            if (e.target === overlay) cleanup(false);
+        });
+    });
+}
+
 // =============================================================================
 // DATA MANAGEMENT
 // =============================================================================
@@ -266,6 +334,12 @@ function generateModalHtml() {
                 <button class="ct-sm-flip-btn ct-sm-flip-next" title="Next Character">
                     <i class="fa-solid fa-chevron-right"></i>
                 </button>
+                <button class="ct-sm-flip-btn ct-sm-edit-char" title="Edit NPC" style="display: none;">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="ct-sm-flip-btn ct-sm-delete-char" title="Delete NPC" style="display: none;">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
                 <button class="ct-sm-flip-btn ct-sm-add-char" title="Add NPC">
                     <i class="fa-solid fa-plus"></i>
                 </button>
@@ -371,6 +445,12 @@ function renderCurrentCharacter() {
 
     if (counterCurrent) counterCurrent.textContent = currentCharacterIndex + 1;
     if (counterTotal) counterTotal.textContent = characterList.length;
+
+    // Show/hide edit and delete buttons for NPCs
+    const editBtn = document.querySelector('.ct-sm-edit-char');
+    const deleteBtn = document.querySelector('.ct-sm-delete-char');
+    if (editBtn) editBtn.style.display = char.isNpc ? 'flex' : 'none';
+    if (deleteBtn) deleteBtn.style.display = char.isNpc ? 'flex' : 'none';
 
     // Render outfits
     renderOutfitCarousel(char);
@@ -650,6 +730,15 @@ async function addNpc() {
     const name = await showInputModal('Add NPC', 'Enter NPC name...');
     if (!name) return;
 
+    // Validate duplicate name
+    const existingChar = characterList.find(c => c.name.toLowerCase() === name.toLowerCase());
+    if (existingChar) {
+        if (typeof toastr !== 'undefined') {
+            toastr.error(`Character with name "${name}" already exists!`);
+        }
+        return;
+    }
+
     const folderName = await showInputModal('Sprite Folder', 'Leave blank to use NPC name', name);
 
     characterList.push({
@@ -667,12 +756,29 @@ async function addNpc() {
     const newChar = characterList[characterList.length - 1];
     try {
         newChar.sprites = await getSpritesList(newChar.folderName);
+
+        // Auto-detect outfits from sprite structure
+        const detectedOutfits = new Set(['default']);
+        for (const sprite of newChar.sprites) {
+            const pathParts = sprite.label?.split('/') || [];
+            if (pathParts.length > 1) {
+                detectedOutfits.add(pathParts[0]);
+            }
+        }
+        newChar.outfits = [...detectedOutfits];
     } catch (e) {
         console.debug(`[${MODULE_NAME}] No sprites found for ${name}`);
+        if (typeof toastr !== 'undefined') {
+            toastr.warning(`NPC "${name}" added, but no sprites found in folder "${newChar.folderName}"`);
+        }
     }
 
     await saveNpcData();
     selectCharacter(characterList.length - 1);
+
+    if (typeof toastr !== 'undefined') {
+        toastr.success(`NPC "${name}" added successfully!`);
+    }
 }
 
 async function addOutfit() {
@@ -690,7 +796,46 @@ async function addOutfit() {
 }
 
 async function addExpression() {
-    toastr.info('To add expressions, place sprite images in the character\'s sprite folder.', 'Adding Expressions');
+    const char = characterList[currentCharacterIndex];
+    if (!char) {
+        toastr.error('No character selected');
+        return;
+    }
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const expressionName = await showInputModal(
+            'New Expression',
+            'Enter expression name',
+            ''
+        );
+        if (!expressionName) return;
+
+        try {
+            const { uploadSprite } = await import('../core/upload-manager.js');
+            toastr.info('Uploading...');
+            await uploadSprite(char.folderName, expressionName, file);
+
+            // Refresh sprites
+            char.sprites = await getSpritesList(char.folderName);
+            renderExpressionGrid(char);
+
+            toastr.success(`Added: "${expressionName}"`);
+        } catch (error) {
+            toastr.error(`Failed: ${error.message}`);
+        }
+    });
+
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
 }
 
 function previewExpression(expression, files) {
@@ -730,6 +875,120 @@ async function addOutfitTrigger(outfit) {
         char.outfitTriggers[outfit].push(trigger);
         await saveNpcData();
         renderTriggers(char);
+    }
+}
+
+/**
+ * Edit an existing NPC's properties
+ * @param {number} npcIndex - Index of NPC in characterList
+ */
+async function editNpc(npcIndex) {
+    const npc = characterList[npcIndex];
+    if (!npc || !npc.isNpc) {
+        if (typeof toastr !== 'undefined') {
+            toastr.error('Can only edit NPCs, not main characters');
+        }
+        return;
+    }
+
+    // Edit name
+    const newName = await showInputModal('Edit NPC Name', 'Enter new name...', npc.name);
+    if (!newName) return;
+
+    // Validate duplicate name (excluding self)
+    const existingChar = characterList.find((c, i) =>
+        i !== npcIndex && c.name.toLowerCase() === newName.toLowerCase()
+    );
+    if (existingChar) {
+        if (typeof toastr !== 'undefined') {
+            toastr.error(`Character with name "${newName}" already exists!`);
+        }
+        return;
+    }
+
+    // Edit folder name
+    const newFolderName = await showInputModal(
+        'Edit Sprite Folder',
+        'Enter folder name...',
+        npc.folderName
+    );
+    if (!newFolderName) return;
+
+    // Update NPC
+    npc.name = newName;
+    npc.folderName = newFolderName;
+
+    // Update triggers to include new name if old name was a trigger
+    if (npc.triggers.includes(npc.name)) {
+        npc.triggers = npc.triggers.filter(t => t !== npc.name);
+        npc.triggers.push(newName);
+    }
+
+    // Reload sprites from new folder
+    try {
+        npc.sprites = await getSpritesList(npc.folderName);
+
+        // Auto-detect outfits
+        const detectedOutfits = new Set(['default']);
+        for (const sprite of npc.sprites) {
+            const pathParts = sprite.label?.split('/') || [];
+            if (pathParts.length > 1) {
+                detectedOutfits.add(pathParts[0]);
+            }
+        }
+        npc.outfits = [...detectedOutfits];
+    } catch (e) {
+        console.debug(`[${MODULE_NAME}] No sprites found for ${newName}`);
+        if (typeof toastr !== 'undefined') {
+            toastr.warning(`Sprites not found in folder "${newFolderName}"`);
+        }
+    }
+
+    await saveNpcData();
+    renderCurrentCharacter();
+
+    if (typeof toastr !== 'undefined') {
+        toastr.success(`NPC "${newName}" updated successfully!`);
+    }
+}
+
+/**
+ * Delete an NPC
+ * @param {number} npcIndex - Index of NPC in characterList
+ */
+async function deleteNpc(npcIndex) {
+    const npc = characterList[npcIndex];
+    if (!npc) return;
+
+    if (!npc.isNpc) {
+        if (typeof toastr !== 'undefined') {
+            toastr.error('Cannot delete main characters, only NPCs');
+        }
+        return;
+    }
+
+    // Confirmation
+    const confirmed = await showConfirmModal(
+        'Delete NPC',
+        `Are you sure you want to delete "${npc.name}"? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    // Remove from list
+    characterList.splice(npcIndex, 1);
+
+    // Persist
+    await saveNpcData();
+
+    // Update UI - select previous character or stay at 0
+    if (currentCharacterIndex >= characterList.length) {
+        currentCharacterIndex = Math.max(0, characterList.length - 1);
+    }
+    renderPartyDock();
+    renderCurrentCharacter();
+
+    if (typeof toastr !== 'undefined') {
+        toastr.success(`NPC "${npc.name}" deleted`);
     }
 }
 
@@ -801,6 +1060,8 @@ function bindModalEvents() {
     modal.querySelector('.ct-sm-flip-prev')?.addEventListener('click', () => navigateCharacter(-1));
     modal.querySelector('.ct-sm-flip-next')?.addEventListener('click', () => navigateCharacter(1));
     modal.querySelector('.ct-sm-add-char')?.addEventListener('click', addNpc);
+    modal.querySelector('.ct-sm-edit-char')?.addEventListener('click', () => editNpc(currentCharacterIndex));
+    modal.querySelector('.ct-sm-delete-char')?.addEventListener('click', () => deleteNpc(currentCharacterIndex));
 
     // Outfit carousel arrows
     modal.querySelector('.ct-sm-carousel-left')?.addEventListener('click', () => {
@@ -831,4 +1092,4 @@ function bindModalEvents() {
 // EXPORTS
 // =============================================================================
 
-export { MODULE_NAME };
+export { MODULE_NAME, showInputModal };

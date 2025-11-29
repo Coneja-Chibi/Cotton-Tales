@@ -45,6 +45,8 @@ const VALIDATORS = {
     expressionsEnabled: (v) => typeof v === 'boolean',
     backgroundTransition: (v) => Object.values(TRANSITION_TYPE).includes(v),
     backgroundTransitionDuration: (v) => typeof v === 'number' && v >= 0 && v <= 2000,
+    customExpressionMappings: (v) => Array.isArray(v),
+    characterExpressionProfiles: (v) => typeof v === 'object' && v !== null,
 };
 
 /**

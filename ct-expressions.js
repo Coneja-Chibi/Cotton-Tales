@@ -618,7 +618,11 @@ async function getLastMessageSprite(avatar) {
     );
 
     if (lastMessage) {
-        return await getExpressionLabel(lastMessage.mes || '');
+        // Extract character folder from avatar for custom emotions
+        const context = getContext();
+        const character = context.characters.find(x => x.avatar == avatar);
+        const charFolder = character?.avatar?.replace(/\.[^/.]+$/, '') || null;
+        return await getExpressionLabel(lastMessage.mes || '', null, charFolder);
     }
     return null;
 }
@@ -943,16 +947,44 @@ export function clearEmotionEmbeddingsCache() {
 }
 
 /**
- * Classify text using VectHare's semantic capabilities
+ * Calculate keyword boost for custom emotion
+ * @param {string} text - Input text to analyze
+ * @param {Object} customDef - Custom emotion definition with keywords
+ * @returns {number} Cumulative boost factor
+ */
+function calculateKeywordBoost(text, customDef) {
+    if (!customDef?.keywords) return 1.0;
+
+    const lowerText = text.toLowerCase();
+    let boostFactor = 1.0;
+    const matchedKeywords = [];
+
+    for (const [keyword, boostScore] of Object.entries(customDef.keywords)) {
+        if (lowerText.includes(keyword.toLowerCase())) {
+            boostFactor *= boostScore;
+            matchedKeywords.push(`${keyword}(${boostScore}x)`);
+        }
+    }
+
+    if (matchedKeywords.length > 0) {
+        console.debug(`[${MODULE_NAME}] Keyword boosts: ${matchedKeywords.join(', ')} = ${boostFactor.toFixed(2)}x`);
+    }
+
+    return boostFactor;
+}
+
+/**
+ * Classify text using VectHare's semantic capabilities with custom emotions support
  * Uses either:
  * 1. VectHare's dedicated classifier API (if enabled in VectHare settings)
- * 2. Embedding similarity fallback
+ * 2. Embedding similarity fallback with custom emotions and keyword boosts
  *
  * @param {string} text - Text to classify
  * @param {string[]} labels - Available labels
+ * @param {string|null} charFolder - Character folder name for character-specific emotions
  * @returns {Promise<string|null>} Expression label or null if unavailable
  */
-async function classifyWithVectHare(text, labels) {
+async function classifyWithVectHare(text, labels, charFolder = null) {
     // Check if VectHare is available at all
     if (!isVectHareAvailable()) {
         console.debug(`[${MODULE_NAME}] VectHare not available`);
@@ -986,7 +1018,7 @@ async function classifyWithVectHare(text, labels) {
         }
     }
 
-    // Priority 2: Use embedding similarity
+    // Priority 2: Use embedding similarity with custom emotions
     try {
         // Generate embedding for the input text
         const textEmbedding = await generateEmbedding(text);
@@ -995,29 +1027,71 @@ async function classifyWithVectHare(text, labels) {
             return null;
         }
 
-        // Get or build emotion embeddings cache
-        let emotionEmbeddings;
+        // ========================================
+        // Step 1: Load custom emotions
+        // ========================================
+        const globalCustom = settings.customEmotions || {};
+        const charCustom = charFolder
+            ? settings.characterEmotions?.[charFolder]?.customEmotions || {}
+            : {};
+        const allCustomEmotions = { ...globalCustom, ...charCustom };
+
+        // ========================================
+        // Step 2: Build emotion embeddings (standard + custom)
+        // ========================================
+        const emotionEmbeddings = {};
+
+        // Standard emotions from labels
         if (settings.vecthareCacheEmotions) {
-            emotionEmbeddings = await buildEmotionEmbeddingsCache(labels);
+            const cachedEmbeddings = await buildEmotionEmbeddingsCache(labels);
+            for (const [label, embedding] of Object.entries(cachedEmbeddings)) {
+                emotionEmbeddings[label] = { embedding, isCustom: false };
+            }
         } else {
             // Generate on-the-fly (slower but always fresh)
-            emotionEmbeddings = {};
             for (const label of labels) {
                 const description = EMOTION_DESCRIPTIONS[label] || label;
                 const embedding = await generateEmbedding(description);
                 if (embedding) {
-                    emotionEmbeddings[label] = embedding;
+                    emotionEmbeddings[label] = { embedding, isCustom: false };
                 }
             }
         }
 
-        // Find best matching emotion via cosine similarity
+        // Custom emotions (always generated on-the-fly as they can change)
+        for (const [name, def] of Object.entries(allCustomEmotions)) {
+            if (!def.enabled) continue;
+            const embedding = await generateEmbedding(def.description);
+            if (embedding) {
+                emotionEmbeddings[name] = {
+                    embedding,
+                    isCustom: true,
+                    definition: def
+                };
+            }
+        }
+
+        // ========================================
+        // Step 3: Compute similarity with keyword boosts
+        // ========================================
         let bestLabel = null;
         let bestScore = -Infinity;
+        let matchType = 'similarity';
 
-        for (const [label, embedding] of Object.entries(emotionEmbeddings)) {
-            const similarity = cosineSimilarity(textEmbedding, embedding);
-            console.debug(`[${MODULE_NAME}] ${label}: ${similarity.toFixed(4)}`);
+        for (const [label, data] of Object.entries(emotionEmbeddings)) {
+            let similarity = cosineSimilarity(textEmbedding, data.embedding);
+
+            // Apply keyword boost for custom emotions
+            if (data.isCustom && data.definition) {
+                const boost = calculateKeywordBoost(text, data.definition);
+                similarity *= boost;
+
+                if (boost > 1.0) {
+                    matchType = 'keyword-boosted';
+                }
+            }
+
+            console.debug(`[${MODULE_NAME}] ${label}: ${similarity.toFixed(4)}${data.isCustom ? ' (custom)' : ''}`);
 
             if (similarity > bestScore) {
                 bestScore = similarity;
@@ -1025,8 +1099,26 @@ async function classifyWithVectHare(text, labels) {
             }
         }
 
+        // ========================================
+        // Step 4: Resolve custom emotion to sprite label
+        // ========================================
+        if (bestLabel && allCustomEmotions[bestLabel]) {
+            const customDef = allCustomEmotions[bestLabel];
+            const resolvedLabel = customDef.baseEmotions[0];
+
+            console.log(`[${MODULE_NAME}] Custom emotion: "${bestLabel}" → "${resolvedLabel}" (${matchType}, score: ${bestScore.toFixed(4)})`);
+
+            // Check character-specific sprite mapping
+            const spriteMap = settings.characterEmotions?.[charFolder]?.spriteEmotionMap;
+            if (spriteMap?.[bestLabel]) {
+                return spriteMap[bestLabel];
+            }
+
+            return labels.includes(resolvedLabel) ? resolvedLabel : null;
+        }
+
         if (bestLabel) {
-            console.log(`[${MODULE_NAME}] VectHare similarity: "${bestLabel}" (score: ${bestScore.toFixed(4)})`);
+            console.log(`[${MODULE_NAME}] VectHare similarity: "${bestLabel}" (${matchType}, score: ${bestScore.toFixed(4)})`);
             return bestLabel;
         }
 
@@ -1111,9 +1203,10 @@ async function classifyWithLlm(text, settings, fallback) {
  *
  * @param {string} text - The text to classify
  * @param {number} [apiOverride] - Optional API override
+ * @param {string} [charFolder] - Character folder for custom emotions
  * @returns {Promise<string|null>} The expression label or null
  */
-async function getExpressionLabel(text, apiOverride = null) {
+async function getExpressionLabel(text, apiOverride = null, charFolder = null) {
     const settings = getSettings();
     const api = apiOverride ?? settings.expressionApi ?? EXPRESSION_API.local;
     const fallback = settings.fallbackExpression || 'neutral';
@@ -1212,13 +1305,13 @@ async function getExpressionLabel(text, apiOverride = null) {
             // =================================================================
             case EXPRESSION_API.vecthare: {
                 const expressionsList = await getExpressionsList();
-                const result = await classifyWithVectHare(text, expressionsList);
+                const result = await classifyWithVectHare(text, expressionsList, charFolder);
                 if (result) {
                     return result;
                 }
                 // Fall through to local if VectHare fails
                 console.debug(`[${MODULE_NAME}] VectHare unavailable, falling back to local`);
-                return getExpressionLabel(text, EXPRESSION_API.local);
+                return getExpressionLabel(text, EXPRESSION_API.local, charFolder);
             }
 
             // =================================================================
@@ -1349,7 +1442,9 @@ async function moduleWorker() {
 
     try {
         inApiCall = true;
-        let expression = await getExpressionLabel(currentLastMessage.mes);
+        // Pass character folder for custom emotions support
+        const charFolder = spriteFolderName?.split('/')[0] || spriteFolderName;
+        let expression = await getExpressionLabel(currentLastMessage.mes, null, charFolder);
 
         if (spriteFolderName === currentLastMessage.name && !context.groupId) {
             spriteFolderName = context.name2;

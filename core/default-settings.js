@@ -139,6 +139,29 @@ export const defaultSettings = {
     vecthareCacheEmotions: true,
 
     // ==========================================================================
+    // CUSTOM EMOTIONS (VectHare Semantic Enhancement)
+    // ==========================================================================
+
+    /** Global custom emotion definitions */
+    customEmotions: {},
+
+    /** Per-character custom emotion definitions and mappings */
+    characterEmotions: {},
+
+    /** Similarity score threshold for custom emotions to match */
+    customEmotionScoreThreshold: 0.5,
+
+    // ==========================================================================
+    // EXPRESSION PROFILES & MAPPINGS
+    // ==========================================================================
+
+    /** Custom expression mappings for LLM/WebLLM modes */
+    customExpressionMappings: [],
+
+    /** Per-character expression profiles */
+    characterExpressionProfiles: {},
+
+    // ==========================================================================
     // BACKGROUND SETTINGS
     // ==========================================================================
 

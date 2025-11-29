@@ -125,6 +125,51 @@ function getTagColor(tag) {
 }
 
 // =============================================================================
+// EXPRESSION CLASSIFICATION HELPERS
+// =============================================================================
+
+/**
+ * Get available expressions based on the selected API
+ * @param {number} api - Expression API enum value
+ * @param {string} classifierModel - Classifier model ID (for LOCAL API)
+ * @returns {string[]} Array of available expression labels
+ */
+function getAvailableExpressions(api, classifierModel = null) {
+    switch (api) {
+        case EXPRESSION_API.local:
+            // Return model's fixed label list
+            const model = CLASSIFIER_MODELS[classifierModel || 'roberta_go_emotions'];
+            return model?.labelList || DEFAULT_EXPRESSIONS;
+
+        case EXPRESSION_API.llm:
+        case EXPRESSION_API.webllm:
+            // Unlocked - return all available + custom
+            const settings = getSettings();
+            const customLabels = (settings.customExpressionMappings || []).map(m => m.label);
+            return [...DEFAULT_EXPRESSIONS, ...customLabels];
+
+        case EXPRESSION_API.vecthare:
+            // Return configured labels + custom with metadata
+            return DEFAULT_EXPRESSIONS;
+
+        case EXPRESSION_API.extras:
+        case EXPRESSION_API.none:
+        default:
+            return DEFAULT_EXPRESSIONS;
+    }
+}
+
+/**
+ * Get available sprite labels from the character sprite cache
+ * @returns {string[]} Array of unique sprite labels
+ */
+function getAvailableSpriteLabels() {
+    const allSprites = Object.values(characterSpriteCache).flat();
+    const labels = allSprites.map(s => s.label).filter(Boolean);
+    return [...new Set(labels)].sort();
+}
+
+// =============================================================================
 // HTML TEMPLATES
 // =============================================================================
 
@@ -961,6 +1006,118 @@ function generateAddCard() {
 }
 
 // =============================================================================
+// UPLOAD HANDLERS
+// =============================================================================
+
+/**
+ * Handle sprite upload from detail panel
+ */
+async function handleUploadSprite() {
+    const charFolder = selectedCharacter;
+    if (!charFolder) {
+        notify.warning('No character selected');
+        return;
+    }
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Get expression name via input modal
+        const { showInputModal } = await import('./sprite-manager.js');
+        const expressionName = await showInputModal(
+            'Expression Name',
+            'Enter expression label (e.g., joy, anger)',
+            'neutral'
+        );
+        if (!expressionName) return;
+
+        try {
+            const { uploadSprite } = await import('../core/upload-manager.js');
+            notify.info('Uploading sprite...');
+            await uploadSprite(charFolder, expressionName, file);
+            await populateCharacterCarousel();
+            notify.success(`Sprite added: "${expressionName}"`);
+        } catch (error) {
+            notify.error(`Upload failed: ${error.message}`);
+        }
+    });
+
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
+}
+
+/**
+ * Handle sprite pack (ZIP) upload
+ */
+async function handleUploadSpritePack() {
+    const charFolder = selectedCharacter;
+    if (!charFolder) {
+        notify.warning('No character selected');
+        return;
+    }
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.zip';
+    fileInput.style.display = 'none';
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const { uploadSpritePackage } = await import('../core/upload-manager.js');
+            notify.info('Uploading sprite pack...');
+            const result = await uploadSpritePackage(charFolder, file);
+            await populateCharacterCarousel();
+            notify.success(`Uploaded ${result.count || 0} sprite(s)`);
+        } catch (error) {
+            notify.error(`Upload failed: ${error.message}`);
+        }
+    });
+
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
+}
+
+/**
+ * Handle background image upload
+ */
+async function handleUploadBackground() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const { uploadBackground } = await import('../core/upload-manager.js');
+            notify.info('Uploading background...');
+            await uploadBackground(file);
+            await populateBackgroundCarousel();
+            notify.success('Background uploaded!');
+        } catch (error) {
+            notify.error(`Upload failed: ${error.message}`);
+        }
+    });
+
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
+}
+
+// =============================================================================
 // DETAIL PANEL
 // =============================================================================
 
@@ -1080,7 +1237,31 @@ async function populateCharacterCarousel() {
         }
     }
 
-    // TODO: Also load NPCs from our own storage
+    // Load NPCs from card-specific storage
+    const settings = getSettings();
+    const cardId = context.characterId;
+    const cardNpcs = settings.cardNpcs?.[cardId] || [];
+
+    for (const npc of cardNpcs) {
+        charList.push({
+            name: npc.name,
+            folder: npc.folderName,
+            avatar: npc.avatar,
+            data: { tags: [] }, // NPCs don't have character data
+            isNPC: true,
+            isActive: false
+        });
+
+        // Pre-fetch NPC sprites
+        try {
+            const res = await fetch(`/api/sprites/get?name=${encodeURIComponent(npc.folderName)}`);
+            if (res.ok) {
+                characterSpriteCache[npc.folderName] = await res.json();
+            }
+        } catch (e) {
+            console.debug(`[${EXTENSION_NAME}] Could not fetch sprites for NPC ${npc.name}`);
+        }
+    }
 
     // Sort so active character is first
     charList.sort((a, b) => {
@@ -1127,10 +1308,9 @@ async function populateCharacterCarousel() {
         });
     });
 
-    // Add character button
+    // Add character button - opens sprite manager
     document.getElementById('ct_add_character')?.addEventListener('click', () => {
-        // TODO: Show add NPC modal
-        notify.info('Add Character - Coming soon!');
+        openSpriteManager();
     });
 }
 
@@ -1331,6 +1511,22 @@ function bindEvents() {
     document.getElementById('ct_open_sprite_manager')?.addEventListener('click', () => {
         openSpriteManager();
     });
+
+    // ==========================================================================
+    // UPLOAD BUTTON BINDINGS
+    // ==========================================================================
+
+    // Upload buttons - use event delegation for dynamically created elements
+    document.addEventListener('click', async (e) => {
+        if (e.target.closest('#ct_upload_sprite')) {
+            await handleUploadSprite();
+        } else if (e.target.closest('#ct_upload_pack')) {
+            await handleUploadSpritePack();
+        }
+    });
+
+    // Background upload button (static element)
+    document.getElementById('ct_upload_bg')?.addEventListener('click', handleUploadBackground);
 
     // ==========================================================================
     // EXPRESSIONS TAB BINDINGS
