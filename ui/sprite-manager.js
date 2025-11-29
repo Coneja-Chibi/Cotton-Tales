@@ -738,6 +738,11 @@ function renderExpressionGrid(char) {
     const settings = getSettings();
     const charFolder = char?.folderName || '';
 
+    // Get per-character fallback and thinking expressions
+    const charProfile = settings.characterExpressionProfiles?.[charFolder] || {};
+    const charFallback = charProfile.fallbackExpression || settings.fallbackExpression || 'neutral';
+    const charThinking = charProfile.thinkingExpression || null;
+
     // Render a tile for EACH expected label
     for (const expression of expectedLabels) {
         const expressionLower = expression.toLowerCase();
@@ -755,9 +760,13 @@ function renderExpressionGrid(char) {
             continue;
         }
 
+        // Check if this is the fallback or thinking expression
+        const isFallback = expressionLower === charFallback.toLowerCase();
+        const isThinking = charThinking && expressionLower === charThinking.toLowerCase();
+
         // BERT/LLM mode: standard compact tiles
         const tile = document.createElement('div');
-        tile.className = `ct-sm-expression-tile ${hasSprite ? 'has-sprite' : 'empty'}`;
+        tile.className = `ct-sm-expression-tile ${hasSprite ? 'has-sprite' : 'empty'} ${isFallback ? 'is-fallback' : ''} ${isThinking ? 'is-thinking' : ''}`;
         tile.dataset.expression = expression;
 
         tile.innerHTML = `
@@ -767,6 +776,8 @@ function renderExpressionGrid(char) {
                     : `<i class="fa-solid fa-plus"></i>`
                 }
                 ${files.length > 1 ? `<span class="ct-sm-expression-count">${files.length}</span>` : ''}
+                ${isFallback ? `<span class="ct-sm-fallback-badge" title="Default/Fallback expression"><i class="fa-solid fa-star"></i></span>` : ''}
+                ${isThinking ? `<span class="ct-sm-thinking-badge" title="Thinking expression"><i class="fa-solid fa-brain"></i></span>` : ''}
                 ${hasSprite ? `
                     <button class="ct-sm-delete-sprite" data-expression="${expression}" title="Delete sprite">
                         <i class="fa-solid fa-trash"></i>
@@ -779,6 +790,14 @@ function renderExpressionGrid(char) {
                 ` : ''}
             </div>
             <div class="ct-sm-expression-label">${expression}</div>
+            <div class="ct-sm-expression-actions">
+                <button class="ct-sm-set-fallback ${isFallback ? 'active' : ''}" data-expression="${expression}" title="Set as fallback">
+                    <i class="fa-solid fa-star"></i>
+                </button>
+                <button class="ct-sm-set-thinking ${isThinking ? 'active' : ''}" data-expression="${expression}" title="Set as thinking">
+                    <i class="fa-solid fa-brain"></i>
+                </button>
+            </div>
         `;
 
         // Click to upload sprite for this expression
@@ -791,6 +810,16 @@ function renderExpressionGrid(char) {
             if (e.target.closest('.ct-sm-remove-label')) {
                 e.stopPropagation();
                 removeCustomLabel(expression);
+                return;
+            }
+            if (e.target.closest('.ct-sm-set-fallback')) {
+                e.stopPropagation();
+                setCharacterFallback(charFolder, expression);
+                return;
+            }
+            if (e.target.closest('.ct-sm-set-thinking')) {
+                e.stopPropagation();
+                setCharacterThinking(charFolder, expression);
                 return;
             }
             uploadSpriteForExpression(expression);
@@ -839,6 +868,14 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
     const globalEmotionConfig = settings.customEmotions?.[expression];
     const emotionConfig = charEmotionConfig || globalEmotionConfig || null;
 
+    // Get per-character fallback and thinking expressions
+    const charProfile = settings.characterExpressionProfiles?.[charFolder] || {};
+    const charFallback = charProfile.fallbackExpression || settings.fallbackExpression || 'neutral';
+    const charThinking = charProfile.thinkingExpression || null;
+    const expressionLower = expression.toLowerCase();
+    const isFallback = expressionLower === charFallback.toLowerCase();
+    const isThinking = charThinking && expressionLower === charThinking.toLowerCase();
+
     // Extract keywords with individual weights
     const keywords = emotionConfig?.keywords || {};
     const keywordEntries = Object.entries(keywords);
@@ -862,7 +899,7 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
     `).join('');
 
     const tile = document.createElement('div');
-    tile.className = `ct-sm-expression-tile ct-sm-vh-tile ${hasSprite ? 'has-sprite' : 'empty'}`;
+    tile.className = `ct-sm-expression-tile ct-sm-vh-tile ${hasSprite ? 'has-sprite' : 'empty'} ${isFallback ? 'is-fallback' : ''} ${isThinking ? 'is-thinking' : ''}`;
     tile.dataset.expression = expression;
     tile.dataset.expanded = 'false';
 
@@ -875,6 +912,8 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
                     : `<i class="fa-solid fa-image"></i>`
                 }
                 ${files.length > 1 ? `<span class="ct-sm-vh-sprite-count">${files.length}</span>` : ''}
+                ${isFallback ? `<span class="ct-sm-fallback-badge" title="Default/Fallback"><i class="fa-solid fa-star"></i></span>` : ''}
+                ${isThinking ? `<span class="ct-sm-thinking-badge" title="Thinking"><i class="fa-solid fa-brain"></i></span>` : ''}
             </div>
             <div class="ct-sm-vh-info">
                 <span class="ct-sm-vh-label">${expression}</span>
@@ -882,9 +921,17 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
                     <i class="fa-solid fa-tags"></i> ${keywordCount} keyword${keywordCount !== 1 ? 's' : ''}
                 </span>
             </div>
-            <button class="ct-sm-vh-expand-toggle" title="Configure">
-                <i class="fa-solid fa-chevron-down"></i>
-            </button>
+            <div class="ct-sm-vh-header-actions">
+                <button class="ct-sm-set-fallback ${isFallback ? 'active' : ''}" data-expression="${expression}" title="Set as fallback">
+                    <i class="fa-solid fa-star"></i>
+                </button>
+                <button class="ct-sm-set-thinking ${isThinking ? 'active' : ''}" data-expression="${expression}" title="Set as thinking">
+                    <i class="fa-solid fa-brain"></i>
+                </button>
+                <button class="ct-sm-vh-expand-toggle" title="Configure">
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+            </div>
         </div>
 
         <!-- EXPANDABLE KEYWORD CONFIG -->
@@ -932,6 +979,8 @@ function bindVectHareTileEvents(tile, expression, charFolder, previewFile, hasSp
     tile.querySelector('.ct-sm-vh-header').addEventListener('click', (e) => {
         if (e.target.closest('[data-upload-trigger]')) return;
         if (e.target.closest('.ct-sm-vh-expand-toggle')) return;
+        if (e.target.closest('.ct-sm-set-fallback')) return;
+        if (e.target.closest('.ct-sm-set-thinking')) return;
         toggleVectHareTileExpansion(tile);
     });
 
@@ -939,6 +988,18 @@ function bindVectHareTileEvents(tile, expression, charFolder, previewFile, hasSp
     tile.querySelector('.ct-sm-vh-expand-toggle').addEventListener('click', (e) => {
         e.stopPropagation();
         toggleVectHareTileExpansion(tile);
+    });
+
+    // Fallback button
+    tile.querySelector('.ct-sm-set-fallback')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setCharacterFallback(charFolder, expression);
+    });
+
+    // Thinking button
+    tile.querySelector('.ct-sm-set-thinking')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setCharacterThinking(charFolder, expression);
     });
 
     // Upload sprite on preview click
@@ -1267,6 +1328,60 @@ async function removeCustomLabel(label) {
 
     renderExpressionGrid(char);
     toastr.success(`Removed label: ${label}`);
+}
+
+/**
+ * Set the fallback expression for a character
+ */
+async function setCharacterFallback(charFolder, expression) {
+    const settings = getSettings();
+
+    if (!settings.characterExpressionProfiles) {
+        settings.characterExpressionProfiles = {};
+    }
+    if (!settings.characterExpressionProfiles[charFolder]) {
+        settings.characterExpressionProfiles[charFolder] = {};
+    }
+
+    // Toggle off if already selected
+    if (settings.characterExpressionProfiles[charFolder].fallbackExpression === expression) {
+        delete settings.characterExpressionProfiles[charFolder].fallbackExpression;
+        toastr.info(`Cleared fallback (using global default)`);
+    } else {
+        settings.characterExpressionProfiles[charFolder].fallbackExpression = expression;
+        toastr.success(`Set fallback: ${expression}`);
+    }
+
+    await saveSettings();
+    const char = characterList[currentCharacterIndex];
+    renderExpressionGrid(char);
+}
+
+/**
+ * Set the thinking expression for a character
+ */
+async function setCharacterThinking(charFolder, expression) {
+    const settings = getSettings();
+
+    if (!settings.characterExpressionProfiles) {
+        settings.characterExpressionProfiles = {};
+    }
+    if (!settings.characterExpressionProfiles[charFolder]) {
+        settings.characterExpressionProfiles[charFolder] = {};
+    }
+
+    // Toggle off if already selected
+    if (settings.characterExpressionProfiles[charFolder].thinkingExpression === expression) {
+        delete settings.characterExpressionProfiles[charFolder].thinkingExpression;
+        toastr.info(`Cleared thinking expression`);
+    } else {
+        settings.characterExpressionProfiles[charFolder].thinkingExpression = expression;
+        toastr.success(`Set thinking: ${expression}`);
+    }
+
+    await saveSettings();
+    const char = characterList[currentCharacterIndex];
+    renderExpressionGrid(char);
 }
 
 /**
