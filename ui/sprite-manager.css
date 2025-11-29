@@ -26,23 +26,27 @@
     --bw-peach-glow: rgba(255, 160, 122, 0.5);
 }
 
-/* Smooth coral → pink → orange cycle */
+/* Very smooth coral → pink → orange cycle - subtle and gradual */
 @keyframes warm-shift {
     0%, 100% {
-        border-color: var(--bw-coral);
-        box-shadow: 0 0 20px var(--bw-coral-glow), inset 0 0 8px rgba(255, 107, 107, 0.08);
-    }
-    25% {
         border-color: var(--bw-pink);
-        box-shadow: 0 0 20px var(--bw-pink-glow), inset 0 0 8px rgba(255, 107, 157, 0.08);
+        box-shadow: 0 0 15px var(--bw-pink-glow), inset 0 0 5px rgba(255, 107, 157, 0.05);
     }
-    50% {
-        border-color: var(--bw-orange);
-        box-shadow: 0 0 20px var(--bw-orange-glow), inset 0 0 8px rgba(255, 159, 67, 0.08);
+    20% {
+        border-color: color-mix(in srgb, var(--bw-pink) 70%, var(--bw-coral) 30%);
+        box-shadow: 0 0 15px color-mix(in srgb, var(--bw-pink-glow) 70%, var(--bw-coral-glow) 30%), inset 0 0 5px rgba(255, 107, 130, 0.05);
     }
-    75% {
-        border-color: var(--bw-peach);
-        box-shadow: 0 0 20px var(--bw-peach-glow), inset 0 0 8px rgba(255, 160, 122, 0.08);
+    40% {
+        border-color: var(--bw-coral);
+        box-shadow: 0 0 15px var(--bw-coral-glow), inset 0 0 5px rgba(255, 107, 107, 0.05);
+    }
+    60% {
+        border-color: color-mix(in srgb, var(--bw-coral) 60%, var(--bw-peach) 40%);
+        box-shadow: 0 0 15px color-mix(in srgb, var(--bw-coral-glow) 60%, var(--bw-peach-glow) 40%), inset 0 0 5px rgba(255, 130, 110, 0.05);
+    }
+    80% {
+        border-color: color-mix(in srgb, var(--bw-peach) 60%, var(--bw-pink) 40%);
+        box-shadow: 0 0 15px color-mix(in srgb, var(--bw-peach-glow) 60%, var(--bw-pink-glow) 40%), inset 0 0 5px rgba(255, 135, 135, 0.05);
     }
 }
 
@@ -88,23 +92,23 @@
     50% { opacity: 1; }
 }
 
-/* Legacy alias for compatibility */
+/* Legacy alias for compatibility - same gradual effect */
 @keyframes rgb-shift {
     0%, 100% {
-        border-color: var(--bw-coral);
-        box-shadow: 0 0 20px var(--bw-coral-glow), inset 0 0 8px rgba(255, 107, 107, 0.08);
+        border-color: var(--bw-pink);
+        box-shadow: 0 0 15px var(--bw-pink-glow), inset 0 0 5px rgba(255, 107, 157, 0.05);
     }
     25% {
-        border-color: var(--bw-pink);
-        box-shadow: 0 0 20px var(--bw-pink-glow), inset 0 0 8px rgba(255, 107, 157, 0.08);
+        border-color: color-mix(in srgb, var(--bw-pink) 50%, var(--bw-coral) 50%);
+        box-shadow: 0 0 15px color-mix(in srgb, var(--bw-pink-glow) 50%, var(--bw-coral-glow) 50%), inset 0 0 5px rgba(255, 107, 130, 0.05);
     }
     50% {
-        border-color: var(--bw-orange);
-        box-shadow: 0 0 20px var(--bw-orange-glow), inset 0 0 8px rgba(255, 159, 67, 0.08);
+        border-color: var(--bw-coral);
+        box-shadow: 0 0 15px var(--bw-coral-glow), inset 0 0 5px rgba(255, 107, 107, 0.05);
     }
     75% {
-        border-color: var(--bw-peach);
-        box-shadow: 0 0 20px var(--bw-peach-glow), inset 0 0 8px rgba(255, 160, 122, 0.08);
+        border-color: color-mix(in srgb, var(--bw-coral) 50%, var(--bw-pink) 50%);
+        box-shadow: 0 0 15px color-mix(in srgb, var(--bw-coral-glow) 50%, var(--bw-pink-glow) 50%), inset 0 0 5px rgba(255, 107, 130, 0.05);
     }
 }
 
@@ -171,7 +175,7 @@
     flex-direction: column;
     transform: scale(0.95) translateY(20px);
     transition: transform 0.3s ease;
-    animation: warm-shift 12s ease-in-out infinite;
+    animation: warm-shift 20s ease-in-out infinite;
 }
 
 #ct-sprite-manager-modal.open .ct-sm-container {

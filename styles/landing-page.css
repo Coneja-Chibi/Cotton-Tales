@@ -123,10 +123,10 @@ body.ct-landing-active #top-settings-holder {
     display: none !important;
 }
 
-/* Hide the top icon bar */
-body.ct-landing-active #top-bar {
+/* Keep top bar visible - users need navigation */
+/* body.ct-landing-active #top-bar {
     display: none !important;
-}
+} */
 
 /* Hide default form/input area */
 body.ct-landing-active #form_sheld {

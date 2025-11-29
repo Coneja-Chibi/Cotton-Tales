@@ -129,19 +129,19 @@
 }
 
 .ct-modal {
-    width: 95%;
-    max-width: 1600px;
-    max-height: 92vh;
-    background: var(--ct-bg-base);
-    border: 2px solid var(--ct-purple);
-    border-radius: 24px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    width: 95% !important;
+    max-width: 1600px !important;
+    max-height: 92vh !important;
+    background: var(--ct-bg-base) !important;
+    border: 2px solid var(--ct-purple) !important;
+    border-radius: 24px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
     box-shadow:
         0 25px 80px rgba(0, 0, 0, 0.8),
         0 0 60px var(--ct-purple-glow),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
     transform: scale(0.95) translateY(20px);
     transition: transform 0.3s ease;
 }
@@ -514,10 +514,10 @@
 }
 
 .ct-modal-content .ct-carousel {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
-    padding: 20px 0;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    gap: 24px !important;
+    padding: 20px 0 !important;
 }
 
 .ct-modal-content .ct-carousel-arrow {
@@ -574,18 +574,19 @@
    ============================================================================= */
 
 .ct-card {
-    flex: 0 0 280px;
-    background: linear-gradient(145deg, rgba(15, 15, 20, 0.95), rgba(25, 25, 35, 0.85));
-    border: 2px solid var(--ct-purple);
-    border-radius: 24px;
+    flex: 0 0 280px !important;
+    min-width: 280px !important;
+    background: linear-gradient(145deg, rgba(15, 15, 20, 0.95), rgba(25, 25, 35, 0.85)) !important;
+    border: 2px solid var(--ct-purple) !important;
+    border-radius: 24px !important;
     cursor: pointer;
     transition: var(--ct-transition-slow);
     position: relative;
-    overflow: visible;
+    overflow: visible !important;
     box-shadow:
         0 12px 32px rgba(0, 0, 0, 0.7),
         0 0 20px rgba(183, 108, 255, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
 }
 
 /* In modal grid, cards are flexible */
@@ -747,15 +748,16 @@
 
 /* Card Avatar - Large and prominent like BunnyWorks */
 .ct-card-avatar {
-    width: 100%;
-    aspect-ratio: 3/4;
-    margin: 0 auto 10px;
-    border-radius: 12px;
-    border: 2px solid var(--ct-border-strong);
-    background: linear-gradient(135deg, rgba(183, 108, 255, 0.1), rgba(255, 107, 157, 0.1));
-    overflow: hidden;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 3/4 !important;
+    margin: 0 auto 10px !important;
+    border-radius: 12px !important;
+    border: 2px solid var(--ct-border-strong) !important;
+    background: linear-gradient(135deg, rgba(183, 108, 255, 0.1), rgba(255, 107, 157, 0.1)) !important;
+    overflow: hidden !important;
     transition: var(--ct-transition);
-    box-shadow: 0 0 16px rgba(183, 108, 255, 0.2);
+    box-shadow: 0 0 16px rgba(183, 108, 255, 0.2) !important;
 }
 
 .ct-card:hover .ct-card-avatar {
