@@ -639,17 +639,19 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    right: 30%;
+    right: 0;
     height: 2px;
     background: linear-gradient(
         90deg,
         var(--bw-coral),
         var(--bw-pink),
         var(--bw-orange),
-        transparent
+        var(--bw-peach),
+        var(--bw-coral),
+        var(--bw-pink)
     );
     background-size: 300% 100%;
-    animation: border-flow 8s linear infinite;
+    animation: border-flow 12s linear infinite;
     border-radius: 1px;
 }
 
