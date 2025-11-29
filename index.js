@@ -180,6 +180,7 @@ async function init() {
         await Promise.all([
             loadCSS('ct-expressions.css'),
             loadCSS('ui/sprite-manager.css'),
+            loadCSS('styles/settings-panel.css'),
             loadCSS('styles/landing-page.css'),
         ]);
     } catch (err) {
