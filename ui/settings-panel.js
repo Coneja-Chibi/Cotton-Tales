@@ -1401,6 +1401,111 @@ async function populateBackgroundCarousel() {
 }
 
 // =============================================================================
+// EXPRESSION UI HELPERS
+// =============================================================================
+
+/**
+ * Update the model expression display with the labels from the selected model
+ * @param {string} modelId - The classifier model ID
+ */
+function updateModelExpressionDisplay(modelId) {
+    const model = CLASSIFIER_MODELS[modelId];
+    const container = document.getElementById('ct_model_expressions');
+    if (!container || !model) return;
+
+    container.innerHTML = `
+        <div style="font-size: 10px; color: var(--ct-text-light); margin-bottom: 6px; font-weight: 600;">
+            Available Expressions (${model.labels}):
+        </div>
+        <div class="ct-expression-chips">
+            ${model.labelList.map(label => `
+                <span class="ct-expression-chip">${label}</span>
+            `).join('')}
+        </div>
+        <p style="font-size: 10px; color: var(--ct-text-light); margin-top: 8px; font-style: italic;">
+            Sprites should be named to match these labels for best results.
+        </p>
+    `;
+}
+
+/**
+ * Populate the custom expression mapping list from settings
+ */
+function populateCustomExpressionList() {
+    const container = document.getElementById('ct_custom_expr_list');
+    if (!container) return;
+
+    const settings = getSettings();
+    const mappings = settings.customExpressionMappings || [];
+
+    // Clear existing
+    container.innerHTML = '';
+
+    // Add existing mappings
+    mappings.forEach((mapping, index) => {
+        addCustomExpressionRow(mapping.label, mapping.spriteLabel);
+    });
+}
+
+/**
+ * Add a custom expression mapping row
+ * @param {string} label - Custom expression label
+ * @param {string} spriteLabel - Sprite label to map to
+ */
+function addCustomExpressionRow(label = '', spriteLabel = '') {
+    const container = document.getElementById('ct_custom_expr_list');
+    if (!container) return;
+
+    const availableSprites = getAvailableSpriteLabels();
+
+    const row = document.createElement('div');
+    row.className = 'ct-custom-expr-row';
+    row.style.cssText = 'display: flex; gap: 8px; align-items: center; margin-bottom: 8px;';
+
+    row.innerHTML = `
+        <input type="text" class="ct-input ct-expr-label" placeholder="e.g., smug, tsundere, flustered" value="${escapeHtml(label)}"
+            style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--ct-wood-dark); background: var(--ct-cream); font-size: 12px;">
+        <select class="ct-select ct-expr-sprite" style="flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--ct-wood-dark); background: var(--ct-cream); font-size: 12px;">
+            <option value="">-- Map to Sprite --</option>
+            ${DEFAULT_EXPRESSIONS.map(s => `<option value="${s}" ${s === spriteLabel ? 'selected' : ''}>${s}</option>`).join('')}
+            ${availableSprites.length > 0 ? `<optgroup label="Available Sprites">
+                ${availableSprites.map(s => `<option value="${s}" ${s === spriteLabel ? 'selected' : ''}>${s}</option>`).join('')}
+            </optgroup>` : ''}
+        </select>
+        <button class="ct-btn-icon danger ct-remove-expr" style="padding: 6px 10px; border-radius: 6px; border: none; background: rgba(239, 68, 68, 0.2); color: #EF4444; cursor: pointer; font-size: 12px;">
+            <i class="fa-solid fa-trash"></i>
+        </button>
+    `;
+
+    container.appendChild(row);
+
+    // Bind remove button
+    row.querySelector('.ct-remove-expr')?.addEventListener('click', () => {
+        row.remove();
+        saveCustomExpressionMappings();
+    });
+
+    // Bind change events
+    row.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('change', saveCustomExpressionMappings);
+    });
+}
+
+/**
+ * Save custom expression mappings to settings
+ */
+function saveCustomExpressionMappings() {
+    const rows = document.querySelectorAll('.ct-custom-expr-row');
+
+    const mappings = Array.from(rows).map(row => ({
+        label: row.querySelector('.ct-expr-label')?.value.toLowerCase().trim() || '',
+        spriteLabel: row.querySelector('.ct-expr-sprite')?.value || ''
+    })).filter(m => m.label && m.spriteLabel);
+
+    updateSetting('customExpressionMappings', mappings);
+}
+
+// =============================================================================
 // EVENT BINDING
 // =============================================================================
 
@@ -1586,6 +1691,7 @@ function bindEvents() {
 
     const vecthareSettings = document.getElementById('ct_vecthare_settings');
     const localClassifierSettings = document.getElementById('ct_local_classifier_settings');
+    const customExpressionSection = document.getElementById('ct_custom_expressions_section');
 
     apiSelect?.addEventListener('change', (e) => {
         const api = parseInt(e.target.value, 10);
@@ -1603,6 +1709,10 @@ function bindEvents() {
         const showLocal = api === EXPRESSION_API.local;
         if (localClassifierSettings) localClassifierSettings.style.display = showLocal ? 'block' : 'none';
 
+        // Show/hide Custom Expression Mapping (shown for LLM and WebLLM)
+        const showCustomExpressions = api === EXPRESSION_API.llm || api === EXPRESSION_API.webllm;
+        if (customExpressionSection) customExpressionSection.style.display = showCustomExpressions ? 'block' : 'none';
+
         // Update help text
         if (apiHelp) apiHelp.innerHTML = apiHelpTexts[api] || '';
     });
@@ -1614,17 +1724,25 @@ function bindEvents() {
     // Classifier model selector
     const classifierModelSelect = document.getElementById('ct_classifier_model');
     const modelDescription = document.getElementById('ct_model_description');
+    const modelExpressions = document.getElementById('ct_model_expressions');
 
     classifierModelSelect?.addEventListener('change', (e) => {
         const modelId = e.target.value;
         updateSetting('classifierModel', modelId);
 
+        const model = CLASSIFIER_MODELS[modelId];
+
         // Update description
-        if (modelDescription && CLASSIFIER_MODELS[modelId]) {
-            modelDescription.textContent = CLASSIFIER_MODELS[modelId].description;
+        if (modelDescription && model) {
+            modelDescription.textContent = model.description;
         }
 
-        notify.info(`Classifier model changed to ${CLASSIFIER_MODELS[modelId]?.name || modelId}. Reload may be required.`);
+        // Update expression labels display
+        if (modelExpressions && model) {
+            updateModelExpressionDisplay(modelId);
+        }
+
+        notify.info(`Classifier model changed to ${model?.name || modelId}. Reload may be required.`);
     });
 
     // Quantization toggle
