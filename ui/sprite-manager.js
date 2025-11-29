@@ -326,35 +326,42 @@ function generateModalHtml() {
 
             <!-- Character Flipbook Navigation -->
             <div class="ct-sm-flipbook">
-                <button class="ct-sm-flip-btn ct-sm-flip-prev" title="Previous Character">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
-                <div class="ct-sm-character-display">
-                    <div class="ct-sm-character-avatar"></div>
-                    <div class="ct-sm-character-info">
-                        <span class="ct-sm-character-name">Character Name</span>
-                        <span class="ct-sm-character-badge">MAIN</span>
+                <!-- Navigation Row with Card -->
+                <div class="ct-sm-flipbook-row">
+                    <button class="ct-sm-flip-btn ct-sm-flip-prev" title="Previous Character">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <div class="ct-sm-character-display">
+                        <div class="ct-sm-character-avatar"></div>
+                        <div class="ct-sm-character-info">
+                            <span class="ct-sm-character-name">Character Name</span>
+                            <span class="ct-sm-character-badge">MAIN</span>
+                        </div>
                     </div>
+                    <button class="ct-sm-flip-btn ct-sm-flip-next" title="Next Character">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
                 </div>
-                <button class="ct-sm-flip-btn ct-sm-flip-next" title="Next Character">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </button>
-                <button class="ct-sm-flip-btn ct-sm-edit-char" title="Edit NPC" style="display: none;">
-                    <i class="fa-solid fa-pen"></i>
-                </button>
-                <button class="ct-sm-flip-btn ct-sm-delete-char" title="Delete NPC" style="display: none;">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-                <button class="ct-sm-flip-btn ct-sm-add-char" title="Add NPC">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
-            </div>
 
-            <!-- Character Counter -->
-            <div class="ct-sm-counter">
-                <span class="ct-sm-counter-current">1</span>
-                <span class="ct-sm-counter-sep">of</span>
-                <span class="ct-sm-counter-total">1</span>
+                <!-- Character Counter -->
+                <div class="ct-sm-counter">
+                    <span class="ct-sm-counter-current">1</span>
+                    <span class="ct-sm-counter-sep">of</span>
+                    <span class="ct-sm-counter-total">1</span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="ct-sm-flipbook-actions">
+                    <button class="ct-sm-action-btn ct-sm-edit-char" title="Edit NPC" style="display: none;">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="ct-sm-action-btn ct-sm-delete-char" title="Delete NPC" style="display: none;">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                    <button class="ct-sm-action-btn ct-sm-add-char" title="Add NPC">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Main Content Area -->
