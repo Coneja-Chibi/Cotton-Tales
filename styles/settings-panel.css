@@ -129,9 +129,9 @@
 }
 
 .ct-modal {
-    width: 100%;
-    max-width: 1100px;
-    max-height: 85vh;
+    width: 95%;
+    max-width: 1600px;
+    max-height: 92vh;
     background: var(--ct-bg-base);
     border: 2px solid var(--ct-purple);
     border-radius: 24px;
@@ -515,9 +515,9 @@
 
 .ct-modal-content .ct-carousel {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 20px;
-    padding: 16px 0;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    padding: 20px 0;
 }
 
 .ct-modal-content .ct-carousel-arrow {
@@ -574,7 +574,7 @@
    ============================================================================= */
 
 .ct-card {
-    flex: 0 0 200px;
+    flex: 0 0 280px;
     background: linear-gradient(145deg, rgba(15, 15, 20, 0.95), rgba(25, 25, 35, 0.85));
     border: 2px solid var(--ct-purple);
     border-radius: 24px;
@@ -741,15 +741,15 @@
 .ct-card-content {
     background: linear-gradient(to bottom right, rgba(8, 8, 12, 0.9), rgba(15, 15, 25, 0.8));
     backdrop-filter: blur(5px);
-    padding: 12px;
+    padding: 16px 20px;
     text-align: center;
 }
 
 /* Card Avatar */
 .ct-card-avatar {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 10px;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 12px;
     border-radius: 16px;
     border: 2px solid var(--ct-border-strong);
     background: linear-gradient(135deg, rgba(183, 108, 255, 0.1), rgba(255, 107, 157, 0.1));
@@ -782,10 +782,10 @@
 
 /* Card Name */
 .ct-card-name {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--ct-text-primary);
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -988,8 +988,8 @@
     color: rgba(0, 0, 0, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: var(--ct-radius);
-    padding: 8px 14px;
-    font-size: 11px;
+    padding: 12px 18px;
+    font-size: 13px;
     font-weight: 700;
     cursor: pointer;
     transition: var(--ct-transition);
@@ -1002,7 +1002,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .ct-card-action:hover {
