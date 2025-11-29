@@ -636,7 +636,7 @@ function getExpectedLabels() {
         }
         case 'llm': {
             // LLM: User's custom labels for this character
-            // Start with existing sprites, then add any custom labels they've defined
+            // Users have full control over their label set - no auto-populating
             const charProfile = settings.characterExpressionProfiles?.[charFolder];
             const customList = charProfile?.customLabels || [];
 
@@ -644,18 +644,23 @@ function getExpectedLabels() {
             console.log('[CT getExpectedLabels LLM] charProfile:', charProfile);
             console.log('[CT getExpectedLabels LLM] customList:', customList);
 
-            // If user has custom labels, show those
-            if (customList.length > 0) {
-                console.log('[CT getExpectedLabels LLM] Returning customList with', customList.length, 'items');
+            // If a profile exists for this character, always use their custom list (even if empty)
+            // This respects the user's choice to have an empty/minimal set
+            if (charProfile) {
+                console.log('[CT getExpectedLabels LLM] Returning user\'s customList with', customList.length, 'items');
                 return customList;
             }
 
-            // Otherwise, show only labels that have existing sprites (don't auto-show all 28 BERT labels)
-            // Plus basic emotions if they want to add sprites
-            const basicEmotions = ['neutral', 'joy', 'sadness', 'anger', 'fear', 'surprise', 'love'];
-            const combined = new Set([...existingSpriteLabels, ...basicEmotions]);
-            console.log('[CT getExpectedLabels LLM] Using fallback basicEmotions');
-            return [...combined].sort();
+            // No profile yet - show only existing sprites (if any) so user can start fresh
+            // Don't auto-populate with emotions they didn't ask for
+            if (existingSpriteLabels.size > 0) {
+                console.log('[CT getExpectedLabels LLM] No profile, showing', existingSpriteLabels.size, 'existing sprites');
+                return [...existingSpriteLabels].sort();
+            }
+
+            // Brand new - show empty grid, user will add labels via "Add Label" button
+            console.log('[CT getExpectedLabels LLM] No profile and no sprites, returning empty');
+            return [];
         }
         case 'vecthare': {
             // VectHare: Semantic matching - show existing sprites + any custom emotions defined
@@ -1560,6 +1565,8 @@ async function deleteNpc(npcIndex) {
 export async function openSpriteManager(targetCharacterFolder = null) {
     if (isOpen) return;
 
+    console.log('[CT SpriteManager] Opening with targetCharacterFolder:', targetCharacterFolder);
+
     // Create modal if doesn't exist
     let modal = document.getElementById('ct-sprite-manager-modal');
     if (!modal) {
@@ -1573,11 +1580,16 @@ export async function openSpriteManager(targetCharacterFolder = null) {
     currentCharacterIndex = 0;
     selectedOutfit = 'default';
 
+    console.log('[CT SpriteManager] characterList:', characterList.map(c => ({ name: c.name, folderName: c.folderName })));
+
     // If a target character was specified, find and select it
     if (targetCharacterFolder) {
         const targetIndex = characterList.findIndex(c => c.folderName === targetCharacterFolder);
+        console.log('[CT SpriteManager] Looking for folder:', targetCharacterFolder, 'found at index:', targetIndex);
         if (targetIndex !== -1) {
             currentCharacterIndex = targetIndex;
+        } else {
+            console.warn('[CT SpriteManager] Target character not found in list!');
         }
     }
 
