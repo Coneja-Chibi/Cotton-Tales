@@ -387,6 +387,12 @@ function generateModalHtml() {
                     <div class="ct-sm-section-header">
                         <i class="fa-solid fa-brain"></i>
                         <span>Expression Method</span>
+                        <div class="ct-sm-sharing-toggle-inline">
+                            <label class="ct-sm-control-label" title="When off, each method has its own sprite configuration for this character">
+                                <input type="checkbox" id="ct_sm_share_sprites" checked />
+                                Share sprites across methods
+                            </label>
+                        </div>
                     </div>
                     <div class="ct-sm-method-tabs">
                         <button class="ct-sm-method-tab" data-method="bert" title="Local BERT classifier">
@@ -433,34 +439,23 @@ function generateModalHtml() {
                     </div>
                     <!-- VectHare Options (shown when VectHare selected) -->
                     <div class="ct-sm-method-options ct-sm-vecthare-options" style="display: none;">
-                        <div class="ct-sm-vecthare-layout">
-                            <p class="ct-sm-method-hint">
-                                <i class="fa-solid fa-vector-square"></i>
-                                VectHare uses semantic matching. Add <strong>keywords</strong> to emotions and adjust <strong>weights</strong> (1.0-3.0x).
-                            </p>
-                            <div class="ct-sm-vecthare-controls">
-                                <div class="ct-sm-preset-selector">
-                                    <label class="ct-sm-control-label">Emotion Preset:</label>
-                                    <select class="ct-sm-model-select" id="ct_sm_vecthare_preset">
-                                        <option value="">-- Choose a preset --</option>
-                                        <option value="basic_6">Basic 6 (Ekman)</option>
-                                        <option value="extended_12">Extended 12</option>
-                                        <option value="roleplay_18">Roleplay 18</option>
-                                        <option value="nsfw_14">NSFW 14</option>
-                                        <option value="anime_16">Anime 16</option>
-                                        <option value="go_emotions_28">GoEmotions 28</option>
-                                        <option value="empty">Start Empty</option>
-                                    </select>
-                                    <button class="ct-sm-btn-small" id="ct_sm_apply_preset">Apply</button>
-                                </div>
-                                <div class="ct-sm-sharing-toggle">
-                                    <label class="ct-sm-control-label">
-                                        <input type="checkbox" id="ct_sm_share_sprites" />
-                                        Share sprites with other methods
-                                    </label>
-                                    <span class="ct-sm-sharing-hint">When off, VectHare has its own sprite config</span>
-                                </div>
-                            </div>
+                        <p class="ct-sm-method-hint">
+                            <i class="fa-solid fa-vector-square"></i>
+                            VectHare uses semantic matching. Add <strong>keywords</strong> to emotions and adjust <strong>weights</strong> (1.0-3.0x).
+                        </p>
+                        <div class="ct-sm-preset-selector">
+                            <label class="ct-sm-control-label">Emotion Preset:</label>
+                            <select class="ct-sm-model-select" id="ct_sm_vecthare_preset">
+                                <option value="">-- Choose a preset --</option>
+                                <option value="basic_6">Basic 6 (Ekman)</option>
+                                <option value="extended_12">Extended 12</option>
+                                <option value="roleplay_18">Roleplay 18</option>
+                                <option value="nsfw_14">NSFW 14</option>
+                                <option value="anime_16">Anime 16</option>
+                                <option value="go_emotions_28">GoEmotions 28</option>
+                                <option value="empty">Start Empty</option>
+                            </select>
+                            <button class="ct-sm-btn-small" id="ct_sm_apply_preset">Apply</button>
                         </div>
                     </div>
                 </div>
@@ -566,6 +561,9 @@ function renderCurrentCharacter() {
 
     // Render party dock
     renderPartyDock();
+
+    // Update sharing toggle state
+    updateSharingToggle();
 }
 
 /**
@@ -1979,24 +1977,27 @@ async function addLabelToCharacter(label) {
 }
 
 /**
- * Update VectHare UI state (sharing toggle, preset dropdown)
+ * Update sharing toggle state for current character
  */
-function updateVectHareUI() {
+function updateSharingToggle() {
     const settings = getSettings();
     const char = characterList[currentCharacterIndex];
     const charFolder = char?.folderName || '';
 
-    // Update sharing toggle state
     const sharingToggle = document.getElementById('ct_sm_share_sprites');
     if (sharingToggle) {
         const share = settings.characterExpressionProfiles?.[charFolder]?.shareSpritesAcrossMethods ?? true;
         sharingToggle.checked = share;
     }
+}
 
-    // Update preset dropdown (show current if one was applied)
+/**
+ * Update VectHare-specific UI (preset dropdown)
+ */
+function updateVectHareUI() {
+    // Reset preset dropdown
     const presetSelect = document.getElementById('ct_sm_vecthare_preset');
     if (presetSelect) {
-        // Reset to default "choose" option
         presetSelect.value = '';
     }
 }
