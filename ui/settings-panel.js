@@ -16,6 +16,7 @@ import { EXTENSION_NAME, VERSION, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMP
 import { getSettings, updateSetting } from '../core/settings-manager.js';
 import { isVectHareAvailable, clearEmotionEmbeddingsCache } from '../ct-expressions.js';
 import { ConnectionManagerRequestService } from '../../../shared.js';
+import { getCustomEmotionsTabHTML, bindCustomEmotionEvents } from './custom-emotions-ui.js';
 
 // =============================================================================
 // CALLBACK REGISTRATION (breaks circular dependency with index.js)
@@ -248,6 +249,10 @@ function getModalHTML() {
                                 <i class="fa-solid fa-face-smile" aria-hidden="true"></i>
                                 <span>Expressions</span>
                             </button>
+                            <button class="ct-sidebar-item" data-tab="custom_emotions" id="ct-sidebar-custom-emotions" role="tab" aria-selected="false" aria-controls="ct-tab-custom-emotions">
+                                <i class="fa-solid fa-sparkles" aria-hidden="true"></i>
+                                <span>Custom Emotions</span>
+                            </button>
                             <button class="ct-sidebar-item" data-tab="backgrounds" id="ct-sidebar-backgrounds" role="tab" aria-selected="false" aria-controls="ct-tab-backgrounds">
                                 <i class="fa-solid fa-image" aria-hidden="true"></i>
                                 <span>Backgrounds</span>
@@ -284,6 +289,11 @@ function getModalHTML() {
                         <!-- Expressions Tab -->
                         <div class="ct-modal-tab" data-tab="expressions" id="ct-tab-expressions" role="tabpanel" aria-labelledby="ct-sidebar-expressions">
                             ${getExpressionsTabHTML()}
+                        </div>
+
+                        <!-- Custom Emotions Tab -->
+                        <div class="ct-modal-tab" data-tab="custom_emotions" id="ct-tab-custom-emotions" role="tabpanel" aria-labelledby="ct-sidebar-custom-emotions">
+                            ${getCustomEmotionsTabHTML()}
                         </div>
 
                         <!-- Backgrounds Tab -->
@@ -2040,6 +2050,7 @@ function bindModalEvents() {
     // Bind all the rest of the events (only once per session to avoid leaks)
     if (!modalEventsBound) {
         bindEvents();
+        bindCustomEmotionEvents();
         modalEventsBound = true;
     }
 }
