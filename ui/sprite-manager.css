@@ -188,8 +188,7 @@
         var(--ct-shadow-lg),
         0 0 25px var(--bw-pink-glow),
         0 0 50px rgba(255, 107, 107, 0.15);
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     transform: scale(0.95) translateY(20px);
@@ -283,8 +282,8 @@
     align-items: center;
     justify-content: center;
     gap: 20px;
-    padding: 40px 40px 40px;
-    min-height: auto;
+    padding: 40px;
+    margin: -20px -20px 0 -20px;
     background: linear-gradient(
         135deg,
         rgba(255, 107, 107, 0.06),
@@ -297,7 +296,6 @@
     animation: gradient-shift 20s ease infinite;
     border-bottom: 1px solid var(--ct-border);
     position: relative;
-    flex-shrink: 0;
 }
 
 /* Navigation row - prev button, card, next button */
