@@ -522,7 +522,9 @@ function renderCurrentCharacter() {
 
     if (avatarEl) {
         if (char.avatar) {
-            avatarEl.innerHTML = `<img src="${getThumbnailUrl('avatar', char.avatar)}" alt="${char.name}">`;
+            // Use full avatar image, not thumbnail, for better quality in larger display
+            const fullAvatarUrl = `/characters/${encodeURIComponent(char.avatar)}`;
+            avatarEl.innerHTML = `<img src="${fullAvatarUrl}" alt="${char.name}">`;
         } else {
             avatarEl.innerHTML = `<i class="fa-solid fa-user"></i>`;
         }
@@ -700,10 +702,10 @@ function renderExpressionGrid(char) {
         return s.label?.startsWith(selectedOutfit + '/');
     });
 
-    // Group existing sprites by expression label
+    // Group existing sprites by expression label (case-insensitive matching)
     const existingSpriteMap = new Map();
     for (const sprite of outfitSprites) {
-        const label = sprite.label?.split('/').pop() || sprite.label;
+        const label = (sprite.label?.split('/').pop() || sprite.label || '').toLowerCase();
         if (!existingSpriteMap.has(label)) {
             existingSpriteMap.set(label, []);
         }
@@ -715,7 +717,8 @@ function renderExpressionGrid(char) {
 
     // Render a tile for EACH expected label
     for (const expression of expectedLabels) {
-        const files = existingSpriteMap.get(expression) || [];
+        const expressionLower = expression.toLowerCase();
+        const files = existingSpriteMap.get(expressionLower) || [];
         const hasSprite = files.length > 0;
         const previewFile = files[0];
 
