@@ -12,7 +12,7 @@
 
 import { getContext } from '../../../../extensions.js';
 import { getRequestHeaders } from '../../../../../script.js';
-import { EXTENSION_NAME, VERSION, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT, VECTHARE_TRIGGER, CLASSIFIER_MODELS } from '../core/constants.js';
+import { EXTENSION_NAME, VERSION, EXPRESSION_API, PROMPT_TYPE, DEFAULT_LLM_PROMPT, VECTHARE_TRIGGER, CLASSIFIER_MODELS, DEFAULT_EXPRESSIONS } from '../core/constants.js';
 import { getSettings, updateSetting } from '../core/settings-manager.js';
 import { isVectHareAvailable, clearEmotionEmbeddingsCache } from '../ct-expressions.js';
 import { ConnectionManagerRequestService } from '../../../shared.js';
@@ -430,8 +430,20 @@ function getExpressionsTabHTML() {
                 This understands emotion context rather than just keywords.
             </p>
 
+            <!-- Use Provider Toggle -->
+            <div class="ct-toggle-row" style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div>
+                    <div class="ct-toggle-label" style="font-size: 12px;">Use VectHare Provider</div>
+                    <div class="ct-toggle-sublabel" style="font-size: 10px;">Use VectHare's embedding source for classification</div>
+                </div>
+                <label class="ct-switch">
+                    <input type="checkbox" id="ct_vecthare_use_provider" ${settings.vecthareUseProvider ? 'checked' : ''} />
+                    <span class="ct-switch-slider"></span>
+                </label>
+            </div>
+
             <!-- Classification Trigger -->
-            <div class="ct-slider-row" style="margin-bottom: 8px;">
+            <div class="ct-slider-row" style="margin-bottom: 8px; margin-top: 12px;">
                 <div class="ct-slider-header">
                     <span class="ct-slider-label" style="font-size: 12px;">Classification Trigger</span>
                 </div>
@@ -737,6 +749,18 @@ function getScenesTabHTML() {
             </select>
         </div>
 
+        <!-- Choice Animation -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Choice Animation</span>
+            </div>
+            <select class="ct-select" id="ct_choice_animation">
+                <option value="fade" ${settings.choiceAnimation === 'fade' ? 'selected' : ''}>Fade</option>
+                <option value="slide" ${settings.choiceAnimation === 'slide' ? 'selected' : ''}>Slide</option>
+                <option value="none" ${settings.choiceAnimation === 'none' ? 'selected' : ''}>None</option>
+            </select>
+        </div>
+
         <div class="ct-section-label" style="margin-top: 24px;">
             <i class="fa-solid fa-panorama"></i>
             Background Automation
@@ -764,6 +788,16 @@ function getScenesTabHTML() {
                 <option value="dissolve" ${settings.backgroundTransition === 'dissolve' ? 'selected' : ''}>Dissolve</option>
                 <option value="none" ${settings.backgroundTransition === 'none' ? 'selected' : ''}>Instant</option>
             </select>
+        </div>
+
+        <!-- Background Transition Duration -->
+        <div class="ct-slider-row">
+            <div class="ct-slider-header">
+                <span class="ct-slider-label">Background Transition Duration</span>
+                <span class="ct-slider-value" id="ct_bg_trans_val">${settings.backgroundTransitionDuration}ms</span>
+            </div>
+            <input type="range" class="ct-slider" id="ct_bg_transition_duration"
+                   min="100" max="2000" step="100" value="${settings.backgroundTransitionDuration}" />
         </div>
 
         <div class="ct-section-label" style="margin-top: 24px;">
@@ -1275,10 +1309,12 @@ function bindEvents() {
     bindSlider('ct_typewriter_speed', 'typewriterSpeed', 'ct_speed_val', 'ms');
     bindSlider('ct_transition_duration', 'spriteTransitionDuration', 'ct_trans_val', 'ms');
     bindSlider('ct_choice_count', 'choiceCount', 'ct_choice_val', '');
+    bindSlider('ct_bg_transition_duration', 'backgroundTransitionDuration', 'ct_bg_trans_val', 'ms');
 
     bindSelect('ct_layout_mode', 'layoutMode');
     bindSelect('ct_sprite_transition', 'spriteTransition');
     bindSelect('ct_choice_style', 'choiceButtonStyle');
+    bindSelect('ct_choice_animation', 'choiceAnimation');
     bindSelect('ct_bg_transition', 'backgroundTransition');
 
     bindToggle('ct_typewriter', 'typewriterEnabled');
@@ -1405,6 +1441,9 @@ function bindEvents() {
     document.getElementById('ct_vecthare_trigger')?.addEventListener('change', (e) => {
         updateSetting('vecthareTrigger', e.target.value);
     });
+
+    // VectHare use provider toggle
+    bindToggle('ct_vecthare_use_provider', 'vecthareUseProvider');
 
     // VectHare cache toggle
     bindToggle('ct_vecthare_cache', 'vecthareCacheEmotions');
