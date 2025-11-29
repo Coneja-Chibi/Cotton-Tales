@@ -436,6 +436,21 @@ function getExpressionsTabHTML() {
                 ${CLASSIFIER_MODELS[settings.classifierModel]?.description || ''}
             </div>
 
+            <!-- Model Expression Labels -->
+            <div id="ct_model_expressions" style="margin-bottom: 12px;">
+                <div style="font-size: 10px; color: var(--ct-text-light); margin-bottom: 6px; font-weight: 600;">
+                    Available Expressions (${CLASSIFIER_MODELS[settings.classifierModel]?.labels || 0}):
+                </div>
+                <div class="ct-expression-chips">
+                    ${(CLASSIFIER_MODELS[settings.classifierModel]?.labelList || []).map(label => `
+                        <span class="ct-expression-chip">${label}</span>
+                    `).join('')}
+                </div>
+                <p style="font-size: 10px; color: var(--ct-text-light); margin-top: 8px; font-style: italic;">
+                    Sprites should be named to match these labels for best results.
+                </p>
+            </div>
+
             <!-- Quantization Toggle -->
             <div class="ct-toggle-row" style="padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.1);">
                 <div>
@@ -621,6 +636,28 @@ function getExpressionsTabHTML() {
                 <input type="checkbox" id="ct_translate_classify" ${settings.translateBeforeClassify ? 'checked' : ''} />
                 <span class="ct-switch-slider"></span>
             </label>
+        </div>
+
+        <!-- Custom Expression Mapping (shown when API = LLM/WEBLLM) -->
+        <div id="ct_custom_expressions_section" style="display: ${settings.expressionApi === EXPRESSION_API.llm || settings.expressionApi === EXPRESSION_API.webllm ? 'block' : 'none'}; margin-top: 24px;">
+            <div class="ct-section-label">
+                <i class="fa-solid fa-sparkles"></i>
+                Custom Expression Mapping
+            </div>
+
+            <p style="font-size: 11px; color: var(--ct-text-light); margin-bottom: 12px;">
+                Map custom emotion labels to available sprites. The LLM can output these custom labels.
+            </p>
+
+            <!-- Mapping Table -->
+            <div id="ct_custom_expr_list" class="ct-mapping-table" style="margin-bottom: 12px;">
+                <!-- Populated by JS -->
+            </div>
+
+            <button class="ct-btn secondary" id="ct_add_custom_expr">
+                <i class="fa-solid fa-plus"></i>
+                Add Custom Expression
+            </button>
         </div>
     `;
 }
