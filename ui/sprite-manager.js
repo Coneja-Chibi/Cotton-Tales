@@ -809,7 +809,8 @@ function renderExpressionGrid(char) {
 }
 
 /**
- * Render a VectHare-specific expression tile with inline keyword/weight configuration
+ * Render a VectHare-specific expression tile with expandable keyword/weight configuration
+ * Supports per-keyword weights as VectHare actually works
  * @param {string} expression - Expression label
  * @param {Array} files - Sprite files for this expression
  * @param {boolean} hasSprite - Whether sprite exists
@@ -824,166 +825,277 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
     const globalEmotionConfig = settings.customEmotions?.[expression];
     const emotionConfig = charEmotionConfig || globalEmotionConfig || null;
 
-    // Extract keywords and weight from config
+    // Extract keywords with individual weights
     const keywords = emotionConfig?.keywords || {};
-    const keywordList = Object.keys(keywords);
-    const avgWeight = keywordList.length > 0
-        ? (Object.values(keywords).reduce((a, b) => a + b, 0) / keywordList.length).toFixed(1)
+    const keywordEntries = Object.entries(keywords); // [[keyword, weight], ...]
+    const keywordCount = keywordEntries.length;
+    const avgWeight = keywordCount > 0
+        ? (Object.values(keywords).reduce((a, b) => a + b, 0) / keywordCount).toFixed(1)
         : '1.5';
+    const detectionMethod = emotionConfig?.detectionMethod || 'auto';
+
+    // Helper to determine if keyword is regex
+    const isRegex = (kw) => kw.startsWith('/') && kw.lastIndexOf('/') > 0;
+
+    // Generate keyword chips HTML
+    const keywordChipsHtml = keywordEntries.map(([kw, weight]) => `
+        <div class="ct-sm-vh-keyword-chip ${isRegex(kw) ? 'ct-sm-vh-regex' : ''}"
+             data-keyword="${kw.replace(/"/g, '&quot;')}"
+             data-weight="${weight}">
+            ${isRegex(kw) ? '<i class="fa-solid fa-code" title="Regex pattern"></i>' : ''}
+            <span class="ct-sm-vh-kw-text">${kw}</span>
+            <span class="ct-sm-vh-kw-weight" title="Weight: ${weight}x">${weight}x</span>
+            <button class="ct-sm-vh-kw-remove" title="Remove keyword">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    `).join('');
 
     const tile = document.createElement('div');
-    tile.className = `ct-sm-expression-tile ct-sm-vecthare-tile ${hasSprite ? 'has-sprite' : 'empty'}`;
+    tile.className = `ct-sm-expression-tile ct-sm-vh-tile ${hasSprite ? 'has-sprite' : 'empty'}`;
     tile.dataset.expression = expression;
+    tile.dataset.expanded = 'false';
 
     tile.innerHTML = `
-        <div class="ct-sm-vh-tile-header">
-            <div class="ct-sm-expression-preview ${hasSprite ? '' : 'ct-sm-empty-slot'}" data-upload-trigger>
+        <!-- COMPACT HEADER (Always Visible) -->
+        <div class="ct-sm-vh-header">
+            <!-- Preview Thumbnail -->
+            <div class="ct-sm-vh-preview ${hasSprite ? '' : 'empty'}" data-upload-trigger>
                 ${hasSprite
                     ? `<img src="${previewFile.imageSrc}" alt="${expression}">`
                     : `<i class="fa-solid fa-plus"></i>`
                 }
-                ${files.length > 1 ? `<span class="ct-sm-expression-count">${files.length}</span>` : ''}
-                ${hasSprite ? `
-                    <button class="ct-sm-delete-sprite" data-expression="${expression}" title="Delete sprite">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                ` : ''}
+                ${files.length > 1 ? `<span class="ct-sm-vh-sprite-count">${files.length}</span>` : ''}
             </div>
-            <div class="ct-sm-vh-label-row">
-                <span class="ct-sm-expression-label">${expression}</span>
-                <button class="ct-sm-vh-remove-emotion" data-emotion="${expression}" title="Remove emotion">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+
+            <!-- Label & Stats -->
+            <div class="ct-sm-vh-info">
+                <span class="ct-sm-vh-label">${expression}</span>
+                <div class="ct-sm-vh-stats">
+                    <span class="ct-sm-vh-keyword-count" title="${keywordCount} keywords configured">
+                        <i class="fa-solid fa-tags"></i> ${keywordCount}
+                    </span>
+                    <span class="ct-sm-vh-avg-weight" data-weight="${avgWeight}" title="Average weight: ${avgWeight}x">
+                        <i class="fa-solid fa-weight-scale"></i> ${avgWeight}x
+                    </span>
+                </div>
             </div>
+
+            <!-- Expand Toggle -->
+            <button class="ct-sm-vh-expand-toggle" title="Configure keywords">
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
         </div>
+
+        <!-- EXPANDABLE CONFIG PANEL (Hidden by Default) -->
         <div class="ct-sm-vh-config">
-            <div class="ct-sm-vh-keywords-row">
-                <label class="ct-sm-vh-label">
+            <!-- Keyword Chips Section -->
+            <div class="ct-sm-vh-keywords-section">
+                <label class="ct-sm-vh-config-label">
                     <i class="fa-solid fa-tags"></i>
-                    Keywords
+                    Keywords <span class="ct-sm-vh-hint">(click to edit weight)</span>
                 </label>
-                <input type="text"
-                    class="ct-sm-vh-keywords-input"
-                    data-expression="${expression}"
-                    placeholder="happy, excited, joy..."
-                    value="${keywordList.join(', ')}"
-                    title="Comma-separated keywords that trigger this emotion"
-                />
+                <div class="ct-sm-vh-keyword-chips">
+                    ${keywordChipsHtml}
+                    <!-- Add Keyword Button -->
+                    <button class="ct-sm-vh-add-keyword" title="Add keyword">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
             </div>
-            <div class="ct-sm-vh-weight-row">
-                <label class="ct-sm-vh-label">
-                    <i class="fa-solid fa-weight-scale"></i>
-                    Weight
+
+            <!-- Inline Weight Editor (Hidden until keyword clicked) -->
+            <div class="ct-sm-vh-weight-editor" style="display: none;">
+                <div class="ct-sm-vh-editor-header">
+                    <span class="ct-sm-vh-editor-title">
+                        <i class="fa-solid fa-weight-scale"></i>
+                        Weight for: <strong class="ct-sm-vh-editor-keyword"></strong>
+                    </span>
+                    <button class="ct-sm-vh-editor-close" title="Close">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
+                </div>
+                <div class="ct-sm-vh-editor-body">
+                    <input type="range"
+                        class="ct-sm-vh-weight-slider"
+                        min="1.0"
+                        max="3.0"
+                        step="0.1"
+                        value="1.5">
+                    <span class="ct-sm-vh-slider-value">1.5x</span>
+                </div>
+                <div class="ct-sm-vh-editor-hint">
+                    1.0x = normal, 3.0x = strong boost
+                </div>
+            </div>
+
+            <!-- Detection Method -->
+            <div class="ct-sm-vh-detection-section">
+                <label class="ct-sm-vh-config-label">
+                    <i class="fa-solid fa-crosshairs"></i>
+                    Detection
                 </label>
-                <input type="range"
-                    class="ct-sm-vh-weight-slider"
-                    data-expression="${expression}"
-                    min="1.0"
-                    max="3.0"
-                    step="0.1"
-                    value="${avgWeight}"
-                    title="Keyword boost multiplier (1.0 = normal, 3.0 = strong)"
-                />
-                <span class="ct-sm-vh-weight-value">${avgWeight}x</span>
+                <select class="ct-sm-vh-detection-select" data-expression="${expression}">
+                    <option value="auto" ${detectionMethod === 'auto' ? 'selected' : ''}>Auto (recommended)</option>
+                    <option value="patterns" ${detectionMethod === 'patterns' ? 'selected' : ''}>Keywords only</option>
+                    <option value="expressions" ${detectionMethod === 'expressions' ? 'selected' : ''}>Sprite-based only</option>
+                    <option value="both" ${detectionMethod === 'both' ? 'selected' : ''}>Both (strict)</option>
+                </select>
+            </div>
+
+            <!-- Actions Footer -->
+            <div class="ct-sm-vh-config-footer">
+                <button class="ct-sm-vh-remove-emotion" data-emotion="${expression}" title="Delete this emotion">
+                    <i class="fa-solid fa-trash"></i>
+                    Remove
+                </button>
             </div>
         </div>
     `;
 
-    // Event: Click preview to upload sprite
-    tile.querySelector('[data-upload-trigger]').addEventListener('click', (e) => {
-        if (e.target.closest('.ct-sm-delete-sprite')) {
-            e.stopPropagation();
-            deleteSpriteForExpression(expression, previewFile);
-            return;
-        }
-        uploadSpriteForExpression(expression);
-    });
-
-    // Event: Remove emotion button
-    tile.querySelector('.ct-sm-vh-remove-emotion').addEventListener('click', (e) => {
-        e.stopPropagation();
-        removeVectHareEmotion(expression);
-    });
-
-    // Event: Keywords input blur - save keywords
-    const keywordsInput = tile.querySelector('.ct-sm-vh-keywords-input');
-    keywordsInput.addEventListener('blur', () => {
-        saveVectHareKeywords(expression, keywordsInput.value, charFolder);
-    });
-    keywordsInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            keywordsInput.blur();
-        }
-    });
-
-    // Event: Weight slider change
-    const weightSlider = tile.querySelector('.ct-sm-vh-weight-slider');
-    const weightValue = tile.querySelector('.ct-sm-vh-weight-value');
-    weightSlider.addEventListener('input', () => {
-        weightValue.textContent = `${weightSlider.value}x`;
-    });
-    weightSlider.addEventListener('change', () => {
-        saveVectHareWeight(expression, parseFloat(weightSlider.value), charFolder);
-    });
+    // Bind all events
+    bindVectHareTileEvents(tile, expression, charFolder, previewFile, hasSprite);
 
     return tile;
 }
 
 /**
- * Save VectHare keywords for an expression
- * @param {string} expression - Expression name
- * @param {string} keywordsStr - Comma-separated keywords
- * @param {string} charFolder - Character folder
+ * Bind all events for a VectHare tile
  */
-async function saveVectHareKeywords(expression, keywordsStr, charFolder) {
-    const settings = getSettings();
+function bindVectHareTileEvents(tile, expression, charFolder, previewFile, hasSprite) {
+    // Toggle expansion on header click
+    tile.querySelector('.ct-sm-vh-header').addEventListener('click', (e) => {
+        // Don't expand if clicking upload area
+        if (e.target.closest('[data-upload-trigger]')) return;
+        toggleVectHareTileExpansion(tile);
+    });
 
-    // Parse keywords
-    const keywords = keywordsStr
-        .split(',')
-        .map(k => k.trim().toLowerCase())
-        .filter(k => k.length > 0);
+    // Expand toggle button
+    tile.querySelector('.ct-sm-vh-expand-toggle').addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleVectHareTileExpansion(tile);
+    });
 
-    // Get existing weight or default
-    const existingConfig = settings.characterEmotions?.[charFolder]?.customEmotions?.[expression];
-    const existingWeight = existingConfig?.keywords
-        ? Object.values(existingConfig.keywords)[0] || 1.5
-        : 1.5;
+    // Upload sprite on preview click
+    tile.querySelector('[data-upload-trigger]').addEventListener('click', (e) => {
+        e.stopPropagation();
+        uploadSpriteForExpression(expression);
+    });
 
-    // Build keywords object with weight
-    const keywordsObj = {};
-    keywords.forEach(k => { keywordsObj[k] = existingWeight; });
+    // Add keyword button
+    tile.querySelector('.ct-sm-vh-add-keyword').addEventListener('click', (e) => {
+        e.stopPropagation();
+        showAddVectHareKeywordModal(expression, charFolder);
+    });
 
-    // Ensure structure exists
-    if (!settings.characterEmotions) settings.characterEmotions = {};
-    if (!settings.characterEmotions[charFolder]) {
-        settings.characterEmotions[charFolder] = { customEmotions: {} };
-    }
-    if (!settings.characterEmotions[charFolder].customEmotions) {
-        settings.characterEmotions[charFolder].customEmotions = {};
-    }
+    // Keyword chip clicks (edit weight)
+    tile.querySelectorAll('.ct-sm-vh-keyword-chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            if (e.target.closest('.ct-sm-vh-kw-remove')) return;
+            e.stopPropagation();
+            const keyword = chip.dataset.keyword;
+            const weight = parseFloat(chip.dataset.weight);
+            showVectHareWeightEditor(tile, expression, keyword, weight, charFolder);
+        });
+    });
 
-    // Update or create emotion config
-    settings.characterEmotions[charFolder].customEmotions[expression] = {
-        ...settings.characterEmotions[charFolder].customEmotions[expression],
-        keywords: keywordsObj,
-        baseEmotions: [expression], // Map to self by default
-        enabled: true,
-        updatedAt: Date.now()
-    };
+    // Remove keyword buttons
+    tile.querySelectorAll('.ct-sm-vh-kw-remove').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const chip = btn.closest('.ct-sm-vh-keyword-chip');
+            const keyword = chip.dataset.keyword;
+            await removeVectHareKeyword(expression, keyword, charFolder);
+        });
+    });
 
-    await saveSettings();
-    console.log(`[CT VectHare] Saved keywords for ${expression}:`, keywords);
+    // Weight editor close button
+    tile.querySelector('.ct-sm-vh-editor-close')?.addEventListener('click', () => {
+        tile.querySelector('.ct-sm-vh-weight-editor').style.display = 'none';
+    });
+
+    // Detection method change
+    tile.querySelector('.ct-sm-vh-detection-select')?.addEventListener('change', async (e) => {
+        await updateVectHareDetectionMethod(expression, e.target.value, charFolder);
+    });
+
+    // Remove emotion button
+    tile.querySelector('.ct-sm-vh-remove-emotion').addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeVectHareEmotion(expression);
+    });
 }
 
 /**
- * Save VectHare weight for an expression
- * @param {string} expression - Expression name
- * @param {number} weight - Weight multiplier (1.0-3.0)
- * @param {string} charFolder - Character folder
+ * Toggle VectHare tile expansion
  */
-async function saveVectHareWeight(expression, weight, charFolder) {
+function toggleVectHareTileExpansion(tile) {
+    const isExpanded = tile.dataset.expanded === 'true';
+    const configPanel = tile.querySelector('.ct-sm-vh-config');
+
+    // Toggle state
+    tile.dataset.expanded = (!isExpanded).toString();
+    configPanel.style.display = !isExpanded ? 'flex' : 'none';
+
+    // Collapse other expanded tiles
+    document.querySelectorAll('.ct-sm-vh-tile[data-expanded="true"]').forEach(otherTile => {
+        if (otherTile !== tile) {
+            otherTile.dataset.expanded = 'false';
+            otherTile.querySelector('.ct-sm-vh-config').style.display = 'none';
+        }
+    });
+}
+
+/**
+ * Show modal to add a new keyword
+ */
+async function showAddVectHareKeywordModal(expression, charFolder) {
+    const keyword = await showInputModal(
+        `Add Keyword for "${expression}"`,
+        'Enter keyword or /regex/ pattern (e.g., happy, /laugh\\w*/i)'
+    );
+
+    if (!keyword || !keyword.trim()) return;
+
+    await addVectHareKeyword(expression, keyword.trim(), 1.5, charFolder);
+}
+
+/**
+ * Show inline weight editor for a keyword
+ */
+function showVectHareWeightEditor(tile, expression, keyword, currentWeight, charFolder) {
+    const editor = tile.querySelector('.ct-sm-vh-weight-editor');
+    const slider = editor.querySelector('.ct-sm-vh-weight-slider');
+    const valueDisplay = editor.querySelector('.ct-sm-vh-slider-value');
+    const keywordDisplay = editor.querySelector('.ct-sm-vh-editor-keyword');
+
+    // Update UI
+    keywordDisplay.textContent = keyword;
+    slider.value = currentWeight;
+    valueDisplay.textContent = `${currentWeight}x`;
+    editor.style.display = 'block';
+
+    // Remove old listeners
+    const newSlider = slider.cloneNode(true);
+    slider.parentNode.replaceChild(newSlider, slider);
+
+    // Slider input event (live update)
+    newSlider.addEventListener('input', () => {
+        valueDisplay.textContent = `${newSlider.value}x`;
+    });
+
+    // Slider change event (save)
+    newSlider.addEventListener('change', async () => {
+        await updateVectHareKeywordWeight(expression, keyword, parseFloat(newSlider.value), charFolder);
+    });
+}
+
+/**
+ * Add a new keyword to an emotion with weight
+ */
+async function addVectHareKeyword(expression, keyword, weight, charFolder) {
     const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
 
     // Ensure structure exists
     if (!settings.characterEmotions) settings.characterEmotions = {};
@@ -993,24 +1105,76 @@ async function saveVectHareWeight(expression, weight, charFolder) {
     if (!settings.characterEmotions[charFolder].customEmotions) {
         settings.characterEmotions[charFolder].customEmotions = {};
     }
+    if (!settings.characterEmotions[charFolder].customEmotions[expression]) {
+        settings.characterEmotions[charFolder].customEmotions[expression] = {
+            keywords: {},
+            baseEmotions: [expression],
+            detectionMethod: 'auto',
+            enabled: true
+        };
+    }
 
-    const existing = settings.characterEmotions[charFolder].customEmotions[expression] || {};
-    const existingKeywords = existing.keywords || {};
-
-    // Update all keyword weights
-    const updatedKeywords = {};
-    Object.keys(existingKeywords).forEach(k => { updatedKeywords[k] = weight; });
-
-    settings.characterEmotions[charFolder].customEmotions[expression] = {
-        ...existing,
-        keywords: updatedKeywords,
-        baseEmotions: existing.baseEmotions || [expression],
-        enabled: true,
-        updatedAt: Date.now()
-    };
+    // Add keyword with weight
+    const emotionConfig = settings.characterEmotions[charFolder].customEmotions[expression];
+    const normalizedKeyword = keyword.startsWith('/') ? keyword : keyword.toLowerCase();
+    emotionConfig.keywords[normalizedKeyword] = weight;
+    emotionConfig.updatedAt = Date.now();
 
     await saveSettings();
-    console.log(`[CT VectHare] Saved weight for ${expression}:`, weight);
+    renderExpressionGrid(char);
+    toastr.success(`Added: ${keyword} (${weight}x)`);
+}
+
+/**
+ * Remove a keyword from an emotion
+ */
+async function removeVectHareKeyword(expression, keyword, charFolder) {
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+
+    const emotionConfig = settings.characterEmotions?.[charFolder]?.customEmotions?.[expression];
+    if (!emotionConfig?.keywords) return;
+
+    delete emotionConfig.keywords[keyword];
+    emotionConfig.updatedAt = Date.now();
+
+    await saveSettings();
+    renderExpressionGrid(char);
+    toastr.success(`Removed: ${keyword}`);
+}
+
+/**
+ * Update weight for a specific keyword
+ */
+async function updateVectHareKeywordWeight(expression, keyword, newWeight, charFolder) {
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+
+    const emotionConfig = settings.characterEmotions?.[charFolder]?.customEmotions?.[expression];
+    if (!emotionConfig?.keywords) return;
+
+    emotionConfig.keywords[keyword] = newWeight;
+    emotionConfig.updatedAt = Date.now();
+
+    await saveSettings();
+    renderExpressionGrid(char);
+    console.log(`[CT VectHare] Updated ${keyword} weight to ${newWeight}x`);
+}
+
+/**
+ * Update detection method for an emotion
+ */
+async function updateVectHareDetectionMethod(expression, method, charFolder) {
+    const settings = getSettings();
+
+    const emotionConfig = settings.characterEmotions?.[charFolder]?.customEmotions?.[expression];
+    if (!emotionConfig) return;
+
+    emotionConfig.detectionMethod = method;
+    emotionConfig.updatedAt = Date.now();
+
+    await saveSettings();
+    toastr.success(`Detection: ${method}`);
 }
 
 /**
