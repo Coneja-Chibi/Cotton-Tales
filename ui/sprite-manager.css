@@ -11,40 +11,55 @@
  */
 
 /* =============================================================================
-   RGB/COLOR SHIFTING ANIMATIONS
+   COLOR SHIFTING ANIMATIONS - BunnyWorks Coral/Pink/Orange palette
    ============================================================================= */
 
-@keyframes rgb-shift {
-    0% {
-        border-color: var(--ct-pink-vibrant);
-        box-shadow: 0 0 15px var(--ct-pink-glow), inset 0 0 10px rgba(255, 107, 157, 0.1);
-    }
-    33% {
-        border-color: var(--ct-cyan-vibrant);
-        box-shadow: 0 0 15px var(--ct-cyan-glow), inset 0 0 10px rgba(92, 225, 230, 0.1);
-    }
-    66% {
-        border-color: var(--ct-purple-vibrant);
-        box-shadow: 0 0 15px var(--ct-purple-glow), inset 0 0 10px rgba(183, 108, 255, 0.1);
-    }
-    100% {
-        border-color: var(--ct-pink-vibrant);
-        box-shadow: 0 0 15px var(--ct-pink-glow), inset 0 0 10px rgba(255, 107, 157, 0.1);
-    }
+/* BunnyWorks warm palette colors */
+:root {
+    --bw-coral: #ff6b6b;
+    --bw-coral-glow: rgba(255, 107, 107, 0.5);
+    --bw-pink: #ff6b9d;
+    --bw-pink-glow: rgba(255, 107, 157, 0.5);
+    --bw-orange: #ff9f43;
+    --bw-orange-glow: rgba(255, 159, 67, 0.5);
+    --bw-peach: #ffa07a;
+    --bw-peach-glow: rgba(255, 160, 122, 0.5);
 }
 
-@keyframes rgb-glow-pulse {
+/* Smooth coral → pink → orange cycle */
+@keyframes warm-shift {
     0%, 100% {
-        filter: drop-shadow(0 0 8px var(--ct-pink-glow));
+        border-color: var(--bw-coral);
+        box-shadow: 0 0 20px var(--bw-coral-glow), inset 0 0 8px rgba(255, 107, 107, 0.08);
     }
-    33% {
-        filter: drop-shadow(0 0 12px var(--ct-cyan-glow));
+    25% {
+        border-color: var(--bw-pink);
+        box-shadow: 0 0 20px var(--bw-pink-glow), inset 0 0 8px rgba(255, 107, 157, 0.08);
     }
-    66% {
-        filter: drop-shadow(0 0 10px var(--ct-purple-glow));
+    50% {
+        border-color: var(--bw-orange);
+        box-shadow: 0 0 20px var(--bw-orange-glow), inset 0 0 8px rgba(255, 159, 67, 0.08);
+    }
+    75% {
+        border-color: var(--bw-peach);
+        box-shadow: 0 0 20px var(--bw-peach-glow), inset 0 0 8px rgba(255, 160, 122, 0.08);
     }
 }
 
+/* Smooth glow pulse in warm tones */
+@keyframes warm-glow-pulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 8px var(--bw-pink-glow));
+    }
+    33% {
+        filter: drop-shadow(0 0 10px var(--bw-coral-glow));
+    }
+    66% {
+        filter: drop-shadow(0 0 10px var(--bw-orange-glow));
+    }
+}
+
+/* Slow, smooth gradient position shift */
 @keyframes gradient-shift {
     0% {
         background-position: 0% 50%;
@@ -57,6 +72,7 @@
     }
 }
 
+/* Slow flowing border - warm colors */
 @keyframes border-flow {
     0% {
         background-position: 0% 0%;
@@ -66,9 +82,42 @@
     }
 }
 
+/* Very subtle pulse */
 @keyframes subtle-pulse {
-    0%, 100% { opacity: 0.6; }
+    0%, 100% { opacity: 0.7; }
     50% { opacity: 1; }
+}
+
+/* Legacy alias for compatibility */
+@keyframes rgb-shift {
+    0%, 100% {
+        border-color: var(--bw-coral);
+        box-shadow: 0 0 20px var(--bw-coral-glow), inset 0 0 8px rgba(255, 107, 107, 0.08);
+    }
+    25% {
+        border-color: var(--bw-pink);
+        box-shadow: 0 0 20px var(--bw-pink-glow), inset 0 0 8px rgba(255, 107, 157, 0.08);
+    }
+    50% {
+        border-color: var(--bw-orange);
+        box-shadow: 0 0 20px var(--bw-orange-glow), inset 0 0 8px rgba(255, 159, 67, 0.08);
+    }
+    75% {
+        border-color: var(--bw-peach);
+        box-shadow: 0 0 20px var(--bw-peach-glow), inset 0 0 8px rgba(255, 160, 122, 0.08);
+    }
+}
+
+@keyframes rgb-glow-pulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 8px var(--bw-pink-glow));
+    }
+    33% {
+        filter: drop-shadow(0 0 10px var(--bw-coral-glow));
+    }
+    66% {
+        filter: drop-shadow(0 0 10px var(--bw-orange-glow));
+    }
 }
 
 /* =============================================================================
@@ -111,25 +160,25 @@
     max-width: 900px;
     max-height: 90vh;
     background: var(--ct-bg-primary);
-    border: 2px solid var(--ct-pink-vibrant);
+    border: 2px solid var(--bw-pink);
     border-radius: var(--ct-radius-xl);
     box-shadow:
         var(--ct-shadow-lg),
-        0 0 30px var(--ct-pink-glow),
-        0 0 60px rgba(183, 108, 255, 0.2);
+        0 0 25px var(--bw-pink-glow),
+        0 0 50px rgba(255, 107, 107, 0.15);
     overflow: hidden;
     display: flex;
     flex-direction: column;
     transform: scale(0.95) translateY(20px);
     transition: transform 0.3s ease;
-    animation: rgb-shift 8s ease-in-out infinite;
+    animation: warm-shift 12s ease-in-out infinite;
 }
 
 #ct-sprite-manager-modal.open .ct-sm-container {
     transform: scale(1) translateY(0);
 }
 
-/* Top gradient accent - animated RGB flow */
+/* Top gradient accent - smooth warm flow */
 .ct-sm-container::before {
     content: '';
     position: absolute;
@@ -139,14 +188,15 @@
     height: 3px;
     background: linear-gradient(
         90deg,
-        var(--ct-pink-vibrant),
-        var(--ct-purple-vibrant),
-        var(--ct-cyan-vibrant),
-        var(--ct-purple-vibrant),
-        var(--ct-pink-vibrant)
+        var(--bw-coral),
+        var(--bw-pink),
+        var(--bw-orange),
+        var(--bw-peach),
+        var(--bw-pink),
+        var(--bw-coral)
     );
-    background-size: 200% 100%;
-    animation: border-flow 4s linear infinite;
+    background-size: 300% 100%;
+    animation: border-flow 8s linear infinite;
     z-index: 10;
 }
 
@@ -209,14 +259,14 @@
     padding: 20px;
     background: linear-gradient(
         135deg,
-        rgba(255, 107, 157, 0.08),
-        rgba(183, 108, 255, 0.06),
-        rgba(92, 225, 230, 0.04),
-        rgba(183, 108, 255, 0.06),
-        rgba(255, 107, 157, 0.08)
+        rgba(255, 107, 107, 0.06),
+        rgba(255, 107, 157, 0.05),
+        rgba(255, 159, 67, 0.04),
+        rgba(255, 107, 157, 0.05),
+        rgba(255, 107, 107, 0.06)
     );
     background-size: 400% 400%;
-    animation: gradient-shift 12s ease infinite;
+    animation: gradient-shift 20s ease infinite;
     border-bottom: 1px solid var(--ct-border);
     position: relative;
 }
@@ -232,14 +282,14 @@
     background: linear-gradient(
         90deg,
         transparent,
-        var(--ct-pink-vibrant),
-        var(--ct-cyan-vibrant),
-        var(--ct-purple-vibrant),
+        var(--bw-coral),
+        var(--bw-pink),
+        var(--bw-orange),
         transparent
     );
-    background-size: 200% 100%;
-    animation: border-flow 6s linear infinite;
-    opacity: 0.6;
+    background-size: 300% 100%;
+    animation: border-flow 10s linear infinite;
+    opacity: 0.5;
 }
 
 .ct-sm-flip-btn,
@@ -283,14 +333,14 @@
     gap: 16px;
     padding: 16px 24px;
     background: linear-gradient(145deg, rgba(15, 15, 20, 0.95), rgba(25, 25, 35, 0.85));
-    border: 2px solid var(--ct-pink-vibrant);
+    border: 2px solid var(--bw-pink);
     border-radius: var(--ct-radius-lg);
     min-width: 280px;
     box-shadow:
         0 8px 24px rgba(0, 0, 0, 0.6),
-        0 0 20px var(--ct-pink-glow),
+        0 0 15px var(--bw-pink-glow),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    animation: rgb-shift 6s ease-in-out infinite;
+    animation: warm-shift 10s ease-in-out infinite;
 }
 
 .ct-sm-character-avatar {
@@ -456,7 +506,7 @@
     gap: 10px;
     font-size: 11px;
     font-weight: 800;
-    color: var(--ct-pink);
+    color: var(--bw-pink);
     text-transform: uppercase;
     letter-spacing: 1.5px;
     margin-bottom: 16px;
@@ -464,9 +514,9 @@
     border-bottom: 2px solid transparent;
     background: linear-gradient(
         90deg,
-        rgba(255, 107, 157, 0.1),
-        rgba(183, 108, 255, 0.06),
-        rgba(92, 225, 230, 0.03),
+        rgba(255, 107, 157, 0.08),
+        rgba(255, 107, 107, 0.05),
+        rgba(255, 159, 67, 0.03),
         transparent
     );
     padding-left: 12px;
@@ -474,7 +524,7 @@
     padding-top: 8px;
     border-radius: var(--ct-radius);
     position: relative;
-    text-shadow: 0 0 10px var(--ct-pink-glow);
+    text-shadow: 0 0 10px var(--bw-pink-glow);
 }
 
 /* Animated underline */
@@ -487,20 +537,20 @@
     height: 2px;
     background: linear-gradient(
         90deg,
-        var(--ct-pink-vibrant),
-        var(--ct-purple-vibrant),
-        var(--ct-cyan-vibrant),
+        var(--bw-coral),
+        var(--bw-pink),
+        var(--bw-orange),
         transparent
     );
-    background-size: 200% 100%;
-    animation: border-flow 4s linear infinite;
+    background-size: 300% 100%;
+    animation: border-flow 8s linear infinite;
     border-radius: 1px;
 }
 
 .ct-sm-section-header i {
-    color: var(--ct-cyan-vibrant);
+    color: var(--bw-coral);
     font-size: 14px;
-    animation: rgb-glow-pulse 3s ease-in-out infinite;
+    animation: warm-glow-pulse 5s ease-in-out infinite;
 }
 
 .ct-sm-outfit-label {
@@ -566,25 +616,25 @@
 
 .ct-sm-outfit-card:hover {
     transform: translateY(-6px);
-    animation: rgb-shift 3s ease-in-out infinite;
+    animation: warm-shift 6s ease-in-out infinite;
     box-shadow:
         0 8px 24px rgba(0, 0, 0, 0.6),
-        0 0 25px rgba(183, 108, 255, 0.4),
+        0 0 20px var(--bw-pink-glow),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .ct-sm-outfit-card.selected {
     background: linear-gradient(
         145deg,
-        rgba(255, 107, 157, 0.15),
-        rgba(183, 108, 255, 0.1),
-        rgba(92, 225, 230, 0.05)
+        rgba(255, 107, 157, 0.12),
+        rgba(255, 107, 107, 0.08),
+        rgba(255, 159, 67, 0.05)
     );
-    animation: rgb-shift 4s ease-in-out infinite;
+    animation: warm-shift 8s ease-in-out infinite;
     box-shadow:
         0 8px 24px rgba(0, 0, 0, 0.7),
-        0 0 35px var(--ct-pink-glow),
-        0 0 60px rgba(183, 108, 255, 0.2),
+        0 0 25px var(--bw-pink-glow),
+        0 0 50px rgba(255, 107, 107, 0.15),
         inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
@@ -730,16 +780,16 @@
 .ct-sm-expression-item:hover {
     transform: translateY(-4px) scale(1.03);
     z-index: 10;
-    animation: rgb-shift 3s ease-in-out infinite;
+    animation: warm-shift 6s ease-in-out infinite;
 }
 
-/* Filled tile hover - pink primary */
+/* Filled tile hover - warm pink primary */
 .ct-sm-expression-tile:not(.empty):hover {
-    border-color: var(--ct-pink-vibrant);
+    border-color: var(--bw-pink);
     box-shadow:
         0 12px 32px rgba(0, 0, 0, 0.7),
-        0 0 25px var(--ct-pink-glow),
-        0 0 50px rgba(255, 107, 157, 0.3),
+        0 0 20px var(--bw-pink-glow),
+        0 0 40px rgba(255, 107, 157, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
@@ -774,27 +824,28 @@
     );
     font-size: 11px;
     font-weight: 700;
-    color: var(--ct-pink);
+    color: var(--bw-pink);
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-shadow: 0 0 10px var(--ct-pink-glow);
+    text-shadow: 0 0 8px var(--bw-pink-glow);
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    border-top: 1px solid rgba(255, 107, 157, 0.3);
+    border-top: 1px solid rgba(255, 107, 157, 0.25);
     border-radius: 0 0 var(--ct-radius) var(--ct-radius);
 }
 
 .ct-sm-expression-tile:hover .ct-sm-expression-label {
     background: linear-gradient(
         90deg,
-        rgba(255, 107, 157, 0.9),
-        rgba(183, 108, 255, 0.9),
-        rgba(92, 225, 230, 0.9)
+        var(--bw-coral),
+        var(--bw-pink),
+        var(--bw-orange),
+        var(--bw-pink)
     );
-    background-size: 200% 100%;
-    animation: gradient-shift 2s ease infinite;
+    background-size: 300% 100%;
+    animation: border-flow 6s linear infinite;
     color: #000;
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
     border-top-color: transparent;
@@ -849,15 +900,15 @@
 .ct-sm-expression-tile.empty {
     background: linear-gradient(145deg, rgba(10, 10, 15, 0.5), rgba(20, 20, 30, 0.3));
     border-style: dashed;
-    border-color: rgba(92, 225, 230, 0.3);
-    animation: subtle-pulse 3s ease-in-out infinite;
+    border-color: rgba(255, 159, 67, 0.3);
+    animation: subtle-pulse 4s ease-in-out infinite;
 }
 
 .ct-sm-expression-tile.empty .ct-sm-expression-preview {
     background: radial-gradient(
         circle at center,
-        rgba(92, 225, 230, 0.08),
-        rgba(183, 108, 255, 0.03),
+        rgba(255, 159, 67, 0.06),
+        rgba(255, 107, 157, 0.03),
         transparent
     );
 }
@@ -868,53 +919,54 @@
     justify-content: center;
     width: 100%;
     height: 100%;
-    color: var(--ct-cyan);
+    color: var(--bw-orange);
     font-size: 32px;
 }
 
 .ct-sm-empty-slot i {
     opacity: 0.4;
-    transition: all 0.3s ease;
-    animation: rgb-glow-pulse 4s ease-in-out infinite;
+    transition: all 0.4s ease;
+    animation: warm-glow-pulse 6s ease-in-out infinite;
 }
 
 .ct-sm-expression-tile.empty:hover {
     background: linear-gradient(
         145deg,
-        rgba(92, 225, 230, 0.12),
-        rgba(183, 108, 255, 0.08),
-        rgba(255, 107, 157, 0.05)
+        rgba(255, 159, 67, 0.1),
+        rgba(255, 107, 157, 0.08),
+        rgba(255, 107, 107, 0.05)
     );
     border-style: solid;
-    animation: rgb-shift 2s ease-in-out infinite;
+    animation: warm-shift 4s ease-in-out infinite;
     box-shadow:
         0 8px 24px rgba(0, 0, 0, 0.6),
-        0 0 25px var(--ct-cyan-glow),
-        0 0 50px rgba(92, 225, 230, 0.2);
+        0 0 20px var(--bw-orange-glow),
+        0 0 40px rgba(255, 159, 67, 0.15);
 }
 
 .ct-sm-expression-tile.empty:hover .ct-sm-empty-slot i {
     opacity: 1;
-    color: var(--ct-cyan-vibrant);
+    color: var(--bw-orange);
     transform: rotate(90deg) scale(1.2);
-    filter: drop-shadow(0 0 15px var(--ct-cyan-glow));
+    filter: drop-shadow(0 0 12px var(--bw-orange-glow));
 }
 
 .ct-sm-expression-tile.empty .ct-sm-expression-label {
-    color: var(--ct-cyan);
-    text-shadow: 0 0 8px var(--ct-cyan-glow);
-    border-top-color: rgba(92, 225, 230, 0.2);
+    color: var(--bw-orange);
+    text-shadow: 0 0 8px var(--bw-orange-glow);
+    border-top-color: rgba(255, 159, 67, 0.2);
 }
 
 .ct-sm-expression-tile.empty:hover .ct-sm-expression-label {
     background: linear-gradient(
         90deg,
-        rgba(92, 225, 230, 0.9),
-        rgba(183, 108, 255, 0.85),
-        rgba(255, 107, 157, 0.9)
+        var(--bw-orange),
+        var(--bw-pink),
+        var(--bw-coral),
+        var(--bw-pink)
     );
-    background-size: 200% 100%;
-    animation: gradient-shift 2s ease infinite;
+    background-size: 300% 100%;
+    animation: border-flow 6s linear infinite;
     color: #000;
 }
 
@@ -963,41 +1015,38 @@
     border-radius: var(--ct-radius-full);
     font-size: 12px;
     font-weight: 600;
-    color: var(--ct-pink);
-    text-shadow: 0 0 8px var(--ct-pink-glow);
-    transition: all 0.2s ease;
+    color: var(--bw-pink);
+    text-shadow: 0 0 8px var(--bw-pink-glow);
+    transition: all 0.3s ease;
 }
 
-/* Alternate chip colors like BunnyWorks tags */
+/* Alternate chip colors - warm BunnyWorks palette */
 .ct-sm-trigger-chip:nth-child(3n+2) {
-    background: linear-gradient(135deg, rgba(92, 225, 230, 0.2), rgba(92, 225, 230, 0.1));
-    border-color: rgba(92, 225, 230, 0.4);
-    color: var(--ct-cyan);
-    text-shadow: 0 0 8px var(--ct-cyan-glow);
+    background: linear-gradient(135deg, rgba(255, 159, 67, 0.2), rgba(255, 159, 67, 0.1));
+    border-color: rgba(255, 159, 67, 0.4);
+    color: var(--bw-orange);
+    text-shadow: 0 0 8px var(--bw-orange-glow);
 }
 
 .ct-sm-trigger-chip:nth-child(3n) {
-    background: linear-gradient(135deg, rgba(183, 108, 255, 0.2), rgba(183, 108, 255, 0.1));
-    border-color: rgba(183, 108, 255, 0.4);
-    color: var(--ct-purple);
-    text-shadow: 0 0 8px var(--ct-purple-glow);
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 107, 107, 0.1));
+    border-color: rgba(255, 107, 107, 0.4);
+    color: var(--bw-coral);
+    text-shadow: 0 0 8px var(--bw-coral-glow);
 }
 
-/* Orange variant for variety */
+/* Peach variant for variety */
 .ct-sm-trigger-chip:nth-child(4n) {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(245, 158, 11, 0.1));
-    border-color: rgba(245, 158, 11, 0.4);
-    color: #f59e0b;
-    text-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+    background: linear-gradient(135deg, rgba(255, 160, 122, 0.2), rgba(255, 160, 122, 0.1));
+    border-color: rgba(255, 160, 122, 0.4);
+    color: var(--bw-peach);
+    text-shadow: 0 0 8px var(--bw-peach-glow);
 }
 
 .ct-sm-trigger-chip:hover {
     transform: translateY(-2px) scale(1.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.ct-sm-trigger-chip:hover {
-    animation: rgb-shift 2s ease-in-out infinite;
+    animation: warm-shift 4s ease-in-out infinite;
 }
 
 .ct-sm-trigger-text {
@@ -1258,12 +1307,12 @@
     background: linear-gradient(
         90deg,
         transparent,
-        var(--ct-pink-vibrant),
-        var(--ct-cyan-vibrant),
-        var(--ct-purple-vibrant),
+        var(--bw-coral),
+        var(--bw-pink),
+        var(--bw-orange),
         transparent
     );
-    background-size: 200% 100%;
+    background-size: 300% 100%;
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -1272,33 +1321,34 @@
     background: linear-gradient(145deg, rgba(25, 25, 35, 0.95), rgba(35, 35, 50, 0.85));
     color: var(--ct-text-primary);
     transform: translateY(-2px);
-    animation: rgb-shift 3s ease-in-out infinite;
+    animation: warm-shift 6s ease-in-out infinite;
     box-shadow:
         0 6px 20px rgba(0, 0, 0, 0.6),
-        0 0 25px rgba(183, 108, 255, 0.3),
+        0 0 20px var(--bw-pink-glow),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .ct-sm-method-tab:hover::before {
     opacity: 1;
-    animation: border-flow 2s linear infinite;
+    animation: border-flow 4s linear infinite;
 }
 
 .ct-sm-method-tab.active {
     background: linear-gradient(
         135deg,
-        var(--ct-pink-vibrant),
-        var(--ct-purple-vibrant),
-        var(--ct-cyan-vibrant)
+        var(--bw-coral),
+        var(--bw-pink),
+        var(--bw-orange),
+        var(--bw-peach)
     );
-    background-size: 200% 200%;
-    animation: gradient-shift 4s ease infinite;
+    background-size: 300% 300%;
+    animation: gradient-shift 8s ease infinite;
     border-color: transparent;
     color: rgba(0, 0, 0, 0.9);
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
     box-shadow:
-        0 8px 24px rgba(255, 107, 157, 0.4),
-        0 0 30px var(--ct-pink-glow),
+        0 8px 24px var(--bw-pink-glow),
+        0 0 25px var(--bw-pink-glow),
         inset 0 1px 0 rgba(255, 255, 255, 0.3),
         inset 0 -1px 0 rgba(0, 0, 0, 0.3);
 }
@@ -1462,37 +1512,37 @@
     gap: 8px;
     padding: 12px 24px;
     background: linear-gradient(145deg, rgba(15, 15, 20, 0.95), rgba(25, 25, 35, 0.85));
-    border: 2px dashed rgba(92, 225, 230, 0.4);
+    border: 2px dashed rgba(255, 159, 67, 0.4);
     border-radius: var(--ct-radius-lg);
-    color: var(--ct-cyan);
+    color: var(--bw-orange);
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    text-shadow: 0 0 8px var(--ct-cyan-glow);
+    text-shadow: 0 0 8px var(--bw-orange-glow);
     letter-spacing: 0.5px;
 }
 
 .ct-sm-btn-add-label:hover {
     background: linear-gradient(
         145deg,
-        rgba(92, 225, 230, 0.15),
-        rgba(183, 108, 255, 0.1),
-        rgba(255, 107, 157, 0.08)
+        rgba(255, 159, 67, 0.12),
+        rgba(255, 107, 157, 0.08),
+        rgba(255, 107, 107, 0.05)
     );
     border-style: solid;
-    animation: rgb-shift 2s ease-in-out infinite;
+    animation: warm-shift 4s ease-in-out infinite;
     transform: translateY(-3px) scale(1.02);
     box-shadow:
         0 8px 24px rgba(0, 0, 0, 0.5),
-        0 0 30px var(--ct-cyan-glow),
-        0 0 50px rgba(92, 225, 230, 0.2);
+        0 0 25px var(--bw-orange-glow),
+        0 0 40px rgba(255, 159, 67, 0.15);
 }
 
 .ct-sm-btn-add-label i {
     font-size: 16px;
-    animation: rgb-glow-pulse 3s ease-in-out infinite;
+    animation: warm-glow-pulse 5s ease-in-out infinite;
 }
 
 /* =============================================================================
