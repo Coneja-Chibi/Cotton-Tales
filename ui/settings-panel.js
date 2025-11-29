@@ -1804,6 +1804,18 @@ function bindEvents() {
         clearEmotionEmbeddingsCache();
         notify.success('Emotion embeddings cache cleared');
     });
+
+    // ==========================================================================
+    // CUSTOM EXPRESSION MAPPING BINDINGS
+    // ==========================================================================
+
+    // Add custom expression button
+    document.getElementById('ct_add_custom_expr')?.addEventListener('click', () => {
+        addCustomExpressionRow();
+    });
+
+    // Populate custom expression list on load
+    populateCustomExpressionList();
 }
 
 /**
