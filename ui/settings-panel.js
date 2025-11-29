@@ -679,21 +679,17 @@ function getBackgroundsTabHTML() {
             Background Library
         </div>
 
-        <div class="ct-carousel-wrapper">
-            <button class="ct-carousel-arrow left" id="ct_bg_prev">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
+        <p style="font-size: 12px; color: var(--ct-text-light); margin-bottom: 12px;">
+            Label backgrounds so AI can reference them via <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px;">{{background_labels}}</code> in prompts.
+            Click a background to add labels and set character availability.
+        </p>
 
-            <div class="ct-carousel" id="ct_background_carousel">
-                <div class="ct-empty-state">
-                    <i class="fa-solid fa-spinner fa-spin"></i>
-                    <div class="ct-empty-state-text">Loading backgrounds...</div>
-                </div>
+        <!-- Background Grid -->
+        <div class="ct-bg-grid" id="ct_background_grid">
+            <div class="ct-empty-state">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <div class="ct-empty-state-text">Loading backgrounds...</div>
             </div>
-
-            <button class="ct-carousel-arrow right" id="ct_bg_next">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
         </div>
 
         <div class="ct-action-row" style="margin-top: 20px; justify-content: center;">
@@ -701,6 +697,54 @@ function getBackgroundsTabHTML() {
                 <i class="fa-solid fa-upload"></i>
                 Upload Background
             </button>
+        </div>
+
+        <!-- Background Editor Modal (hidden by default) -->
+        <div id="ct_bg_editor" class="ct-bg-editor" style="display: none;">
+            <div class="ct-bg-editor-content">
+                <div class="ct-bg-editor-header">
+                    <span id="ct_bg_editor_title">Edit Background</span>
+                    <button class="ct-bg-editor-close" id="ct_bg_editor_close">&times;</button>
+                </div>
+                <div class="ct-bg-editor-body">
+                    <div class="ct-bg-editor-preview">
+                        <img id="ct_bg_editor_img" src="" alt="Background preview" />
+                    </div>
+
+                    <!-- Labels Section -->
+                    <div class="ct-form-group" style="margin-bottom: 16px;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">
+                            <i class="fa-solid fa-tags"></i> Labels
+                        </label>
+                        <p style="font-size: 10px; color: var(--ct-text-light); margin-bottom: 8px;">
+                            Add descriptive labels like "bedroom", "forest", "night", "cozy", etc.
+                        </p>
+                        <div class="ct-bg-labels-container" id="ct_bg_labels">
+                            <!-- Label chips populated here -->
+                        </div>
+                        <div class="ct-bg-add-label" style="display: flex; gap: 8px; margin-top: 8px;">
+                            <input type="text" id="ct_bg_new_label" placeholder="Add label..." style="flex: 1; padding: 6px 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; background: rgba(0,0,0,0.2); color: var(--SmartThemeBodyColor); font-size: 11px;" />
+                            <button class="ct-btn-small" id="ct_bg_add_label_btn">Add</button>
+                        </div>
+                    </div>
+
+                    <!-- Character Availability Section -->
+                    <div class="ct-form-group">
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">
+                            <i class="fa-solid fa-users"></i> Character Availability
+                        </label>
+                        <p style="font-size: 10px; color: var(--ct-text-light); margin-bottom: 8px;">
+                            Select which characters can use this background. Leave empty for all.
+                        </p>
+                        <div class="ct-bg-char-checkboxes" id="ct_bg_char_list">
+                            <!-- Character checkboxes populated here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="ct-bg-editor-footer">
+                    <button class="ct-btn" id="ct_bg_save">Save</button>
+                </div>
+            </div>
         </div>
     `;
 }
@@ -1370,8 +1414,8 @@ async function populateCharacterCarousel() {
 }
 
 async function populateBackgroundCarousel() {
-    const carousel = document.getElementById('ct_background_carousel');
-    if (!carousel) return;
+    const grid = document.getElementById('ct_background_grid');
+    if (!grid) return;
 
     try {
         const res = await fetch('/api/backgrounds/all', {
@@ -1381,7 +1425,7 @@ async function populateBackgroundCarousel() {
         });
 
         if (!res.ok) {
-            carousel.innerHTML = `
+            grid.innerHTML = `
                 <div class="ct-empty-state">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                     <div class="ct-empty-state-text">Could not load backgrounds</div>
@@ -1392,9 +1436,11 @@ async function populateBackgroundCarousel() {
 
         const data = await res.json();
         const backgrounds = data.images || [];
+        const settings = getSettings();
+        const bgLabels = settings.backgroundLabels || {};
 
         if (backgrounds.length === 0) {
-            carousel.innerHTML = `
+            grid.innerHTML = `
                 <div class="ct-empty-state">
                     <i class="fa-solid fa-image"></i>
                     <div class="ct-empty-state-text">No backgrounds found</div>
@@ -1403,19 +1449,201 @@ async function populateBackgroundCarousel() {
             return;
         }
 
-        carousel.innerHTML = backgrounds.slice(0, 20).map(bg => `
-            <div class="ct-card" data-bg="${bg}" style="flex: 0 0 200px;">
-                <div style="height: 100px; border-radius: 8px; overflow: hidden; margin-bottom: 10px; border: 2px solid var(--ct-wood-light);">
-                    <img src="backgrounds/${encodeURIComponent(bg)}" alt="${bg}"
-                         style="width: 100%; height: 100%; object-fit: cover;" loading="lazy" />
+        grid.innerHTML = backgrounds.map(bg => {
+            const bgName = bg.replace(/\.[^/.]+$/, '');
+            const labels = bgLabels[bg]?.labels || [];
+            const labelChips = labels.slice(0, 3).map(l =>
+                `<span class="ct-bg-label-chip">${escapeHtml(l)}</span>`
+            ).join('');
+            const hasMore = labels.length > 3 ? `<span class="ct-bg-label-more">+${labels.length - 3}</span>` : '';
+
+            return `
+                <div class="ct-bg-card" data-bg="${escapeHtml(bg)}">
+                    <div class="ct-bg-card-img">
+                        <img src="backgrounds/${encodeURIComponent(bg)}" alt="${escapeHtml(bgName)}" loading="lazy" />
+                    </div>
+                    <div class="ct-bg-card-info">
+                        <div class="ct-bg-card-name">${escapeHtml(bgName)}</div>
+                        ${labels.length > 0 ? `<div class="ct-bg-card-labels">${labelChips}${hasMore}</div>` : ''}
+                    </div>
                 </div>
-                <div class="ct-card-name" style="font-size: 11px;">${bg.replace(/\.[^/.]+$/, '')}</div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+
+        // Bind click handlers for editing
+        grid.querySelectorAll('.ct-bg-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const bgName = card.dataset.bg;
+                openBackgroundEditor(bgName);
+            });
+        });
 
     } catch (e) {
         console.error(`[${EXTENSION_NAME}] Error loading backgrounds:`, e);
     }
+}
+
+/** Currently editing background */
+let currentEditingBg = null;
+
+/**
+ * Open background editor modal
+ */
+function openBackgroundEditor(bgName) {
+    currentEditingBg = bgName;
+    const settings = getSettings();
+    const bgConfig = settings.backgroundLabels?.[bgName] || { labels: [], characters: [] };
+
+    // Show editor
+    const editor = document.getElementById('ct_bg_editor');
+    if (!editor) return;
+
+    editor.style.display = 'flex';
+
+    // Set preview image
+    const img = document.getElementById('ct_bg_editor_img');
+    if (img) img.src = `backgrounds/${encodeURIComponent(bgName)}`;
+
+    // Set title
+    const title = document.getElementById('ct_bg_editor_title');
+    if (title) title.textContent = bgName.replace(/\.[^/.]+$/, '');
+
+    // Populate labels
+    renderBgLabels(bgConfig.labels);
+
+    // Populate character checkboxes
+    renderBgCharacterList(bgConfig.characters);
+}
+
+/**
+ * Render background labels
+ */
+function renderBgLabels(labels) {
+    const container = document.getElementById('ct_bg_labels');
+    if (!container) return;
+
+    container.innerHTML = labels.map(label => `
+        <span class="ct-bg-label-chip editable" data-label="${escapeHtml(label)}">
+            ${escapeHtml(label)}
+            <button class="ct-bg-label-remove" data-label="${escapeHtml(label)}">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </span>
+    `).join('');
+
+    // Bind remove buttons
+    container.querySelectorAll('.ct-bg-label-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const label = btn.dataset.label;
+            removeBgLabel(label);
+        });
+    });
+}
+
+/**
+ * Render character availability checkboxes
+ */
+function renderBgCharacterList(selectedChars) {
+    const container = document.getElementById('ct_bg_char_list');
+    if (!container) return;
+
+    const context = getContext();
+    const characters = context.characters || [];
+
+    container.innerHTML = characters.slice(0, 20).map(char => {
+        const folder = char.avatar?.replace(/\.[^/.]+$/, '') || char.name;
+        const isSelected = selectedChars.includes(folder);
+        return `
+            <label class="ct-bg-char-checkbox" style="display: flex; align-items: center; gap: 6px; cursor: pointer; margin-bottom: 4px;">
+                <input type="checkbox" value="${escapeHtml(folder)}" ${isSelected ? 'checked' : ''} />
+                <span style="font-size: 11px;">${escapeHtml(char.name)}</span>
+            </label>
+        `;
+    }).join('');
+
+    if (characters.length === 0) {
+        container.innerHTML = '<p style="font-size: 11px; color: var(--ct-text-light);">No characters available</p>';
+    }
+}
+
+/**
+ * Add a label to current background
+ */
+function addBgLabel() {
+    const input = document.getElementById('ct_bg_new_label');
+    const label = input?.value?.trim().toLowerCase();
+
+    if (!label || !currentEditingBg) return;
+
+    const settings = getSettings();
+    if (!settings.backgroundLabels) settings.backgroundLabels = {};
+    if (!settings.backgroundLabels[currentEditingBg]) {
+        settings.backgroundLabels[currentEditingBg] = { labels: [], characters: [] };
+    }
+
+    if (!settings.backgroundLabels[currentEditingBg].labels.includes(label)) {
+        settings.backgroundLabels[currentEditingBg].labels.push(label);
+        renderBgLabels(settings.backgroundLabels[currentEditingBg].labels);
+    }
+
+    input.value = '';
+}
+
+/**
+ * Remove a label from current background
+ */
+function removeBgLabel(label) {
+    if (!currentEditingBg) return;
+
+    const settings = getSettings();
+    const bgConfig = settings.backgroundLabels?.[currentEditingBg];
+    if (!bgConfig) return;
+
+    bgConfig.labels = bgConfig.labels.filter(l => l !== label);
+    renderBgLabels(bgConfig.labels);
+}
+
+/**
+ * Save background config
+ */
+async function saveBgConfig() {
+    if (!currentEditingBg) return;
+
+    const settings = getSettings();
+    if (!settings.backgroundLabels) settings.backgroundLabels = {};
+    if (!settings.backgroundLabels[currentEditingBg]) {
+        settings.backgroundLabels[currentEditingBg] = { labels: [], characters: [] };
+    }
+
+    // Get selected characters
+    const checkboxes = document.querySelectorAll('#ct_bg_char_list input:checked');
+    const selectedChars = Array.from(checkboxes).map(cb => cb.value);
+
+    // Get current labels from chips
+    const labelChips = document.querySelectorAll('#ct_bg_labels .ct-bg-label-chip');
+    const labels = Array.from(labelChips).map(chip => chip.dataset.label).filter(Boolean);
+
+    settings.backgroundLabels[currentEditingBg] = {
+        labels,
+        characters: selectedChars
+    };
+
+    updateSetting('backgroundLabels', settings.backgroundLabels);
+
+    // Close editor and refresh grid
+    closeBgEditor();
+    await populateBackgroundCarousel();
+    notify.success('Background saved');
+}
+
+/**
+ * Close background editor
+ */
+function closeBgEditor() {
+    const editor = document.getElementById('ct_bg_editor');
+    if (editor) editor.style.display = 'none';
+    currentEditingBg = null;
 }
 
 // =============================================================================
@@ -1687,6 +1915,14 @@ function bindEvents() {
 
     // Background upload button (static element)
     document.getElementById('ct_upload_bg')?.addEventListener('click', handleUploadBackground);
+
+    // Background editor events
+    document.getElementById('ct_bg_editor_close')?.addEventListener('click', closeBgEditor);
+    document.getElementById('ct_bg_add_label_btn')?.addEventListener('click', addBgLabel);
+    document.getElementById('ct_bg_new_label')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addBgLabel();
+    });
+    document.getElementById('ct_bg_save')?.addEventListener('click', saveBgConfig);
 
     // ==========================================================================
     // EXPRESSIONS TAB BINDINGS

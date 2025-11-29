@@ -1844,3 +1844,248 @@
     background: rgba(239, 68, 68, 0.3) !important;
     transform: scale(1.05);
 }
+
+/* =============================================================================
+   BACKGROUND GRID & EDITOR
+   ============================================================================= */
+
+.ct-bg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.ct-bg-card {
+    background: var(--ct-bg-card);
+    border: 2px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: var(--ct-transition);
+}
+
+.ct-bg-card:hover {
+    border-color: var(--ct-pink);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.ct-bg-card-img {
+    height: 100px;
+    overflow: hidden;
+}
+
+.ct-bg-card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.ct-bg-card:hover .ct-bg-card-img img {
+    transform: scale(1.05);
+}
+
+.ct-bg-card-info {
+    padding: 8px 10px;
+}
+
+.ct-bg-card-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ct-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+
+.ct-bg-card-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.ct-bg-label-chip {
+    font-size: 9px;
+    padding: 2px 6px;
+    background: rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    border-radius: var(--ct-radius-full);
+    color: #a78bfa;
+}
+
+.ct-bg-label-more {
+    font-size: 9px;
+    padding: 2px 6px;
+    color: var(--ct-text-muted);
+}
+
+/* Background Editor Modal */
+.ct-bg-editor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ct-bg-editor-content {
+    background: var(--ct-bg-deep);
+    border: 2px solid var(--ct-border-strong);
+    border-radius: var(--ct-radius-lg);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.ct-bg-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--ct-border);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+}
+
+.ct-bg-editor-header span {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ct-text-primary);
+}
+
+.ct-bg-editor-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--ct-text-muted);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.ct-bg-editor-close:hover {
+    color: var(--ct-pink);
+}
+
+.ct-bg-editor-body {
+    padding: 20px;
+}
+
+.ct-bg-editor-preview {
+    margin-bottom: 16px;
+    border-radius: var(--ct-radius);
+    overflow: hidden;
+    border: 2px solid var(--ct-border);
+}
+
+.ct-bg-editor-preview img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.ct-bg-labels-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 32px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--ct-radius);
+}
+
+.ct-bg-label-chip.editable {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+}
+
+.ct-bg-label-remove {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    font-size: 10px;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.ct-bg-label-remove:hover {
+    opacity: 1;
+}
+
+.ct-btn-small {
+    padding: 6px 12px;
+    background: var(--ct-pink);
+    color: white;
+    border: none;
+    border-radius: var(--ct-radius);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--ct-transition);
+}
+
+.ct-btn-small:hover {
+    background: var(--ct-pink-light);
+}
+
+.ct-bg-editor-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--ct-border);
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Custom Emotions Tab */
+.ct-custom-emotions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ct-custom-emotion-card {
+    background: var(--ct-bg-card);
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    padding: 16px;
+    transition: var(--ct-transition);
+}
+
+.ct-custom-emotion-card:hover {
+    border-color: var(--ct-pink);
+}
+
+.ct-emotion-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ct-emotion-card-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ct-emotion-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ct-text-primary);
+}
+
+.ct-emotion-card-actions {
+    display: flex;
+    gap: 6px;
+}
