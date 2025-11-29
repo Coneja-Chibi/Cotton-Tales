@@ -893,8 +893,8 @@ async function deleteSpriteForExpression(expressionLabel, spriteFile) {
         char.sprites = await getSpritesList(char.folderName);
 
         // Clear sprite cache for this character
-        if (spriteCache) {
-            spriteCache.delete(char.folderName);
+        if (spriteCache && char.folderName) {
+            delete spriteCache[char.folderName];
         }
 
         renderExpressionGrid(char);
