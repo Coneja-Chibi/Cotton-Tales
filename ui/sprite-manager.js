@@ -19,7 +19,7 @@
 import { getRequestHeaders, getThumbnailUrl, characters, this_chid } from '../../../../../script.js';
 import { getContext } from '../../../../extensions.js';
 import { getSettings, saveSettings } from '../core/settings-manager.js';
-import { EXTENSION_NAME, DEFAULT_EXPRESSIONS, CLASSIFIER_MODELS, EXPRESSION_API } from '../core/constants.js';
+import { EXTENSION_NAME, DEFAULT_EXPRESSIONS, CLASSIFIER_MODELS, EXPRESSION_API, EMOTION_PRESETS } from '../core/constants.js';
 import { getSpritesList, spriteCache, validateImages } from '../ct-expressions.js';
 
 // =============================================================================
@@ -434,16 +434,32 @@ function generateModalHtml() {
                     <!-- VectHare Options (shown when VectHare selected) -->
                     <div class="ct-sm-method-options ct-sm-vecthare-options" style="display: none;">
                         <div class="ct-sm-vecthare-layout">
-                            <div class="ct-sm-vecthare-info">
-                                <div class="ct-sm-vecthare-status" id="ct_sm_vecthare_status">
-                                    <i class="fa-solid fa-circle-question"></i>
-                                    <span>Checking VectHare status...</span>
+                            <p class="ct-sm-method-hint">
+                                <i class="fa-solid fa-vector-square"></i>
+                                VectHare uses semantic matching. Add <strong>keywords</strong> to emotions and adjust <strong>weights</strong> (1.0-3.0x).
+                            </p>
+                            <div class="ct-sm-vecthare-controls">
+                                <div class="ct-sm-preset-selector">
+                                    <label class="ct-sm-control-label">Emotion Preset:</label>
+                                    <select class="ct-sm-model-select" id="ct_sm_vecthare_preset">
+                                        <option value="">-- Choose a preset --</option>
+                                        <option value="basic_6">Basic 6 (Ekman)</option>
+                                        <option value="extended_12">Extended 12</option>
+                                        <option value="roleplay_18">Roleplay 18</option>
+                                        <option value="nsfw_14">NSFW 14</option>
+                                        <option value="anime_16">Anime 16</option>
+                                        <option value="go_emotions_28">GoEmotions 28</option>
+                                        <option value="empty">Start Empty</option>
+                                    </select>
+                                    <button class="ct-sm-btn-small" id="ct_sm_apply_preset">Apply</button>
                                 </div>
-                                <p class="ct-sm-method-hint">
-                                    <i class="fa-solid fa-vector-square"></i>
-                                    VectHare uses semantic embedding to match text to emotions.
-                                    Add <strong>keywords</strong> to boost detection and adjust <strong>weights</strong> (1.0-3.0x) below.
-                                </p>
+                                <div class="ct-sm-sharing-toggle">
+                                    <label class="ct-sm-control-label">
+                                        <input type="checkbox" id="ct_sm_share_sprites" />
+                                        Share sprites with other methods
+                                    </label>
+                                    <span class="ct-sm-sharing-hint">When off, VectHare has its own sprite config</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -809,8 +825,8 @@ function renderExpressionGrid(char) {
 }
 
 /**
- * Render a VectHare-specific expression tile with expandable keyword/weight configuration
- * Supports per-keyword weights as VectHare actually works
+ * Render a VectHare-specific expression tile with expandable keyword configuration
+ * Clean, focused design - sprite preview + keywords list
  * @param {string} expression - Expression label
  * @param {Array} files - Sprite files for this expression
  * @param {boolean} hasSprite - Whether sprite exists
@@ -827,12 +843,8 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
 
     // Extract keywords with individual weights
     const keywords = emotionConfig?.keywords || {};
-    const keywordEntries = Object.entries(keywords); // [[keyword, weight], ...]
+    const keywordEntries = Object.entries(keywords);
     const keywordCount = keywordEntries.length;
-    const avgWeight = keywordCount > 0
-        ? (Object.values(keywords).reduce((a, b) => a + b, 0) / keywordCount).toFixed(1)
-        : '1.5';
-    const detectionMethod = emotionConfig?.detectionMethod || 'auto';
 
     // Helper to determine if keyword is regex
     const isRegex = (kw) => kw.startsWith('/') && kw.lastIndexOf('/') > 0;
@@ -843,9 +855,9 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
              data-keyword="${kw.replace(/"/g, '&quot;')}"
              data-weight="${weight}">
             ${isRegex(kw) ? '<i class="fa-solid fa-code" title="Regex pattern"></i>' : ''}
-            <span class="ct-sm-vh-kw-text">${kw}</span>
-            <span class="ct-sm-vh-kw-weight" title="Weight: ${weight}x">${weight}x</span>
-            <button class="ct-sm-vh-kw-remove" title="Remove keyword">
+            <span class="ct-sm-vh-kw-text">${escapeHtml(kw)}</span>
+            <span class="ct-sm-vh-kw-weight">${weight}x</span>
+            <button class="ct-sm-vh-kw-remove" title="Remove">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -857,97 +869,52 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
     tile.dataset.expanded = 'false';
 
     tile.innerHTML = `
-        <!-- COMPACT HEADER (Always Visible) -->
+        <!-- COMPACT HEADER -->
         <div class="ct-sm-vh-header">
-            <!-- Preview Thumbnail -->
             <div class="ct-sm-vh-preview ${hasSprite ? '' : 'empty'}" data-upload-trigger>
                 ${hasSprite
                     ? `<img src="${previewFile.imageSrc}" alt="${expression}">`
-                    : `<i class="fa-solid fa-plus"></i>`
+                    : `<i class="fa-solid fa-image"></i>`
                 }
                 ${files.length > 1 ? `<span class="ct-sm-vh-sprite-count">${files.length}</span>` : ''}
             </div>
-
-            <!-- Label & Stats -->
             <div class="ct-sm-vh-info">
                 <span class="ct-sm-vh-label">${expression}</span>
-                <div class="ct-sm-vh-stats">
-                    <span class="ct-sm-vh-keyword-count" title="${keywordCount} keywords configured">
-                        <i class="fa-solid fa-tags"></i> ${keywordCount}
-                    </span>
-                    <span class="ct-sm-vh-avg-weight" data-weight="${avgWeight}" title="Average weight: ${avgWeight}x">
-                        <i class="fa-solid fa-weight-scale"></i> ${avgWeight}x
-                    </span>
-                </div>
+                <span class="ct-sm-vh-keyword-count">
+                    <i class="fa-solid fa-tags"></i> ${keywordCount} keyword${keywordCount !== 1 ? 's' : ''}
+                </span>
             </div>
-
-            <!-- Expand Toggle -->
-            <button class="ct-sm-vh-expand-toggle" title="Configure keywords">
+            <button class="ct-sm-vh-expand-toggle" title="Configure">
                 <i class="fa-solid fa-chevron-down"></i>
             </button>
         </div>
 
-        <!-- EXPANDABLE CONFIG PANEL (Hidden by Default) -->
+        <!-- EXPANDABLE KEYWORD CONFIG -->
         <div class="ct-sm-vh-config">
-            <!-- Keyword Chips Section -->
             <div class="ct-sm-vh-keywords-section">
-                <label class="ct-sm-vh-config-label">
-                    <i class="fa-solid fa-tags"></i>
-                    Keywords <span class="ct-sm-vh-hint">(click to edit weight)</span>
-                </label>
                 <div class="ct-sm-vh-keyword-chips">
                     ${keywordChipsHtml}
-                    <!-- Add Keyword Button -->
                     <button class="ct-sm-vh-add-keyword" title="Add keyword">
-                        <i class="fa-solid fa-plus"></i>
+                        <i class="fa-solid fa-plus"></i> Add
                     </button>
                 </div>
             </div>
 
-            <!-- Inline Weight Editor (Hidden until keyword clicked) -->
+            <!-- Inline Weight Editor -->
             <div class="ct-sm-vh-weight-editor" style="display: none;">
                 <div class="ct-sm-vh-editor-header">
-                    <span class="ct-sm-vh-editor-title">
-                        <i class="fa-solid fa-weight-scale"></i>
-                        Weight for: <strong class="ct-sm-vh-editor-keyword"></strong>
-                    </span>
-                    <button class="ct-sm-vh-editor-close" title="Close">
-                        <i class="fa-solid fa-times"></i>
-                    </button>
+                    <span class="ct-sm-vh-editor-keyword"></span>
+                    <button class="ct-sm-vh-editor-close"><i class="fa-solid fa-times"></i></button>
                 </div>
                 <div class="ct-sm-vh-editor-body">
-                    <input type="range"
-                        class="ct-sm-vh-weight-slider"
-                        min="1.0"
-                        max="3.0"
-                        step="0.1"
-                        value="1.5">
+                    <input type="range" class="ct-sm-vh-weight-slider" min="1.0" max="3.0" step="0.1" value="1.5">
                     <span class="ct-sm-vh-slider-value">1.5x</span>
                 </div>
-                <div class="ct-sm-vh-editor-hint">
-                    1.0x = normal, 3.0x = strong boost
-                </div>
             </div>
 
-            <!-- Detection Method -->
-            <div class="ct-sm-vh-detection-section">
-                <label class="ct-sm-vh-config-label">
-                    <i class="fa-solid fa-crosshairs"></i>
-                    Detection
-                </label>
-                <select class="ct-sm-vh-detection-select" data-expression="${expression}">
-                    <option value="auto" ${detectionMethod === 'auto' ? 'selected' : ''}>Auto (recommended)</option>
-                    <option value="patterns" ${detectionMethod === 'patterns' ? 'selected' : ''}>Keywords only</option>
-                    <option value="expressions" ${detectionMethod === 'expressions' ? 'selected' : ''}>Sprite-based only</option>
-                    <option value="both" ${detectionMethod === 'both' ? 'selected' : ''}>Both (strict)</option>
-                </select>
-            </div>
-
-            <!-- Actions Footer -->
             <div class="ct-sm-vh-config-footer">
-                <button class="ct-sm-vh-remove-emotion" data-emotion="${expression}" title="Delete this emotion">
-                    <i class="fa-solid fa-trash"></i>
-                    Remove
+                <button class="ct-sm-vh-remove-emotion" data-emotion="${expression}">
+                    <i class="fa-solid fa-trash"></i> Remove Emotion
                 </button>
             </div>
         </div>
@@ -965,8 +932,8 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
 function bindVectHareTileEvents(tile, expression, charFolder, previewFile, hasSprite) {
     // Toggle expansion on header click
     tile.querySelector('.ct-sm-vh-header').addEventListener('click', (e) => {
-        // Don't expand if clicking upload area
         if (e.target.closest('[data-upload-trigger]')) return;
+        if (e.target.closest('.ct-sm-vh-expand-toggle')) return;
         toggleVectHareTileExpansion(tile);
     });
 
@@ -1012,11 +979,6 @@ function bindVectHareTileEvents(tile, expression, charFolder, previewFile, hasSp
     // Weight editor close button
     tile.querySelector('.ct-sm-vh-editor-close')?.addEventListener('click', () => {
         tile.querySelector('.ct-sm-vh-weight-editor').style.display = 'none';
-    });
-
-    // Detection method change
-    tile.querySelector('.ct-sm-vh-detection-select')?.addEventListener('change', async (e) => {
-        await updateVectHareDetectionMethod(expression, e.target.value, charFolder);
     });
 
     // Remove emotion button
@@ -1162,19 +1124,59 @@ async function updateVectHareKeywordWeight(expression, keyword, newWeight, charF
 }
 
 /**
- * Update detection method for an emotion
+ * Apply a preset emotion pack to the current character
+ * @param {string} presetId - ID of the preset to apply
  */
-async function updateVectHareDetectionMethod(expression, method, charFolder) {
+async function applyVectHarePreset(presetId) {
+    const preset = EMOTION_PRESETS[presetId];
+    if (!preset) {
+        toastr.error('Unknown preset');
+        return;
+    }
+
     const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
 
-    const emotionConfig = settings.characterEmotions?.[charFolder]?.customEmotions?.[expression];
-    if (!emotionConfig) return;
+    // Initialize structure
+    if (!settings.characterEmotions) settings.characterEmotions = {};
+    if (!settings.characterEmotions[charFolder]) {
+        settings.characterEmotions[charFolder] = { customEmotions: {} };
+    }
 
-    emotionConfig.detectionMethod = method;
-    emotionConfig.updatedAt = Date.now();
+    // Apply preset emotions
+    settings.characterEmotions[charFolder].customEmotions = {};
+    for (const [emotion, config] of Object.entries(preset.emotions)) {
+        settings.characterEmotions[charFolder].customEmotions[emotion] = {
+            keywords: { ...config.keywords },
+            enabled: true,
+            updatedAt: Date.now(),
+        };
+    }
 
     await saveSettings();
-    toastr.success(`Detection: ${method}`);
+    renderExpressionGrid(char);
+    toastr.success(`Applied preset: ${preset.name}`);
+}
+
+/**
+ * Toggle sprite sharing for current character
+ * @param {boolean} share - Whether to share sprites across methods
+ */
+async function toggleSpriteSharing(share) {
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
+
+    if (!settings.characterExpressionProfiles) settings.characterExpressionProfiles = {};
+    if (!settings.characterExpressionProfiles[charFolder]) {
+        settings.characterExpressionProfiles[charFolder] = {};
+    }
+
+    settings.characterExpressionProfiles[charFolder].shareSpritesAcrossMethods = share;
+    await saveSettings();
+
+    toastr.success(share ? 'Sprites shared across methods' : 'VectHare has separate sprite config');
 }
 
 /**
@@ -1842,6 +1844,22 @@ function bindModalEvents() {
     // Add custom label button (LLM mode)
     modal.querySelector('#ct_sm_add_label')?.addEventListener('click', addCustomLabel);
 
+    // VectHare preset apply button
+    modal.querySelector('#ct_sm_apply_preset')?.addEventListener('click', () => {
+        const presetSelect = modal.querySelector('#ct_sm_vecthare_preset');
+        const presetId = presetSelect?.value;
+        if (presetId) {
+            applyVectHarePreset(presetId);
+        } else {
+            toastr.warning('Select a preset first');
+        }
+    });
+
+    // VectHare sprite sharing toggle
+    modal.querySelector('#ct_sm_share_sprites')?.addEventListener('change', (e) => {
+        toggleSpriteSharing(e.target.checked);
+    });
+
     // Keyboard navigation - store reference for cleanup
     keyboardHandler = (e) => {
         if (!isOpen) return;
@@ -1878,9 +1896,9 @@ function selectMethod(method) {
         renderLLMSuggestions();
     }
 
-    // Render VectHare status if in VectHare mode
+    // Update VectHare UI state if in VectHare mode
     if (method === 'vecthare') {
-        renderVectHareStatus();
+        updateVectHareUI();
     }
 
     // Re-render expression grid with new labels
@@ -1961,26 +1979,25 @@ async function addLabelToCharacter(label) {
 }
 
 /**
- * Render VectHare connection status
+ * Update VectHare UI state (sharing toggle, preset dropdown)
  */
-function renderVectHareStatus() {
-    const container = document.getElementById('ct_sm_vecthare_status');
-    if (!container) return;
+function updateVectHareUI() {
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
 
-    // Check if VectHare extension is available
-    const vecthareAvailable = window.VectHare !== undefined ||
-        document.querySelector('[id*="vecthare"]') !== null;
+    // Update sharing toggle state
+    const sharingToggle = document.getElementById('ct_sm_share_sprites');
+    if (sharingToggle) {
+        const share = settings.characterExpressionProfiles?.[charFolder]?.shareSpritesAcrossMethods ?? true;
+        sharingToggle.checked = share;
+    }
 
-    if (vecthareAvailable) {
-        container.innerHTML = `
-            <i class="fa-solid fa-circle-check" style="color: var(--bw-coral);"></i>
-            <span style="color: var(--bw-coral);">VectHare Active</span>
-        `;
-    } else {
-        container.innerHTML = `
-            <i class="fa-solid fa-circle-xmark" style="color: var(--ct-text-muted);"></i>
-            <span>VectHare not detected. Install it for semantic emotion matching.</span>
-        `;
+    // Update preset dropdown (show current if one was applied)
+    const presetSelect = document.getElementById('ct_sm_vecthare_preset');
+    if (presetSelect) {
+        // Reset to default "choose" option
+        presetSelect.value = '';
     }
 }
 

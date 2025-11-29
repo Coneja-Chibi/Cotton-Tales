@@ -1563,36 +1563,6 @@
 }
 
 /* ---------------------------------------------------------------------------
-   DETECTION METHOD
-   --------------------------------------------------------------------------- */
-
-.ct-sm-vh-detection-section {
-    margin-top: 4px;
-}
-
-.ct-sm-vh-detection-select {
-    width: 100%;
-    padding: 6px 10px;
-    background: rgba(10, 10, 15, 0.8);
-    border: 1px solid var(--ct-border);
-    border-radius: var(--ct-radius);
-    color: var(--ct-text-primary);
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.ct-sm-vh-detection-select:hover {
-    border-color: var(--bw-pink);
-}
-
-.ct-sm-vh-detection-select:focus {
-    outline: none;
-    border-color: var(--bw-pink);
-    box-shadow: 0 0 8px var(--bw-pink-glow);
-}
-
-/* ---------------------------------------------------------------------------
    CONFIG FOOTER
    --------------------------------------------------------------------------- */
 
@@ -2080,6 +2050,54 @@
 .ct-sm-method-hint i {
     color: var(--bw-pink);
     font-size: 14px;
+}
+
+/* VectHare Controls */
+.ct-sm-vecthare-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ct-sm-preset-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ct-sm-preset-selector .ct-sm-model-select {
+    flex: 1;
+    max-width: 200px;
+}
+
+.ct-sm-control-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ct-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ct-sm-sharing-toggle {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ct-sm-sharing-toggle label {
+    cursor: pointer;
+}
+
+.ct-sm-sharing-toggle input[type="checkbox"] {
+    margin-right: 6px;
+    accent-color: var(--bw-pink);
+}
+
+.ct-sm-sharing-hint {
+    font-size: 10px;
+    color: var(--ct-text-muted);
+    margin-left: 20px;
 }
 
 /* LLM Suggestions section */
