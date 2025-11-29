@@ -122,6 +122,9 @@ export const defaultSettings = {
     /** Translate text to English before classification */
     translateBeforeClassify: false,
 
+    /** Show thinking expression while LLM is generating (requires per-character thinking expression set) */
+    showThinkingExpression: true,
+
     /** Connection profile ID for LLM classification (empty = use current API) */
     expressionConnectionProfile: '',
 

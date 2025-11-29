@@ -117,6 +117,8 @@ let eventHandlers = {
     messageSwiped: null,
     chatChanged: null,
     groupUpdated: null,
+    generationStarted: null,
+    generationEnded: null,
 };
 
 // =============================================================================
@@ -1590,11 +1592,37 @@ export async function initExpressions() {
 
     eventHandlers.groupUpdated = updateVisualNovelModeDebounced;
 
+    // Thinking expression handlers
+    eventHandlers.generationStarted = () => {
+        const ctSettings = getSettings();
+        if (!ctSettings.enabled || !ctSettings.showThinkingExpression) return;
+
+        const context = getContext();
+        if (!context.characterId && !context.groupId) return;
+
+        // Get character's thinking expression
+        const charFolder = context.name2 || '';
+        const charProfile = ctSettings.characterExpressionProfiles?.[charFolder] || {};
+        const thinkingExpression = charProfile.thinkingExpression;
+
+        if (thinkingExpression) {
+            console.debug(`[${MODULE_NAME}] GENERATION_STARTED - showing thinking expression: ${thinkingExpression}`);
+            sendExpressionCall(charFolder, thinkingExpression, { force: true });
+        }
+    };
+
+    eventHandlers.generationEnded = () => {
+        // Expression will be updated by MESSAGE_RECEIVED
+        console.debug(`[${MODULE_NAME}] GENERATION_ENDED`);
+    };
+
     // Register event handlers
     eventSource.on(event_types.MESSAGE_RECEIVED, eventHandlers.messageReceived);
     eventSource.on(event_types.MESSAGE_SWIPED, eventHandlers.messageSwiped);
     eventSource.on(event_types.CHAT_CHANGED, eventHandlers.chatChanged);
     eventSource.on(event_types.GROUP_UPDATED, eventHandlers.groupUpdated);
+    eventSource.on(event_types.GENERATION_STARTED, eventHandlers.generationStarted);
+    eventSource.on(event_types.GENERATION_ENDED, eventHandlers.generationEnded);
     $(window).on('resize', updateVisualNovelModeDebounced);
 
     // Initial visibility setup (no classification)
@@ -1628,6 +1656,12 @@ export function cleanupExpressions() {
     if (eventHandlers.groupUpdated) {
         eventSource.removeListener(event_types.GROUP_UPDATED, eventHandlers.groupUpdated);
     }
+    if (eventHandlers.generationStarted) {
+        eventSource.removeListener(event_types.GENERATION_STARTED, eventHandlers.generationStarted);
+    }
+    if (eventHandlers.generationEnded) {
+        eventSource.removeListener(event_types.GENERATION_ENDED, eventHandlers.generationEnded);
+    }
     $(window).off('resize', updateVisualNovelModeDebounced);
 
     // Clear handler references
@@ -1636,6 +1670,8 @@ export function cleanupExpressions() {
         messageSwiped: null,
         chatChanged: null,
         groupUpdated: null,
+        generationStarted: null,
+        generationEnded: null,
     };
 
     // Remove DOM elements
