@@ -360,17 +360,17 @@ function generateModalHtml() {
             <!-- Main Content Area -->
             <div class="ct-sm-content">
                 <!-- Outfit Carousel -->
-                <div class="ct-sm-section">
+                <div class="ct-sm-section ct-sm-outfits-section">
                     <div class="ct-sm-section-header">
                         <i class="fa-solid fa-shirt"></i>
                         <span>Outfits</span>
                     </div>
                     <div class="ct-sm-outfit-carousel-wrapper">
-                        <button class="ct-sm-carousel-arrow ct-sm-carousel-left">
+                        <button class="ct-sm-carousel-arrow ct-sm-carousel-left" title="Previous outfits">
                             <i class="fa-solid fa-chevron-left"></i>
                         </button>
                         <div class="ct-sm-outfit-carousel"></div>
-                        <button class="ct-sm-carousel-arrow ct-sm-carousel-right">
+                        <button class="ct-sm-carousel-arrow ct-sm-carousel-right" title="Next outfits">
                             <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
@@ -406,8 +406,16 @@ function generateModalHtml() {
                     </div>
                     <!-- LLM Options (shown when LLM selected) -->
                     <div class="ct-sm-method-options ct-sm-llm-options" style="display: none;">
-                        <div class="ct-sm-llm-source">
-                            <span class="ct-sm-llm-label">Import from:</span>
+                        <p class="ct-sm-method-hint">
+                            <i class="fa-solid fa-comments"></i>
+                            LLM mode shows your existing sprites plus suggested labels. Click tiles to add sprites.
+                        </p>
+                        <div class="ct-sm-llm-suggestions">
+                            <span class="ct-sm-llm-label">Quick Add:</span>
+                            <div class="ct-sm-suggestion-chips" id="ct_sm_llm_suggestions"></div>
+                        </div>
+                        <div class="ct-sm-llm-import">
+                            <span class="ct-sm-llm-label">Import preset:</span>
                             <select class="ct-sm-model-select" id="ct_sm_llm_source">
                                 <option value="">-- Select preset --</option>
                                 ${Object.values(CLASSIFIER_MODELS).map(m => `
@@ -419,10 +427,31 @@ function generateModalHtml() {
                     </div>
                     <!-- VectHare Options (shown when VectHare selected) -->
                     <div class="ct-sm-method-options ct-sm-vecthare-options" style="display: none;">
-                        <p class="ct-sm-method-hint">
-                            <i class="fa-solid fa-info-circle"></i>
-                            VectHare uses semantic matching. Add custom emotions with keyword boosts below.
-                        </p>
+                        <div class="ct-sm-vecthare-layout">
+                            <div class="ct-sm-vecthare-info">
+                                <div class="ct-sm-vecthare-status" id="ct_sm_vecthare_status">
+                                    <i class="fa-solid fa-circle-question"></i>
+                                    <span>Checking VectHare status...</span>
+                                </div>
+                                <p class="ct-sm-method-hint">
+                                    <i class="fa-solid fa-vector-square"></i>
+                                    VectHare uses AI embeddings to semantically match text to emotions.
+                                    It understands context, not just keywords.
+                                </p>
+                            </div>
+                            <div class="ct-sm-vecthare-emotions">
+                                <div class="ct-sm-vecthare-section-label">
+                                    <i class="fa-solid fa-sparkles"></i>
+                                    <span>Custom Emotions</span>
+                                    <button class="ct-sm-btn-add-emotion" id="ct_sm_add_emotion" title="Add custom emotion">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="ct-sm-emotion-chips" id="ct_sm_emotion_chips">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -589,36 +618,56 @@ function renderOutfitCarousel(char) {
 
 /**
  * Get the list of expression labels based on current method
+ * Each method has its own isolated label set - no bleeding between methods
  */
 function getExpectedLabels() {
     const settings = getSettings();
     const char = characterList[currentCharacterIndex];
     const charFolder = char?.folderName || '';
 
+    // Get labels that have existing sprites for this character
+    const existingSpriteLabels = new Set();
+    for (const sprite of char?.sprites || []) {
+        const label = sprite.label?.split('/').pop() || sprite.label;
+        if (label) existingSpriteLabels.add(label.toLowerCase());
+    }
+
     switch (selectedMethod) {
         case 'bert': {
-            // BERT: Fixed labels from the selected model
+            // BERT: Fixed labels from the selected BERT model ONLY
             const model = CLASSIFIER_MODELS[selectedBertModel];
-            return model?.labelList || DEFAULT_EXPRESSIONS;
+            return model?.labelList || [];
         }
         case 'llm': {
-            // LLM: User's custom labels for this character (or defaults)
+            // LLM: User's custom labels for this character
+            // Start with existing sprites, then add any custom labels they've defined
             const charProfile = settings.characterExpressionProfiles?.[charFolder];
-            if (charProfile?.customLabels?.length > 0) {
-                return charProfile.customLabels;
+            const customList = charProfile?.customLabels || [];
+
+            // If user has custom labels, show those
+            if (customList.length > 0) {
+                return customList;
             }
-            // Fall back to custom labels in session or defaults
-            return customLabels.length > 0 ? customLabels : DEFAULT_EXPRESSIONS;
+
+            // Otherwise, show only labels that have existing sprites (don't auto-show all 28 BERT labels)
+            // Plus basic emotions if they want to add sprites
+            const basicEmotions = ['neutral', 'joy', 'sadness', 'anger', 'fear', 'surprise', 'love'];
+            const combined = new Set([...existingSpriteLabels, ...basicEmotions]);
+            return [...combined].sort();
         }
         case 'vecthare': {
-            // VectHare: Default expressions + any custom emotions defined
+            // VectHare: Semantic matching - show existing sprites + any custom emotions defined
             const customEmotions = settings.customEmotions || {};
             const charEmotions = settings.characterEmotions?.[charFolder]?.customEmotions || {};
             const allCustom = [...Object.keys(customEmotions), ...Object.keys(charEmotions)];
-            return [...DEFAULT_EXPRESSIONS, ...allCustom.filter(e => !DEFAULT_EXPRESSIONS.includes(e))];
+
+            // Start with existing sprites, add custom emotions, then a minimal base set
+            const minimalBase = ['neutral', 'joy', 'sadness', 'anger', 'love', 'surprise'];
+            const combined = new Set([...existingSpriteLabels, ...allCustom, ...minimalBase]);
+            return [...combined].sort();
         }
         default:
-            return DEFAULT_EXPRESSIONS;
+            return ['neutral'];
     }
 }
 
@@ -686,6 +735,11 @@ function renderExpressionGrid(char) {
                     : `<i class="fa-solid fa-plus"></i>`
                 }
                 ${files.length > 1 ? `<span class="ct-sm-expression-count">${files.length}</span>` : ''}
+                ${hasSprite ? `
+                    <button class="ct-sm-delete-sprite" data-expression="${expression}" title="Delete sprite">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                ` : ''}
                 ${isCustomLabel && !isFromBertPreset ? `
                     <button class="ct-sm-remove-label" data-label="${expression}" title="Remove label">
                         <i class="fa-solid fa-xmark"></i>
@@ -697,6 +751,11 @@ function renderExpressionGrid(char) {
 
         // Click to upload sprite for this expression
         tile.addEventListener('click', (e) => {
+            if (e.target.closest('.ct-sm-delete-sprite')) {
+                e.stopPropagation();
+                deleteSpriteForExpression(expression, previewFile);
+                return;
+            }
             if (e.target.closest('.ct-sm-remove-label')) {
                 e.stopPropagation();
                 removeCustomLabel(expression);
@@ -796,6 +855,54 @@ async function removeCustomLabel(label) {
 
     renderExpressionGrid(char);
     toastr.success(`Removed label: ${label}`);
+}
+
+/**
+ * Delete a sprite file for an expression
+ */
+async function deleteSpriteForExpression(expressionLabel, spriteFile) {
+    const char = characterList[currentCharacterIndex];
+    if (!char || !spriteFile) {
+        toastr.error('No sprite to delete');
+        return;
+    }
+
+    // Confirm deletion
+    const confirmed = confirm(`Delete sprite "${expressionLabel}"?\n\nThis will permanently remove the image file.`);
+    if (!confirmed) return;
+
+    try {
+        // Extract filename from path
+        const filename = spriteFile.imageSrc?.split('/').pop() || spriteFile.label;
+
+        // Call ST's sprite delete API
+        const response = await fetch('/api/sprites/delete', {
+            method: 'POST',
+            headers: getRequestHeaders(),
+            body: JSON.stringify({
+                name: char.folderName,
+                label: filename.replace(/\.[^/.]+$/, '') // Remove extension
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+        }
+
+        // Refresh sprites list
+        char.sprites = await getSpritesList(char.folderName);
+
+        // Clear sprite cache for this character
+        if (spriteCache) {
+            spriteCache.delete(char.folderName);
+        }
+
+        renderExpressionGrid(char);
+        toastr.success(`Deleted: ${expressionLabel}`);
+    } catch (error) {
+        console.error(`[${EXTENSION_NAME}] Failed to delete sprite:`, error);
+        toastr.error(`Failed to delete: ${error.message}`);
+    }
 }
 
 /**
@@ -1282,14 +1389,14 @@ function bindModalEvents() {
     modal.querySelector('.ct-sm-edit-char')?.addEventListener('click', () => editNpc(currentCharacterIndex));
     modal.querySelector('.ct-sm-delete-char')?.addEventListener('click', () => deleteNpc(currentCharacterIndex));
 
-    // Outfit carousel arrows
+    // Outfit carousel arrows - scroll by card width
     modal.querySelector('.ct-sm-carousel-left')?.addEventListener('click', () => {
         const carousel = modal.querySelector('.ct-sm-outfit-carousel');
-        if (carousel) carousel.scrollBy({ left: -200, behavior: 'smooth' });
+        if (carousel) carousel.scrollBy({ left: -220, behavior: 'smooth' });
     });
     modal.querySelector('.ct-sm-carousel-right')?.addEventListener('click', () => {
         const carousel = modal.querySelector('.ct-sm-outfit-carousel');
-        if (carousel) carousel.scrollBy({ left: 200, behavior: 'smooth' });
+        if (carousel) carousel.scrollBy({ left: 220, behavior: 'smooth' });
     });
 
     // Add trigger button
@@ -1313,8 +1420,11 @@ function bindModalEvents() {
     // LLM import labels button
     modal.querySelector('#ct_sm_import_labels')?.addEventListener('click', importLabelsFromBert);
 
-    // Add custom label button
+    // Add custom label button (LLM mode)
     modal.querySelector('#ct_sm_add_label')?.addEventListener('click', addCustomLabel);
+
+    // Add custom emotion button (VectHare mode)
+    modal.querySelector('#ct_sm_add_emotion')?.addEventListener('click', addVectHareEmotion);
 
     // Keyboard navigation - store reference for cleanup
     keyboardHandler = (e) => {
@@ -1347,9 +1457,229 @@ function selectMethod(method) {
     modal.querySelector('.ct-sm-llm-options').style.display = method === 'llm' ? 'block' : 'none';
     modal.querySelector('.ct-sm-vecthare-options').style.display = method === 'vecthare' ? 'block' : 'none';
 
+    // Render LLM suggestions if in LLM mode
+    if (method === 'llm') {
+        renderLLMSuggestions();
+    }
+
+    // Render VectHare status and emotions if in VectHare mode
+    if (method === 'vecthare') {
+        renderVectHareStatus();
+        renderVectHareEmotions();
+    }
+
     // Re-render expression grid with new labels
     const char = characterList[currentCharacterIndex];
     if (char) renderExpressionGrid(char);
+}
+
+/**
+ * Render suggested expression labels for LLM mode
+ * Shows 3 grayed-out suggestions user can click to add
+ */
+function renderLLMSuggestions() {
+    const container = document.getElementById('ct_sm_llm_suggestions');
+    if (!container) return;
+
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
+    const settings = getSettings();
+
+    // Get currently used labels
+    const currentLabels = new Set(getExpectedLabels());
+
+    // Suggested emotions not currently in use (from common RP emotions)
+    const allSuggestions = [
+        'embarrassment', 'excitement', 'nervousness', 'confusion',
+        'curiosity', 'desire', 'disappointment', 'amusement',
+        'caring', 'pride', 'relief', 'admiration', 'gratitude',
+        'smug', 'flustered', 'teasing', 'shy', 'pouty'
+    ];
+
+    // Filter to suggestions not already used
+    const available = allSuggestions.filter(s => !currentLabels.has(s));
+
+    // Show 3 random suggestions
+    const shuffled = available.sort(() => Math.random() - 0.5);
+    const suggestions = shuffled.slice(0, 3);
+
+    container.innerHTML = suggestions.map(label => `
+        <button class="ct-sm-suggestion-chip" data-label="${label}" title="Click to add '${label}' label">
+            <span>${label}</span>
+            <i class="fa-solid fa-plus"></i>
+        </button>
+    `).join('');
+
+    // Bind click handlers
+    container.querySelectorAll('.ct-sm-suggestion-chip').forEach(chip => {
+        chip.addEventListener('click', async () => {
+            const label = chip.dataset.label;
+            await addLabelToCharacter(label);
+            renderLLMSuggestions(); // Refresh suggestions
+        });
+    });
+}
+
+/**
+ * Add a label to the current character's LLM profile
+ */
+async function addLabelToCharacter(label) {
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
+
+    if (!settings.characterExpressionProfiles) {
+        settings.characterExpressionProfiles = {};
+    }
+    if (!settings.characterExpressionProfiles[charFolder]) {
+        settings.characterExpressionProfiles[charFolder] = { customLabels: [] };
+    }
+
+    const normalized = label.toLowerCase().trim();
+    if (!settings.characterExpressionProfiles[charFolder].customLabels.includes(normalized)) {
+        settings.characterExpressionProfiles[charFolder].customLabels.push(normalized);
+        customLabels = settings.characterExpressionProfiles[charFolder].customLabels;
+        await saveSettings();
+        renderExpressionGrid(char);
+        toastr.success(`Added label: ${normalized}`);
+    }
+}
+
+/**
+ * Render VectHare connection status
+ */
+function renderVectHareStatus() {
+    const container = document.getElementById('ct_sm_vecthare_status');
+    if (!container) return;
+
+    // Check if VectHare extension is available
+    const vecthareAvailable = window.VectHare !== undefined ||
+        document.querySelector('[id*="vecthare"]') !== null;
+
+    if (vecthareAvailable) {
+        container.innerHTML = `
+            <i class="fa-solid fa-circle-check" style="color: var(--bw-coral);"></i>
+            <span style="color: var(--bw-coral);">VectHare Active</span>
+        `;
+    } else {
+        container.innerHTML = `
+            <i class="fa-solid fa-circle-xmark" style="color: var(--ct-text-muted);"></i>
+            <span>VectHare not detected. Install it for semantic emotion matching.</span>
+        `;
+    }
+}
+
+/**
+ * Render VectHare custom emotion chips
+ */
+function renderVectHareEmotions() {
+    const container = document.getElementById('ct_sm_emotion_chips');
+    if (!container) return;
+
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
+
+    // Get global and character-specific custom emotions
+    const globalEmotions = settings.customEmotions || {};
+    const charEmotions = settings.characterEmotions?.[charFolder]?.customEmotions || {};
+
+    // Merge them
+    const allEmotions = { ...globalEmotions, ...charEmotions };
+    const emotionNames = Object.keys(allEmotions);
+
+    if (emotionNames.length === 0) {
+        container.innerHTML = `
+            <div class="ct-sm-no-emotions">
+                <i class="fa-solid fa-ghost"></i>
+                <span>No custom emotions defined. Click + to add one.</span>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = emotionNames.map(name => `
+        <div class="ct-sm-emotion-chip" data-emotion="${name}">
+            <span class="ct-sm-emotion-name">${name}</span>
+            <button class="ct-sm-emotion-remove" data-emotion="${name}" title="Remove emotion">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    `).join('');
+
+    // Bind remove handlers
+    container.querySelectorAll('.ct-sm-emotion-remove').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const emotionName = btn.dataset.emotion;
+            await removeVectHareEmotion(emotionName);
+        });
+    });
+}
+
+/**
+ * Add a custom VectHare emotion
+ */
+async function addVectHareEmotion() {
+    const emotionName = await showInputModal('Add Custom Emotion', 'Enter emotion name (e.g., smug, flustered)');
+    if (!emotionName) return;
+
+    const normalized = emotionName.toLowerCase().trim().replace(/\s+/g, '_');
+
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
+
+    // Add to character-specific emotions
+    if (!settings.characterEmotions) {
+        settings.characterEmotions = {};
+    }
+    if (!settings.characterEmotions[charFolder]) {
+        settings.characterEmotions[charFolder] = { customEmotions: {} };
+    }
+
+    if (settings.characterEmotions[charFolder].customEmotions[normalized]) {
+        toastr.warning(`Emotion "${normalized}" already exists`);
+        return;
+    }
+
+    // Add with default keyword boost
+    settings.characterEmotions[charFolder].customEmotions[normalized] = {
+        keywords: [normalized],
+        boost: 1.0
+    };
+
+    await saveSettings();
+    renderVectHareEmotions();
+    renderExpressionGrid(char);
+    toastr.success(`Added emotion: ${normalized}`);
+}
+
+/**
+ * Remove a VectHare custom emotion
+ */
+async function removeVectHareEmotion(emotionName) {
+    const settings = getSettings();
+    const char = characterList[currentCharacterIndex];
+    const charFolder = char?.folderName || '';
+
+    // Remove from character-specific emotions
+    if (settings.characterEmotions?.[charFolder]?.customEmotions?.[emotionName]) {
+        delete settings.characterEmotions[charFolder].customEmotions[emotionName];
+        await saveSettings();
+        renderVectHareEmotions();
+        renderExpressionGrid(char);
+        toastr.success(`Removed emotion: ${emotionName}`);
+    }
+
+    // Also check global emotions
+    if (settings.customEmotions?.[emotionName]) {
+        delete settings.customEmotions[emotionName];
+        await saveSettings();
+        renderVectHareEmotions();
+        renderExpressionGrid(char);
+        toastr.success(`Removed emotion: ${emotionName}`);
+    }
 }
 
 /**
