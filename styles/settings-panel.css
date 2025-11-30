@@ -2219,7 +2219,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 100000;
+    z-index: 10300;
     animation: ct-fade-in 0.2s ease;
 }
 
@@ -2340,11 +2340,23 @@
    Z-INDEX HIERARCHY (Critical for modals)
    ============================================================================= */
 
-/* Base layers */
-/* Main Cotton-Tales modal: 10000 */
-/* Sub-modals (keyword/vector editors): 10100 */
-/* Tooltips/popovers: 10200 */
-/* Preview popups: 10300 */
+/*
+ * COTTON-TALES Z-INDEX LAYERS:
+ * ============================================
+ * 10300 - Preview/inspect popups (highest)
+ * 10200 - Sprite Manager modal (opens from settings)
+ * 10100 - Sub-modals (keyword/vector/emotion editors)
+ * 10000 - Main settings modal overlay
+ *  9600 - VN Choice panel (floating)
+ *  9500 - VN Mode container
+ *   150 - VN Controls
+ *   110 - VN Choices (in-container)
+ *   100 - VN Dialogue
+ *    50 - Active badges
+ *    10 - Carousel arrows, sprite layers
+ *     1 - Background layers
+ * ============================================
+ */
 
 .ct-modal-overlay {
     z-index: 10000 !important;
@@ -2353,9 +2365,15 @@
 /* Sub-modals that appear over the main settings modal */
 #ct-keyword-boost-modal,
 #ct-summary-vector-modal,
+#ct-emotion-editor-modal,
 .ct-bg-editor,
 .ct-input-modal-overlay {
     z-index: 10100 !important;
+}
+
+/* Sprite Manager modal (opens from settings, needs to be above sub-modals) */
+#ct-sprite-manager-modal {
+    z-index: 10200 !important;
 }
 
 /* Preview/inspect popups that appear over everything */

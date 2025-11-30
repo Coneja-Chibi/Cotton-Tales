@@ -18,6 +18,7 @@ import { isVectHareAvailable, clearEmotionEmbeddingsCache } from '../ct-expressi
 import { ConnectionManagerRequestService } from '../../../shared.js';
 import { getCustomEmotionsTabHTML, bindCustomEmotionEvents } from './custom-emotions-ui.js';
 import { openSummaryVectorEditor, deleteSummaryVector, openKeywordBoostEditor, deleteKeywordBoost } from './vecthare-editors.js';
+import { getDirectorTabHTML, bindDirectorTabEvents } from './director-tab.js';
 
 // =============================================================================
 // CALLBACK REGISTRATION (breaks circular dependency with index.js)
@@ -272,6 +273,14 @@ function getModalHTML() {
                             </button>
                         </div>
 
+                        <div class="ct-sidebar-section">
+                            <div class="ct-sidebar-label" id="ct-sidebar-ai-label">AI Director</div>
+                            <button class="ct-sidebar-item" data-tab="director" id="ct-sidebar-director" role="tab" aria-selected="false" aria-controls="ct-tab-director">
+                                <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+                                <span>Director</span>
+                            </button>
+                        </div>
+
                         <div class="ct-sidebar-footer">
                             <a href="https://github.com/Coneja-Chibi" target="_blank">
                                 <i class="fa-brands fa-github"></i>
@@ -310,6 +319,11 @@ function getModalHTML() {
                         <!-- Scenes Tab -->
                         <div class="ct-modal-tab" data-tab="scenes" id="ct-tab-scenes" role="tabpanel" aria-labelledby="ct-sidebar-scenes">
                             ${getScenesTabHTML()}
+                        </div>
+
+                        <!-- Director Tab -->
+                        <div class="ct-modal-tab" data-tab="director" id="ct-tab-director" role="tabpanel" aria-labelledby="ct-sidebar-director">
+                            ${getDirectorTabHTML()}
                         </div>
                     </div>
                 </div>
@@ -372,6 +386,69 @@ function getCharactersTabHTML() {
             Manage sprites, outfits, NPCs, and triggers
         </p>
     `;
+}
+
+
+/**
+ * Generate HTML for summary vectors list
+ * @param {Object} summaryVectors - { emotionName: ['phrase1', 'phrase2', ...] }
+ * @returns {string} HTML string
+ */
+export function generateSummaryVectorsList(summaryVectors) {
+    const entries = Object.entries(summaryVectors || {});
+    if (entries.length === 0) return '';
+
+    return entries.map(([emotion, phrases]) => `
+        <div class="ct-vector-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(96, 165, 250, 0.1); border: 1px solid rgba(96, 165, 250, 0.2); border-radius: 6px; margin-bottom: 6px;">
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; font-size: 12px; color: #60a5fa;">${emotion}</div>
+                <div style="font-size: 10px; color: var(--ct-text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${phrases.length} phrase${phrases.length !== 1 ? 's' : ''}: ${phrases.slice(0, 2).join(', ')}${phrases.length > 2 ? '...' : ''}
+                </div>
+            </div>
+            <div style="display: flex; gap: 4px; margin-left: 8px;">
+                <button class="ct-sv-edit" data-emotion="${emotion}" style="padding: 4px 8px; background: rgba(255,255,255,0.1); border: none; border-radius: 4px; cursor: pointer; color: var(--SmartThemeBodyColor);" title="Edit">
+                    <i class="fa-solid fa-pen fa-xs"></i>
+                </button>
+                <button class="ct-sv-delete" data-emotion="${emotion}" style="padding: 4px 8px; background: rgba(239, 68, 68, 0.2); border: none; border-radius: 4px; cursor: pointer; color: #ef4444;" title="Delete">
+                    <i class="fa-solid fa-trash fa-xs"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Generate HTML for keyword boosts list
+ * @param {Object} keywordBoosts - { keyword: { emotion: 'emotionName', boost: 1.5 } }
+ * @returns {string} HTML string
+ */
+export function generateKeywordBoostsList(keywordBoosts) {
+    const entries = Object.entries(keywordBoosts || {});
+    if (entries.length === 0) return '';
+
+    return entries.map(([keyword, data]) => `
+        <div class="ct-boost-item" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 6px; margin-bottom: 6px;">
+            <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 600; font-size: 12px; color: #fbbf24;">"${keyword}"</span>
+                    <i class="fa-solid fa-arrow-right fa-xs" style="color: var(--ct-text-light);"></i>
+                    <span style="font-size: 12px;">${data.emotion}</span>
+                    <span style="font-size: 10px; padding: 2px 6px; background: ${data.boost >= 1 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; border-radius: 4px; color: ${data.boost >= 1 ? '#22c55e' : '#ef4444'};">
+                        ${data.boost}x
+                    </span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 4px; margin-left: 8px;">
+                <button class="ct-kb-edit" data-keyword="${keyword}" style="padding: 4px 8px; background: rgba(255,255,255,0.1); border: none; border-radius: 4px; cursor: pointer; color: var(--SmartThemeBodyColor);" title="Edit">
+                    <i class="fa-solid fa-pen fa-xs"></i>
+                </button>
+                <button class="ct-kb-delete" data-keyword="${keyword}" style="padding: 4px 8px; background: rgba(239, 68, 68, 0.2); border: none; border-radius: 4px; cursor: pointer; color: #ef4444;" title="Delete">
+                    <i class="fa-solid fa-trash fa-xs"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
 }
 
 function getExpressionsTabHTML() {
@@ -2364,6 +2441,7 @@ function bindModalEvents() {
     if (!modalEventsBound) {
         bindEvents();
         bindCustomEmotionEvents();
+        bindDirectorTabEvents();
         modalEventsBound = true;
     }
 }

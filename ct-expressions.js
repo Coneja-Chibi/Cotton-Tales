@@ -64,6 +64,10 @@ import {
     DEFAULT_LLM_PROMPT,
     EMOTION_DESCRIPTIONS,
 } from './core/constants.js';
+import {
+    classifyWithCustomEmotions,
+    getCharacterEmotions,
+} from './core/custom-classifier.js';
 
 // Shared extension utilities
 import { isWebLlmSupported, generateWebLlmChatPrompt, ConnectionManagerRequestService } from '../../shared.js';
@@ -995,6 +999,26 @@ async function classifyWithVectHare(text, labels, charFolder = null) {
 
     const settings = getSettings();
     const vhSettings = getVectHareSettings();
+
+    // Priority 0: Check for custom per-character emotion classifier
+    if (charFolder) {
+        const customEmotions = getCharacterEmotions(charFolder);
+        if (Object.keys(customEmotions).length > 0) {
+            try {
+                const customResult = await classifyWithCustomEmotions(charFolder, text);
+                if (customResult?.emotion) {
+                    // Check if the custom emotion is in our allowed labels
+                    const matchedLabel = labels.find(l => l.toLowerCase() === customResult.emotion.toLowerCase());
+                    if (matchedLabel) {
+                        console.log(`[${MODULE_NAME}] Custom classifier: "${matchedLabel}" (${customResult.score.toFixed(3)})${customResult.boosted ? ' [keyword-boosted]' : ''}`);
+                        return matchedLabel;
+                    }
+                }
+            } catch (error) {
+                console.debug(`[${MODULE_NAME}] Custom classifier failed:`, error);
+            }
+        }
+    }
 
     // Priority 1: Use VectHare's dedicated classifier API if available
     if (isVectHareClassifierAvailable() && !vhSettings?.emotion_use_similarity) {

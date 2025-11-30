@@ -174,7 +174,7 @@ function generateCustomEmotionCard(name, def, isCharSpecific) {
  */
 export function getEmotionEditorModalHTML() {
     return `
-        <div id="ct-emotion-editor-modal" class="ct-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center;">
+        <div id="ct-emotion-editor-modal" class="ct-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 10100; align-items: center; justify-content: center;">
             <div class="ct-modal" style="max-width: 600px; max-height: 90vh; overflow-y: auto; background: var(--SmartThemeBlurTintColor); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
                 <div class="ct-modal-header" style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between;">
                     <div class="ct-modal-header-left" style="display: flex; align-items: center; gap: 12px;">

@@ -152,7 +152,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 10000;
+    z-index: 10200;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1252,12 +1252,27 @@
    ============================================================================= */
 
 /* Base tile - compact by default */
+/* VectHare grid needs wider columns for horizontal tile layout */
+.ct-sm-expression-grid:has(.ct-sm-vh-tile) {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    gap: 12px !important;
+}
+
 .ct-sm-vh-tile {
     aspect-ratio: auto !important;
     min-height: auto;
+    min-width: 260px;
     padding: 0;
     overflow: hidden;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 107, 157, 0.3);
+    border-radius: var(--ct-radius);
+    background: linear-gradient(145deg, rgba(15, 15, 20, 0.95), rgba(25, 25, 35, 0.85));
+}
+
+.ct-sm-vh-tile:hover {
+    border-color: var(--bw-pink);
+    box-shadow: 0 0 15px var(--bw-pink-glow);
 }
 
 /* Expanded state - span 2 columns */
@@ -1306,13 +1321,24 @@
 
 .ct-sm-vh-preview.empty {
     border-style: dashed;
-    border-color: rgba(255, 159, 67, 0.3);
+    border-color: rgba(255, 159, 67, 0.4);
+    background: linear-gradient(145deg, rgba(255, 159, 67, 0.05), rgba(255, 159, 67, 0.02));
 }
 
 .ct-sm-vh-preview.empty i {
-    font-size: 22px;
+    font-size: 20px;
     color: var(--bw-orange);
-    opacity: 0.4;
+    opacity: 0.5;
+}
+
+/* Hide broken image icons */
+.ct-sm-vh-preview img {
+    background: transparent;
+}
+
+.ct-sm-vh-preview img[src=""],
+.ct-sm-vh-preview img:not([src]) {
+    display: none;
 }
 
 .ct-sm-vh-preview:hover {
@@ -2606,4 +2632,180 @@
         text-align: center;
         margin-bottom: 8px;
     }
+}
+
+
+/* =============================================================================
+   VECTHARE TILE - REDESIGNED WITH VECTORS + KEYWORDS
+   ============================================================================= */
+
+/* Section headers */
+.ct-sm-vh-section {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ct-sm-vh-section:last-of-type {
+    border-bottom: none;
+}
+
+.ct-sm-vh-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: var(--bw-pink);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ct-sm-vh-section-header i {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.ct-sm-vh-section-header small {
+    font-weight: 400;
+    color: var(--ct-text-light);
+    opacity: 0.7;
+    margin-left: auto;
+    font-size: 10px;
+}
+
+/* Vector chips */
+.ct-sm-vh-vector-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+    min-height: 28px;
+}
+
+.ct-sm-vh-vector-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px 5px 10px;
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.15), rgba(96, 165, 250, 0.08));
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    border-radius: 14px;
+    font-size: 11px;
+    color: #93c5fd;
+    max-width: 200px;
+}
+
+.ct-sm-vh-vector-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ct-sm-vh-vector-remove {
+    background: none;
+    border: none;
+    color: rgba(239, 68, 68, 0.6);
+    cursor: pointer;
+    padding: 2px;
+    font-size: 10px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.ct-sm-vh-vector-remove:hover {
+    color: #ef4444;
+}
+
+/* Empty hints */
+.ct-sm-vh-empty-hint {
+    font-size: 11px;
+    color: var(--ct-text-light);
+    opacity: 0.5;
+    font-style: italic;
+}
+
+/* Add buttons */
+.ct-sm-vh-add-vector,
+.ct-sm-vh-add-keyword {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: var(--ct-text-light);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.ct-sm-vh-add-vector:hover {
+    background: rgba(96, 165, 250, 0.1);
+    border-color: rgba(96, 165, 250, 0.4);
+    color: #60a5fa;
+}
+
+.ct-sm-vh-add-keyword:hover {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: rgba(251, 191, 36, 0.4);
+    color: #fbbf24;
+}
+
+/* Stats in header */
+.ct-sm-vh-stats {
+    display: flex;
+    gap: 10px;
+    margin-top: 2px;
+}
+
+.ct-sm-vh-vector-count,
+.ct-sm-vh-keyword-count {
+    font-size: 10px;
+    color: var(--ct-text-light);
+    opacity: 0.7;
+}
+
+.ct-sm-vh-vector-count i {
+    color: #60a5fa;
+}
+
+.ct-sm-vh-keyword-count i {
+    color: #fbbf24;
+}
+
+/* Config panel flex layout */
+.ct-sm-vh-config {
+    display: none;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Footer */
+.ct-sm-vh-config-footer {
+    padding: 10px 12px;
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ct-sm-vh-remove-emotion {
+    padding: 6px 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 6px;
+    color: #f87171;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ct-sm-vh-remove-emotion:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
 }

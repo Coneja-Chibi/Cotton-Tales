@@ -224,6 +224,31 @@ export const defaultSettings = {
      * Structure: { [cardId]: [{ name, avatar, folderName, outfits, triggers, outfitTriggers }] }
      */
     cardNpcs: {},
+
+    // ==========================================================================
+    // AI DIRECTOR SETTINGS
+    // ==========================================================================
+
+    /** Enable AI Director (inject Director prompt) */
+    directorEnabled: false,
+
+    /** Director prompt style: 'default', 'minimal', 'detailed', 'custom' */
+    directorPromptStyle: 'default',
+
+    /** Custom Director prompt (when style is 'custom') */
+    customDirectorPrompt: '',
+
+    /** Where to inject Director prompt */
+    directorPromptPosition: 'system_end',
+
+    /** Number of choices Director should generate */
+    directorChoiceCount: 3,
+
+    /** Automatically parse vn-scene blocks from AI responses */
+    autoParseResponses: true,
+
+    /** Hide vn-scene JSON blocks from displayed messages */
+    stripSceneJson: true,
 };
 
 /**

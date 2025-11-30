@@ -21,6 +21,7 @@ import { getContext } from '../../../../extensions.js';
 import { getSettings, saveSettings } from '../core/settings-manager.js';
 import { EXTENSION_NAME, DEFAULT_EXPRESSIONS, CLASSIFIER_MODELS, EXPRESSION_API, EMOTION_PRESETS } from '../core/constants.js';
 import { getSpritesList, spriteCache, validateImages } from '../ct-expressions.js';
+import { addVector, removeVector, setKeyword, removeKeyword, rebuildCharacterVectors } from '../core/custom-classifier.js';
 
 // =============================================================================
 // CONSTANTS
@@ -217,8 +218,11 @@ async function getCharactersForCard() {
     const settings = getSettings();
     const result = [];
 
-    // Get main character
-    if (context.characterId !== undefined && characters[this_chid]) {
+    // Check if we have a chat open with a specific character
+    const hasActiveChat = context.characterId !== undefined && characters[this_chid];
+
+    if (hasActiveChat) {
+        // Chat is open - load current character and their NPCs
         const mainChar = characters[this_chid];
         const folderName = mainChar.avatar?.replace(/\.[^/.]+$/, '') || mainChar.name;
 
@@ -232,23 +236,40 @@ async function getCharactersForCard() {
             triggers: [mainChar.name],
             outfitTriggers: {}
         });
-    }
 
-    // Get NPCs from per-card settings
-    const cardId = context.characterId;
-    const cardNpcs = settings.cardNpcs?.[cardId] || [];
+        // Get NPCs from per-card settings
+        const cardId = context.characterId;
+        const cardNpcs = settings.cardNpcs?.[cardId] || [];
 
-    for (const npc of cardNpcs) {
-        result.push({
-            name: npc.name,
-            avatar: npc.avatar || null,
-            isNpc: true,
-            folderName: npc.folderName || npc.name,
-            sprites: [],
-            outfits: npc.outfits || ['default'],
-            triggers: npc.triggers || [npc.name],
-            outfitTriggers: npc.outfitTriggers || {}
-        });
+        for (const npc of cardNpcs) {
+            result.push({
+                name: npc.name,
+                avatar: npc.avatar || null,
+                isNpc: true,
+                folderName: npc.folderName || npc.name,
+                sprites: [],
+                outfits: npc.outfits || ['default'],
+                triggers: npc.triggers || [npc.name],
+                outfitTriggers: npc.outfitTriggers || {}
+            });
+        }
+    } else {
+        // No chat open - load ALL characters for sprite browsing/management
+        for (const char of characters) {
+            if (!char || !char.name) continue;
+            const folderName = char.avatar?.replace(/\.[^/.]+$/, '') || char.name;
+
+            result.push({
+                name: char.name,
+                avatar: char.avatar,
+                isNpc: false,
+                folderName: folderName,
+                sprites: [],
+                outfits: ['default'],
+                triggers: [char.name],
+                outfitTriggers: {}
+            });
+        }
     }
 
     // Load sprites for all characters in parallel
@@ -876,20 +897,28 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
     const isFallback = expressionLower === charFallback.toLowerCase();
     const isThinking = charThinking && expressionLower === charThinking.toLowerCase();
 
-    // Extract keywords with individual weights
+    // VECTORS: Semantic phrases that get vectorized and matched
+    const vectors = emotionConfig?.vectors || [];
+    const vectorCount = vectors.length;
+
+    // KEYWORDS: Literal keyword triggers with boost weights
     const keywords = emotionConfig?.keywords || {};
     const keywordEntries = Object.entries(keywords);
     const keywordCount = keywordEntries.length;
 
-    // Helper to determine if keyword is regex
-    const isRegex = (kw) => kw.startsWith('/') && kw.lastIndexOf('/') > 0;
+    // Generate vector chips HTML
+    const vectorChipsHtml = vectors.map((phrase, idx) => `
+        <div class="ct-sm-vh-vector-chip" data-index="${idx}">
+            <span class="ct-sm-vh-vector-text">${escapeHtml(phrase)}</span>
+            <button class="ct-sm-vh-vector-remove" data-index="${idx}" title="Remove">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    `).join('');
 
     // Generate keyword chips HTML
     const keywordChipsHtml = keywordEntries.map(([kw, weight]) => `
-        <div class="ct-sm-vh-keyword-chip ${isRegex(kw) ? 'ct-sm-vh-regex' : ''}"
-             data-keyword="${kw.replace(/"/g, '&quot;')}"
-             data-weight="${weight}">
-            ${isRegex(kw) ? '<i class="fa-solid fa-code" title="Regex pattern"></i>' : ''}
+        <div class="ct-sm-vh-keyword-chip" data-keyword="${kw.replace(/"/g, '&quot;')}" data-weight="${weight}">
             <span class="ct-sm-vh-kw-text">${escapeHtml(kw)}</span>
             <span class="ct-sm-vh-kw-weight">${weight}x</span>
             <button class="ct-sm-vh-kw-remove" title="Remove">
@@ -906,27 +935,26 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
     tile.innerHTML = `
         <!-- COMPACT HEADER -->
         <div class="ct-sm-vh-header">
-            <div class="ct-sm-vh-preview ${hasSprite ? '' : 'empty'}" data-upload-trigger>
-                ${hasSprite
+            <div class="ct-sm-vh-preview ${hasSprite && previewFile?.imageSrc ? '' : 'empty'}" data-upload-trigger>
+                ${hasSprite && previewFile?.imageSrc
                     ? `<img src="${previewFile.imageSrc}" alt="${expression}">`
                     : `<i class="fa-solid fa-image"></i>`
                 }
-                ${files.length > 1 ? `<span class="ct-sm-vh-sprite-count">${files.length}</span>` : ''}
-                ${isFallback ? `<span class="ct-sm-fallback-badge" title="Default/Fallback"><i class="fa-solid fa-star"></i></span>` : ''}
-                ${isThinking ? `<span class="ct-sm-thinking-badge" title="Thinking"><i class="fa-solid fa-brain"></i></span>` : ''}
             </div>
             <div class="ct-sm-vh-info">
                 <span class="ct-sm-vh-label">${expression}</span>
-                <span class="ct-sm-vh-keyword-count">
-                    <i class="fa-solid fa-tags"></i> ${keywordCount} keyword${keywordCount !== 1 ? 's' : ''}
-                </span>
+                <div class="ct-sm-vh-stats">
+                    <span class="ct-sm-vh-vector-count" title="Semantic vectors">
+                        <i class="fa-solid fa-diagram-project"></i> ${vectorCount}
+                    </span>
+                    <span class="ct-sm-vh-keyword-count" title="Keyword boosters">
+                        <i class="fa-solid fa-bolt"></i> ${keywordCount}
+                    </span>
+                </div>
             </div>
             <div class="ct-sm-vh-header-actions">
                 <button class="ct-sm-set-fallback ${isFallback ? 'active' : ''}" data-expression="${expression}" title="Set as fallback">
                     <i class="fa-solid fa-star"></i>
-                </button>
-                <button class="ct-sm-set-thinking ${isThinking ? 'active' : ''}" data-expression="${expression}" title="Set as thinking">
-                    <i class="fa-solid fa-brain"></i>
                 </button>
                 <button class="ct-sm-vh-expand-toggle" title="Configure">
                     <i class="fa-solid fa-chevron-down"></i>
@@ -934,27 +962,36 @@ function renderVectHareExpressionTile(expression, files, hasSprite, previewFile,
             </div>
         </div>
 
-        <!-- EXPANDABLE KEYWORD CONFIG -->
+        <!-- EXPANDABLE CONFIG -->
         <div class="ct-sm-vh-config">
-            <div class="ct-sm-vh-keywords-section">
-                <div class="ct-sm-vh-keyword-chips">
-                    ${keywordChipsHtml}
-                    <button class="ct-sm-vh-add-keyword" title="Add keyword">
-                        <i class="fa-solid fa-plus"></i> Add
-                    </button>
+            <!-- VECTORS SECTION -->
+            <div class="ct-sm-vh-section">
+                <div class="ct-sm-vh-section-header">
+                    <i class="fa-solid fa-diagram-project"></i>
+                    <span>Semantic Vectors</span>
+                    <small>Phrases that map to this emotion</small>
                 </div>
+                <div class="ct-sm-vh-vector-chips">
+                    ${vectorChipsHtml || '<span class="ct-sm-vh-empty-hint">No vectors yet</span>'}
+                </div>
+                <button class="ct-sm-vh-add-vector">
+                    <i class="fa-solid fa-plus"></i> Add Vector Phrase
+                </button>
             </div>
 
-            <!-- Inline Weight Editor -->
-            <div class="ct-sm-vh-weight-editor" style="display: none;">
-                <div class="ct-sm-vh-editor-header">
-                    <span class="ct-sm-vh-editor-keyword"></span>
-                    <button class="ct-sm-vh-editor-close"><i class="fa-solid fa-times"></i></button>
+            <!-- KEYWORDS SECTION -->
+            <div class="ct-sm-vh-section">
+                <div class="ct-sm-vh-section-header">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Keyword Boosters</span>
+                    <small>Words that boost this emotion's score</small>
                 </div>
-                <div class="ct-sm-vh-editor-body">
-                    <input type="range" class="ct-sm-vh-weight-slider" min="1.0" max="3.0" step="0.1" value="1.5">
-                    <span class="ct-sm-vh-slider-value">1.5x</span>
+                <div class="ct-sm-vh-keyword-chips">
+                    ${keywordChipsHtml || '<span class="ct-sm-vh-empty-hint">No keywords yet</span>'}
                 </div>
+                <button class="ct-sm-vh-add-keyword">
+                    <i class="fa-solid fa-plus"></i> Add Keyword
+                </button>
             </div>
 
             <div class="ct-sm-vh-config-footer">
@@ -980,7 +1017,6 @@ function bindVectHareTileEvents(tile, expression, charFolder, previewFile, hasSp
         if (e.target.closest('[data-upload-trigger]')) return;
         if (e.target.closest('.ct-sm-vh-expand-toggle')) return;
         if (e.target.closest('.ct-sm-set-fallback')) return;
-        if (e.target.closest('.ct-sm-set-thinking')) return;
         toggleVectHareTileExpansion(tile);
     });
 
@@ -996,20 +1032,29 @@ function bindVectHareTileEvents(tile, expression, charFolder, previewFile, hasSp
         setCharacterFallback(charFolder, expression);
     });
 
-    // Thinking button
-    tile.querySelector('.ct-sm-set-thinking')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setCharacterThinking(charFolder, expression);
-    });
-
     // Upload sprite on preview click
     tile.querySelector('[data-upload-trigger]').addEventListener('click', (e) => {
         e.stopPropagation();
         uploadSpriteForExpression(expression);
     });
 
-    // Add keyword button
-    tile.querySelector('.ct-sm-vh-add-keyword').addEventListener('click', (e) => {
+    // ADD VECTOR button
+    tile.querySelector('.ct-sm-vh-add-vector')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showAddVectHareVectorModal(expression, charFolder);
+    });
+
+    // REMOVE VECTOR buttons
+    tile.querySelectorAll('.ct-sm-vh-vector-remove').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const idx = parseInt(btn.dataset.index);
+            await removeVectHareVector(expression, idx, charFolder);
+        });
+    });
+
+    // ADD KEYWORD button
+    tile.querySelector('.ct-sm-vh-add-keyword')?.addEventListener('click', (e) => {
         e.stopPropagation();
         showAddVectHareKeywordModal(expression, charFolder);
     });
@@ -1035,13 +1080,8 @@ function bindVectHareTileEvents(tile, expression, charFolder, previewFile, hasSp
         });
     });
 
-    // Weight editor close button
-    tile.querySelector('.ct-sm-vh-editor-close')?.addEventListener('click', () => {
-        tile.querySelector('.ct-sm-vh-weight-editor').style.display = 'none';
-    });
-
     // Remove emotion button
-    tile.querySelector('.ct-sm-vh-remove-emotion').addEventListener('click', (e) => {
+    tile.querySelector('.ct-sm-vh-remove-emotion')?.addEventListener('click', (e) => {
         e.stopPropagation();
         removeVectHareEmotion(expression);
     });
@@ -1114,34 +1154,53 @@ function showVectHareWeightEditor(tile, expression, keyword, currentWeight, char
 /**
  * Add a new keyword to an emotion with weight
  */
-async function addVectHareKeyword(expression, keyword, weight, charFolder) {
-    const settings = getSettings();
+
+/**
+ * Show modal to add a new vector phrase
+ */
+async function showAddVectHareVectorModal(expression, charFolder) {
+    const phrase = await showInputModal(
+        `Add Vector for "${expression}"`,
+        'Enter a semantic phrase (e.g., "I\'m so happy!", "This is wonderful!")'
+    );
+    if (!phrase) return;
+    await addVectHareVector(expression, phrase.trim(), charFolder);
+}
+
+/**
+ * Add a vector phrase to an emotion
+ */
+async function addVectHareVector(expression, phrase, charFolder) {
+    // Use custom-classifier API which handles settings + VectHare sync
+    await addVector(charFolder, expression, phrase);
+
+    // Re-render
     const char = characterList[currentCharacterIndex];
+    renderExpressionGrid(char);
 
-    // Ensure structure exists
-    if (!settings.characterEmotions) settings.characterEmotions = {};
-    if (!settings.characterEmotions[charFolder]) {
-        settings.characterEmotions[charFolder] = { customEmotions: {} };
-    }
-    if (!settings.characterEmotions[charFolder].customEmotions) {
-        settings.characterEmotions[charFolder].customEmotions = {};
-    }
-    if (!settings.characterEmotions[charFolder].customEmotions[expression]) {
-        settings.characterEmotions[charFolder].customEmotions[expression] = {
-            keywords: {},
-            baseEmotions: [expression],
-            detectionMethod: 'auto',
-            enabled: true
-        };
-    }
+    toastr.success(`Vector added to "${expression}"`);
+}
 
-    // Add keyword with weight
-    const emotionConfig = settings.characterEmotions[charFolder].customEmotions[expression];
-    const normalizedKeyword = keyword.startsWith('/') ? keyword : keyword.toLowerCase();
-    emotionConfig.keywords[normalizedKeyword] = weight;
-    emotionConfig.updatedAt = Date.now();
+/**
+ * Remove a vector phrase from an emotion
+ */
+async function removeVectHareVector(expression, index, charFolder) {
+    // Use custom-classifier API which handles settings + VectHare sync
+    await removeVector(charFolder, expression, index);
 
-    await saveSettings();
+    // Re-render
+    const char = characterList[currentCharacterIndex];
+    renderExpressionGrid(char);
+
+    toastr.success(`Vector removed from "${expression}"`);
+}
+
+async function addVectHareKeyword(expression, keyword, weight, charFolder) {
+    // Use custom-classifier API
+    await setKeyword(charFolder, expression, keyword, weight);
+
+    // Re-render
+    const char = characterList[currentCharacterIndex];
     renderExpressionGrid(char);
     toastr.success(`Added: ${keyword} (${weight}x)`);
 }
@@ -1150,16 +1209,11 @@ async function addVectHareKeyword(expression, keyword, weight, charFolder) {
  * Remove a keyword from an emotion
  */
 async function removeVectHareKeyword(expression, keyword, charFolder) {
-    const settings = getSettings();
+    // Use custom-classifier API
+    await removeKeyword(charFolder, expression, keyword);
+
+    // Re-render
     const char = characterList[currentCharacterIndex];
-
-    const emotionConfig = settings.characterEmotions?.[charFolder]?.customEmotions?.[expression];
-    if (!emotionConfig?.keywords) return;
-
-    delete emotionConfig.keywords[keyword];
-    emotionConfig.updatedAt = Date.now();
-
-    await saveSettings();
     renderExpressionGrid(char);
     toastr.success(`Removed: ${keyword}`);
 }
@@ -1536,9 +1590,9 @@ function renderEmptyState() {
 
     content.innerHTML = `
         <div class="ct-sm-empty-state">
-            <i class="fa-solid fa-ghost"></i>
-            <p>No character loaded</p>
-            <span>Open a chat to manage sprites</span>
+            <i class="fa-solid fa-folder-open"></i>
+            <p>No characters found</p>
+            <span>Create a character in SillyTavern to manage their sprites</span>
         </div>
     `;
 }
