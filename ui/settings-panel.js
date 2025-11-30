@@ -17,6 +17,7 @@ import { getSettings, updateSetting } from '../core/settings-manager.js';
 import { isVectHareAvailable, clearEmotionEmbeddingsCache } from '../ct-expressions.js';
 import { ConnectionManagerRequestService } from '../../../shared.js';
 import { getCustomEmotionsTabHTML, bindCustomEmotionEvents } from './custom-emotions-ui.js';
+import { openSummaryVectorEditor, deleteSummaryVector, openKeywordBoostEditor, deleteKeywordBoost } from './vecthare-editors.js';
 
 // =============================================================================
 // CALLBACK REGISTRATION (breaks circular dependency with index.js)
@@ -488,67 +489,110 @@ function getExpressionsTabHTML() {
             </p>
         </div>
 
-        ${vectHareAvailable ? `
-        <!-- VectHare Bonus Section -->
-        <div class="ct-vecthare-bonus" id="ct_vecthare_settings" style="margin: 16px 0; padding: 12px; background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(59,130,246,0.1)); border: 1px solid rgba(139,92,246,0.3); border-radius: 8px; display: ${settings.expressionApi === EXPRESSION_API.vecthare ? 'block' : 'none'};">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                <i class="fa-solid fa-rabbit" style="color: #8b5cf6;"></i>
-                <span style="font-weight: 600; color: #8b5cf6;">VectHare Semantic Classification</span>
-            </div>
-            <p style="font-size: 11px; color: var(--ct-text-light); margin: 0 0 12px 0;">
-                Uses VectHare's embedding provider to semantically match text to emotions via cosine similarity.
-                This understands emotion context rather than just keywords.
-            </p>
+        <!-- VectHare Integration Section -->
+        <div id="ct_vecthare_settings" style="margin: 16px 0; display: ${settings.expressionApi === EXPRESSION_API.vecthare ? 'block' : 'none'};">
 
-            <!-- Use Provider Toggle -->
-            <div class="ct-toggle-row" style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <div>
-                    <div class="ct-toggle-label" style="font-size: 12px;">Use VectHare Provider</div>
-                    <div class="ct-toggle-sublabel" style="font-size: 10px;">Use VectHare's embedding source for classification</div>
+            <!-- Status Banner -->
+            <div id="ct_vecthare_status" style="padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; ${vectHareAvailable ? 'background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(16,185,129,0.1)); border: 1px solid rgba(34,197,94,0.4);' : 'background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.1)); border: 1px solid rgba(239,68,68,0.4);'}">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid ${vectHareAvailable ? 'fa-circle-check' : 'fa-circle-xmark'}" style="font-size: 18px; color: ${vectHareAvailable ? '#22c55e' : '#ef4444'};"></i>
+                    <div>
+                        <div style="font-weight: 600; font-size: 13px; color: ${vectHareAvailable ? '#22c55e' : '#ef4444'};">VectHare ${vectHareAvailable ? 'Detected' : 'Not Found'}</div>
+                        <div style="font-size: 11px; color: var(--ct-text-light); margin-top: 2px;">${vectHareAvailable ? 'Semantic emotion classification is available' : 'Install VectHare extension for semantic classification'}</div>
+                    </div>
                 </div>
-                <label class="ct-switch">
-                    <input type="checkbox" id="ct_vecthare_use_provider" ${settings.vecthareUseProvider ? 'checked' : ''} />
-                    <span class="ct-switch-slider"></span>
-                </label>
             </div>
 
-            <!-- Classification Trigger -->
-            <div class="ct-slider-row" style="margin-bottom: 8px; margin-top: 12px;">
-                <div class="ct-slider-header">
-                    <span class="ct-slider-label" style="font-size: 12px;">Classification Trigger</span>
+            ${vectHareAvailable ? `
+            <!-- Core Settings -->
+            <div style="background: rgba(139,92,246,0.08); border: 1px solid rgba(139,92,246,0.25); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                    <i class="fa-solid fa-sliders" style="color: #a78bfa;"></i>
+                    <span style="font-weight: 600; color: #a78bfa; font-size: 13px;">Classification Settings</span>
                 </div>
-                <select class="ct-select" id="ct_vecthare_trigger" style="font-size: 11px;">
-                    <option value="${VECTHARE_TRIGGER.after_response}" ${settings.vecthareTrigger === VECTHARE_TRIGGER.after_response ? 'selected' : ''}>
-                        After AI Response
-                    </option>
-                    <option value="${VECTHARE_TRIGGER.before_send}" ${settings.vecthareTrigger === VECTHARE_TRIGGER.before_send ? 'selected' : ''}>
-                        Before User Sends (classify previous)
-                    </option>
-                </select>
-            </div>
-            <p style="font-size: 10px; color: var(--ct-text-light); margin: 0 0 12px 0;">
-                "After AI Response" classifies immediately. "Before User Sends" waits until user starts typing.
-            </p>
 
-            <!-- Cache Emotions Toggle -->
-            <div class="ct-toggle-row" style="padding: 8px 0;">
-                <div>
-                    <div class="ct-toggle-label" style="font-size: 12px;">Cache Emotion Embeddings</div>
-                    <div class="ct-toggle-sublabel" style="font-size: 10px;">Faster classification (embeddings computed once)</div>
+                <div class="ct-toggle-row" style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                    <div>
+                        <div class="ct-toggle-label" style="font-size: 12px;">Cache Emotion Embeddings</div>
+                        <div class="ct-toggle-sublabel" style="font-size: 10px;">Pre-compute emotion vectors for faster matching</div>
+                    </div>
+                    <label class="ct-switch">
+                        <input type="checkbox" id="ct_vecthare_cache" ${settings.vecthareCacheEmotions ? 'checked' : ''} />
+                        <span class="ct-switch-slider"></span>
+                    </label>
                 </div>
-                <label class="ct-switch">
-                    <input type="checkbox" id="ct_vecthare_cache" ${settings.vecthareCacheEmotions ? 'checked' : ''} />
-                    <span class="ct-switch-slider"></span>
-                </label>
+
+                <div class="ct-toggle-row" style="padding: 8px 0;">
+                    <div>
+                        <div class="ct-toggle-label" style="font-size: 12px;">Use VectHare's Embedding Provider</div>
+                        <div class="ct-toggle-sublabel" style="font-size: 10px;">Use the same embedding source as VectHare RAG</div>
+                    </div>
+                    <label class="ct-switch">
+                        <input type="checkbox" id="ct_vecthare_use_provider" ${settings.vecthareUseProvider ? 'checked' : ''} />
+                        <span class="ct-switch-slider"></span>
+                    </label>
+                </div>
+
+                <button class="ct-btn secondary" id="ct_clear_emotion_cache" style="margin-top: 12px; font-size: 11px; width: 100%;">
+                    <i class="fa-solid fa-rotate"></i>
+                    Rebuild Emotion Cache
+                </button>
             </div>
 
-            <!-- Clear Cache Button -->
-            <button class="ct-btn secondary" id="ct_clear_emotion_cache" style="margin-top: 8px; font-size: 11px;">
-                <i class="fa-solid fa-trash"></i>
-                Clear Emotion Cache
-            </button>
+            <!-- Summary Vectors Section -->
+            <div style="background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.25); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-diagram-project" style="color: #60a5fa;"></i>
+                        <span style="font-weight: 600; color: #60a5fa; font-size: 13px;">Summary Vectors</span>
+                    </div>
+                    <button class="ct-btn-icon" id="ct_add_summary_vector" title="Add Summary Vector" style="padding: 6px 10px; background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.4); border-radius: 6px; color: #60a5fa; cursor: pointer; font-size: 12px;">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <p style="font-size: 11px; color: var(--ct-text-light); margin: 0 0 12px 0;">
+                    Define multiple semantic phrases that all resolve to the same emotion.
+                    Example: "I'm so happy!" and "This is wonderful!" → joy
+                </p>
+
+                <div id="ct_summary_vectors_list" style="display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto;">
+                    ${generateSummaryVectorsList(settings.summaryVectors || {})}
+                </div>
+
+                ${Object.keys(settings.summaryVectors || {}).length === 0 ? '<div class="ct-empty-hint" id="ct_summary_empty" style="text-align: center; padding: 20px; color: var(--ct-text-light); opacity: 0.6; font-size: 11px;"><i class="fa-solid fa-layer-group" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>No summary vectors defined. Click + to add one.</div>' : ''}
+            </div>
+
+            <!-- Keyword Boost Section -->
+            <div style="background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25); border-radius: 8px; padding: 16px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-arrow-up-right-dots" style="color: #fbbf24;"></i>
+                        <span style="font-weight: 600; color: #fbbf24; font-size: 13px;">Keyword Boosters</span>
+                    </div>
+                    <button class="ct-btn-icon" id="ct_add_keyword_boost" title="Add Keyword Boost" style="padding: 6px 10px; background: rgba(251,191,36,0.2); border: 1px solid rgba(251,191,36,0.4); border-radius: 6px; color: #fbbf24; cursor: pointer; font-size: 12px;">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <p style="font-size: 11px; color: var(--ct-text-light); margin: 0 0 12px 0;">
+                    When these keywords appear in text, boost the matching emotion's score.
+                    Example: "blush" boosts embarrassment by 1.5x
+                </p>
+
+                <div id="ct_keyword_boosts_list" style="display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto;">
+                    ${generateKeywordBoostsList(settings.keywordBoosts || {})}
+                </div>
+
+                ${Object.keys(settings.keywordBoosts || {}).length === 0 ? '<div class="ct-empty-hint" id="ct_keywords_empty" style="text-align: center; padding: 20px; color: var(--ct-text-light); opacity: 0.6; font-size: 11px;"><i class="fa-solid fa-bolt" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>No keyword boosters defined. Click + to add one.</div>' : ''}
+            </div>
+            ` : `
+            <!-- VectHare Not Installed Message -->
+            <div style="text-align: center; padding: 24px; background: rgba(0,0,0,0.1); border-radius: 8px;">
+                <i class="fa-solid fa-puzzle-piece" style="font-size: 32px; color: var(--ct-text-light); opacity: 0.4; margin-bottom: 12px;"></i>
+                <p style="font-size: 12px; color: var(--ct-text-light); margin: 0;">VectHare extension is required for semantic emotion classification.</p>
+                <p style="font-size: 11px; color: var(--ct-text-light); opacity: 0.7; margin-top: 8px;">Install it from Extensions → Download Extensions</p>
+            </div>
+            `}
         </div>
-        ` : ''}
 
         <!-- LLM Settings (shown when LLM selected) -->
         <div id="ct_llm_settings" style="display: ${settings.expressionApi === EXPRESSION_API.llm ? 'block' : 'none'};">
@@ -2042,11 +2086,6 @@ function bindEvents() {
     // VECTHARE SETTINGS BINDINGS
     // ==========================================================================
 
-    // VectHare trigger
-    document.getElementById('ct_vecthare_trigger')?.addEventListener('change', (e) => {
-        updateSetting('vecthareTrigger', e.target.value);
-    });
-
     // VectHare use provider toggle
     bindToggle('ct_vecthare_use_provider', 'vecthareUseProvider');
 
@@ -2056,7 +2095,45 @@ function bindEvents() {
     // Clear emotion cache button
     document.getElementById('ct_clear_emotion_cache')?.addEventListener('click', () => {
         clearEmotionEmbeddingsCache();
-        notify.success('Emotion embeddings cache cleared');
+        notify.success('Emotion embeddings cache rebuilt');
+    });
+
+    // Add summary vector button
+    document.getElementById('ct_add_summary_vector')?.addEventListener('click', () => {
+        openSummaryVectorEditor();
+    });
+
+    // Summary vector list event delegation
+    document.getElementById('ct_summary_vectors_list')?.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.ct-edit-summary-vector');
+        const deleteBtn = e.target.closest('.ct-delete-summary-vector');
+        const item = e.target.closest('.ct-summary-vector-item');
+        const emotion = item?.dataset?.emotion;
+
+        if (editBtn && emotion) {
+            openSummaryVectorEditor(emotion);
+        } else if (deleteBtn && emotion) {
+            deleteSummaryVector(emotion);
+        }
+    });
+
+    // Add keyword boost button
+    document.getElementById('ct_add_keyword_boost')?.addEventListener('click', () => {
+        openKeywordBoostEditor();
+    });
+
+    // Keyword boost list event delegation
+    document.getElementById('ct_keyword_boosts_list')?.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.ct-edit-keyword-boost');
+        const deleteBtn = e.target.closest('.ct-delete-keyword-boost');
+        const item = e.target.closest('.ct-keyword-boost-item');
+        const keyword = item?.dataset?.keyword;
+
+        if (editBtn && keyword) {
+            openKeywordBoostEditor(keyword);
+        } else if (deleteBtn && keyword) {
+            deleteKeywordBoost(keyword);
+        }
     });
 
     // ==========================================================================

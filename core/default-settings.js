@@ -141,6 +141,18 @@ export const defaultSettings = {
     /** Cache emotion embeddings for faster classification */
     vecthareCacheEmotions: true,
 
+    /**
+     * Summary vectors - multiple phrases that resolve to the same emotion
+     * Structure: { emotionName: ['phrase1', 'phrase2', ...] }
+     */
+    summaryVectors: {},
+
+    /**
+     * Keyword boosters - keywords that boost specific emotion scores
+     * Structure: { keyword: { emotion: 'emotionName', boost: 1.5 } }
+     */
+    keywordBoosts: {},
+
     // ==========================================================================
     // CUSTOM EMOTIONS (VectHare Semantic Enhancement)
     // ==========================================================================
