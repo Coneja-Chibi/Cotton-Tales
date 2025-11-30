@@ -2366,14 +2366,18 @@
 #ct-keyword-boost-modal,
 #ct-summary-vector-modal,
 #ct-emotion-editor-modal,
-.ct-bg-editor,
-.ct-input-modal-overlay {
+.ct-bg-editor {
     z-index: 10100 !important;
 }
 
 /* Sprite Manager modal (opens from settings, needs to be above sub-modals) */
 #ct-sprite-manager-modal {
     z-index: 10200 !important;
+}
+
+/* Input/Confirm modals - highest modal layer (used from within sprite manager) */
+.ct-input-modal-overlay {
+    z-index: 10400 !important;
 }
 
 /* Preview/inspect popups that appear over everything */

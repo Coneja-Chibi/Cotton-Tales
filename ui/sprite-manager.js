@@ -21,7 +21,7 @@ import { getContext } from '../../../../extensions.js';
 import { getSettings, saveSettings } from '../core/settings-manager.js';
 import { EXTENSION_NAME, DEFAULT_EXPRESSIONS, CLASSIFIER_MODELS, EXPRESSION_API, EMOTION_PRESETS } from '../core/constants.js';
 import { getSpritesList, spriteCache, validateImages } from '../ct-expressions.js';
-import { addVector, removeVector, setKeyword, removeKeyword, rebuildCharacterVectors } from '../core/custom-classifier.js';
+import { addVector, removeVector, setKeyword, removeKeyword, rebuildCharacterVectors, removeEmotion } from '../core/custom-classifier.js';
 
 // =============================================================================
 // CONSTANTS
@@ -1301,13 +1301,10 @@ async function removeVectHareEmotion(expression) {
     const char = characterList[currentCharacterIndex];
     const charFolder = char?.folderName || '';
 
-    // Remove from character-specific config
-    if (settings.characterEmotions?.[charFolder]?.customEmotions?.[expression]) {
-        delete settings.characterEmotions[charFolder].customEmotions[expression];
-        await saveSettings();
-    }
+    // Use the proper API to remove emotion (handles vectors + settings cleanup)
+    await removeEmotion(charFolder, expression);
 
-    // Remove from global config
+    // Also remove from global customEmotions if present
     if (settings.customEmotions?.[expression]) {
         delete settings.customEmotions[expression];
         await saveSettings();
@@ -2006,14 +2003,18 @@ function bindModalEvents() {
     });
 
     // LLM import labels button
-    modal.querySelector('#ct_sm_import_labels')?.addEventListener('click', importLabelsFromBert);
+    const importBtn = document.getElementById('ct_sm_import_labels');
+    if (importBtn) {
+        importBtn.addEventListener('click', importLabelsFromBert);
+    }
 
     // Add custom label button (LLM mode)
     modal.querySelector('#ct_sm_add_label')?.addEventListener('click', addCustomLabel);
 
     // VectHare preset apply button
     modal.querySelector('#ct_sm_apply_preset')?.addEventListener('click', () => {
-        const presetSelect = modal.querySelector('#ct_sm_vecthare_preset');
+        // Use getElementById to get fresh reference (avoid stale closure)
+        const presetSelect = document.getElementById('ct_sm_vecthare_preset');
         const presetId = presetSelect?.value;
         if (presetId) {
             applyVectHarePreset(presetId);

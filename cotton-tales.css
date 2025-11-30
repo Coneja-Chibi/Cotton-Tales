@@ -1815,7 +1815,7 @@
     height: 100vh;
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(4px);
-    z-index: 10100; /* Sub-modal - above main settings modal */
+    z-index: 10400; /* Highest modal - appears above sprite manager */
     display: flex;
     align-items: center;
     justify-content: center;
