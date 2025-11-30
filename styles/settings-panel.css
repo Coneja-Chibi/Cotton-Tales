@@ -2089,3 +2089,282 @@
     display: flex;
     gap: 6px;
 }
+
+/* =============================================================================
+   DIRECTOR TAB
+   ============================================================================= */
+
+.ct-textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 12px;
+    background: var(--ct-bg-card);
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    color: var(--ct-text-primary);
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    resize: vertical;
+    transition: var(--ct-transition);
+}
+
+.ct-textarea:focus {
+    outline: none;
+    border-color: var(--ct-pink);
+    box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.2);
+}
+
+.ct-textarea::placeholder {
+    color: var(--ct-text-light);
+}
+
+.ct-btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* Macro Grid */
+.ct-macro-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ct-macro-category {
+    background: var(--ct-bg-card);
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    padding: 12px;
+}
+
+.ct-macro-category-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ct-text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.ct-macro-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ct-macro-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(236, 72, 153, 0.1);
+    border: 1px solid rgba(236, 72, 153, 0.3);
+    border-radius: 12px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 11px;
+    color: var(--ct-pink);
+    cursor: pointer;
+    transition: var(--ct-transition);
+    user-select: none;
+}
+
+.ct-macro-chip:hover {
+    background: rgba(236, 72, 153, 0.2);
+    border-color: var(--ct-pink);
+    transform: scale(1.05);
+}
+
+.ct-macro-chip.ct-macro-builtin {
+    background: rgba(147, 51, 234, 0.1);
+    border-color: rgba(147, 51, 234, 0.3);
+    color: var(--ct-purple);
+}
+
+.ct-macro-chip.ct-macro-builtin:hover {
+    background: rgba(147, 51, 234, 0.2);
+    border-color: var(--ct-purple);
+}
+
+.ct-macro-chip.ct-macro-copied {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: #22c55e;
+    color: #22c55e;
+}
+
+/* Schema Preview */
+.ct-schema-preview {
+    background: var(--ct-bg-card);
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    padding: 16px;
+    overflow-x: auto;
+}
+
+.ct-schema-preview pre {
+    margin: 0;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--ct-text-secondary);
+    white-space: pre;
+}
+
+/* Preview Popup */
+.ct-preview-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+    animation: ct-fade-in 0.2s ease;
+}
+
+.ct-preview-popup-content {
+    background: var(--ct-bg-modal);
+    border: 2px solid var(--ct-border-strong);
+    border-radius: var(--ct-radius-lg);
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ct-preview-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: var(--ct-bg-card);
+    border-bottom: 1px solid var(--ct-border);
+    font-weight: 600;
+    color: var(--ct-text-primary);
+}
+
+.ct-preview-popup-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--ct-text-light);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.ct-preview-popup-close:hover {
+    color: var(--ct-pink);
+}
+
+.ct-preview-popup-body {
+    padding: 20px;
+    overflow: auto;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ct-text-secondary);
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+}
+
+/* Custom Prompt Section */
+.ct-custom-prompt-section {
+    margin-top: 12px;
+    padding: 16px;
+    background: rgba(236, 72, 153, 0.05);
+    border: 1px dashed rgba(236, 72, 153, 0.3);
+    border-radius: var(--ct-radius);
+}
+
+/* =============================================================================
+   ICON BUTTONS (Small action buttons with icons)
+   ============================================================================= */
+
+.ct-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--ct-bg-card);
+    border: 1px solid var(--ct-border);
+    border-radius: var(--ct-radius);
+    color: var(--ct-text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--ct-transition);
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.ct-btn-icon:hover {
+    background: var(--ct-bg-card-hover);
+    border-color: var(--ct-purple);
+    color: var(--ct-purple);
+    transform: scale(1.05);
+}
+
+.ct-btn-icon:active {
+    transform: scale(0.95);
+}
+
+.ct-btn-icon i {
+    font-size: inherit;
+}
+
+/* Keyword Boost specific button styling */
+#ct_add_keyword_boost,
+#ct_add_summary_vector {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 6px 10px !important;
+    transition: all 0.2s ease !important;
+}
+
+#ct_add_keyword_boost:hover,
+#ct_add_summary_vector:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3) !important;
+}
+
+/* =============================================================================
+   Z-INDEX HIERARCHY (Critical for modals)
+   ============================================================================= */
+
+/* Base layers */
+/* Main Cotton-Tales modal: 10000 */
+/* Sub-modals (keyword/vector editors): 10100 */
+/* Tooltips/popovers: 10200 */
+/* Preview popups: 10300 */
+
+.ct-modal-overlay {
+    z-index: 10000 !important;
+}
+
+/* Sub-modals that appear over the main settings modal */
+#ct-keyword-boost-modal,
+#ct-summary-vector-modal,
+.ct-bg-editor,
+.ct-input-modal-overlay {
+    z-index: 10100 !important;
+}
+
+/* Preview/inspect popups that appear over everything */
+.ct-preview-popup {
+    z-index: 10300 !important;
+}
+
+/* Ensure modal content is above backdrop */
+.ct-modal {
+    z-index: 1;
+    position: relative;
+}
