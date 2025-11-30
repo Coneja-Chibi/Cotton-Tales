@@ -175,21 +175,57 @@ body.ct-vn-mode {
 }
 
 /* =============================================================================
-   CHOICE PANEL
+   CHOICE PANEL (Standalone Component)
    ============================================================================= */
 
-.ct-vn-choices {
-    position: absolute;
-    bottom: 180px;
+.ct-choice-panel {
+    position: fixed;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 110;
+    z-index: 9600;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.ct-choice-panel.ct-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Position variants */
+.ct-choice-panel.ct-position-bottom,
+.ct-choice-panel:not([class*="ct-position-"]) {
+    bottom: 200px;
+}
+
+.ct-choice-panel.ct-position-top {
+    top: 120px;
+    bottom: auto;
+}
+
+.ct-choice-panel.ct-position-center {
+    top: 50%;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+}
+
+.ct-choice-panel.ct-visible.ct-position-center {
+    transform: translate(-50%, -50%);
+}
+
+.ct-choice-panel-inner {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    min-width: 400px;
-    max-width: 600px;
+    min-width: 450px;
+    max-width: 650px;
+    padding: 8px;
 }
+
+/* =============================================================================
+   CHOICE BUTTONS (Shared Styles)
+   ============================================================================= */
 
 .ct-choice-btn {
     display: flex;
@@ -204,6 +240,7 @@ body.ct-vn-mode {
     transition: var(--ct-transition);
     text-align: left;
     box-shadow: var(--ct-shadow);
+    backdrop-filter: blur(12px);
 }
 
 .ct-choice-btn:hover {
@@ -217,18 +254,25 @@ body.ct-vn-mode {
     transform: translateX(4px) scale(0.98);
 }
 
+.ct-choice-btn.ct-choice-selected {
+    background: linear-gradient(135deg, rgba(255, 107, 157, 0.4) 0%, rgba(183, 108, 255, 0.3) 100%);
+    border-color: var(--ct-pink-vibrant);
+    box-shadow: var(--ct-glow-lg) var(--ct-pink-glow);
+}
+
 .ct-choice-number {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     background: var(--ct-gradient-pink-purple);
     border-radius: 50%;
     font-size: 14px;
     font-weight: 700;
     color: #fff;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
 }
 
 .ct-choice-text {
@@ -236,6 +280,138 @@ body.ct-vn-mode {
     font-weight: 500;
     color: #e0e0f0;
     line-height: 1.4;
+    flex: 1;
+}
+
+/* =============================================================================
+   PREFILLED CHOICES (AI-generated options)
+   ============================================================================= */
+
+.ct-choice-prefilled {
+    animation: ctChoiceSlideIn 0.3s ease backwards;
+}
+
+.ct-choice-prefilled:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.ct-choice-prefilled:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+@keyframes ctChoiceSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* =============================================================================
+   CUSTOM INPUT CHOICE (User types their own)
+   ============================================================================= */
+
+.ct-choice-custom {
+    animation: ctChoiceSlideIn 0.3s ease backwards;
+    animation-delay: 0.15s;
+    cursor: default;
+}
+
+.ct-choice-custom:hover {
+    transform: none;
+}
+
+.ct-choice-custom .ct-choice-number {
+    background: linear-gradient(135deg, var(--ct-cyan-vibrant), var(--ct-purple-vibrant));
+}
+
+.ct-choice-input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ct-choice-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--ct-radius);
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    outline: none;
+    transition: var(--ct-transition);
+}
+
+.ct-choice-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+}
+
+.ct-choice-input:focus {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--ct-cyan-vibrant);
+    box-shadow: 0 0 15px rgba(92, 225, 230, 0.3);
+}
+
+.ct-choice-send {
+    width: 42px;
+    height: 42px;
+    background: var(--ct-gradient-pink-purple);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    transition: var(--ct-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3);
+}
+
+.ct-choice-send:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(255, 107, 157, 0.5);
+}
+
+.ct-choice-send:active {
+    transform: scale(0.95);
+}
+
+/* Shake animation for empty input */
+@keyframes ctShake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.ct-choice-input.ct-shake {
+    animation: ctShake 0.5s ease;
+    border-color: var(--ct-pink-vibrant);
+}
+
+/* =============================================================================
+   LEGACY: In-VN Container Choices (ct-vn-choices)
+   ============================================================================= */
+
+.ct-vn-choices {
+    position: absolute;
+    bottom: 180px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 110;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 400px;
+    max-width: 600px;
 }
 
 /* =============================================================================
