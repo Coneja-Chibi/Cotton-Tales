@@ -170,6 +170,25 @@ function loadCSS(path) {
 }
 
 /**
+ * Load the React bundle (for VN choice panel and future React components)
+ */
+function loadReactBundle() {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = '/scripts/extensions/third-party/Cotton-Tales/dist/react-bundle.js';
+        script.onload = () => {
+            console.log(`[${EXTENSION_NAME}] React bundle loaded`);
+            resolve();
+        };
+        script.onerror = () => {
+            console.warn(`[${EXTENSION_NAME}] React bundle not found (run npm run build)`);
+            resolve(); // Don't fail init, React features just won't work
+        };
+        document.head.appendChild(script);
+    });
+}
+
+/**
  * Main initialization function
  */
 async function init() {
@@ -186,6 +205,9 @@ async function init() {
     } catch (err) {
         console.warn(`[${EXTENSION_NAME}] Some stylesheets failed to load, extension may not display correctly`);
     }
+
+    // Load React bundle for VN choice panel
+    await loadReactBundle();
 
     // Initialize settings
     initializeSettings();

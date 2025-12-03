@@ -1,0 +1,231 @@
+/**
+ * Choice Panel Styles
+ * VN-style choice buttons with animations
+ */
+
+.ct-choice-panel {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9600;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    max-width: 600px;
+    width: 90%;
+}
+
+.ct-choice-panel.ct-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Position variants */
+.ct-choice-panel.ct-position-bottom {
+    bottom: 180px;
+}
+
+.ct-choice-panel.ct-position-center {
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.ct-choice-panel.ct-position-top {
+    top: 120px;
+}
+
+/* Choice list container */
+.ct-choice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Base button style */
+.ct-choice-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, rgba(30, 20, 40, 0.95), rgba(40, 25, 55, 0.9));
+    border: 2px solid rgba(183, 108, 255, 0.4);
+    border-radius: 12px;
+    color: #e8e0f0;
+    font-size: 15px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    animation: ctChoiceSlideIn 0.4s ease-out backwards;
+}
+
+.ct-choice-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(50, 30, 70, 0.95), rgba(60, 35, 85, 0.95));
+    border-color: rgba(255, 107, 157, 0.6);
+    transform: translateX(8px);
+    box-shadow: 0 6px 25px rgba(183, 108, 255, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.ct-choice-btn:active:not(:disabled) {
+    transform: translateX(4px) scale(0.98);
+}
+
+.ct-choice-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Choice number badge */
+.ct-choice-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, rgba(183, 108, 255, 0.3), rgba(255, 107, 157, 0.2));
+    border: 1px solid rgba(183, 108, 255, 0.5);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #b76cff;
+    flex-shrink: 0;
+}
+
+/* Choice icon (for custom) */
+.ct-choice-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.3), rgba(59, 130, 246, 0.2));
+    border: 1px solid rgba(96, 165, 250, 0.5);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #60a5fa;
+    flex-shrink: 0;
+}
+
+/* Choice text */
+.ct-choice-text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+/* Custom input trigger */
+.ct-choice-custom-trigger {
+    border-color: rgba(96, 165, 250, 0.4);
+    border-style: dashed;
+}
+
+.ct-choice-custom-trigger:hover:not(:disabled) {
+    border-color: rgba(96, 165, 250, 0.7);
+    border-style: solid;
+}
+
+/* Custom input expanded state */
+.ct-choice-custom.ct-expanded {
+    animation: ctChoiceSlideIn 0.3s ease-out;
+}
+
+.ct-choice-input-wrapper {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background: linear-gradient(135deg, rgba(30, 20, 40, 0.95), rgba(40, 25, 55, 0.9));
+    border: 2px solid rgba(96, 165, 250, 0.5);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+}
+
+.ct-choice-input {
+    flex: 1;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #e8e0f0;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.ct-choice-input:focus {
+    border-color: rgba(183, 108, 255, 0.5);
+}
+
+.ct-choice-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.ct-choice-send,
+.ct-choice-cancel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ct-choice-send {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+    color: #22c55e;
+}
+
+.ct-choice-send:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.5), rgba(22, 163, 74, 0.4));
+    transform: scale(1.05);
+}
+
+.ct-choice-send:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.ct-choice-cancel {
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.ct-choice-cancel:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+/* Keyboard hint */
+.ct-choice-hint {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.ct-choice-hint kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 10px;
+    margin: 0 2px;
+}
+
+/* Slide-in animation */
+@keyframes ctChoiceSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

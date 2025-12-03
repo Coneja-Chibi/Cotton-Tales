@@ -14,8 +14,7 @@ Thumbs.db
 # Logs
 *.log
 
-# Build artifacts
-dist/
+# Build artifacts (dist/ is NOT ignored - contains React bundle needed for extension)
 build/
 
 # Local config
