@@ -16,9 +16,92 @@
 
 import { updateSceneState, getSceneState } from './macro-resolver.js';
 import { getSettings } from './settings-manager.js';
-import { showChoices, hideChoices, initChoicePanel, isChoicePanelVisible } from '../ui/choice-panel.js';
 
 const MODULE_NAME = 'CT-SceneParser';
+
+// =============================================================================
+// REACT CHOICE PANEL BRIDGE
+// =============================================================================
+
+let choiceContainerId = 'ct-react-choice-root';
+let isChoicePanelMounted = false;
+let currentChoiceCallback = null;
+
+/**
+ * Initialize the React choice panel container
+ */
+function initChoicePanel() {
+    if (document.getElementById(choiceContainerId)) return;
+
+    const container = document.createElement('div');
+    container.id = choiceContainerId;
+    document.body.appendChild(container);
+
+    console.log(`[${MODULE_NAME}] Choice panel container created`);
+}
+
+/**
+ * Show choices using React component
+ * @param {Array} choices - Array of {label, prompt} objects
+ * @param {Function} onChoice - Callback (choiceText, isCustom) => void
+ */
+function showChoices(choices, onChoice) {
+    initChoicePanel();
+
+    if (!window.CottonTalesReact) {
+        console.warn(`[${MODULE_NAME}] React bundle not loaded, choices unavailable`);
+        return;
+    }
+
+    const settings = getSettings();
+    currentChoiceCallback = onChoice;
+
+    // Transform choices to React format
+    const reactChoices = choices.map((c, i) => ({
+        id: `choice-${i}`,
+        text: c.label || c.prompt || `Option ${i + 1}`,
+    }));
+
+    // Mount/update the React component
+    window.CottonTalesReact.mountChoicePanel(choiceContainerId, {
+        choices: reactChoices,
+        visible: true,
+        position: 'bottom',
+        maxChoices: settings.choiceCount || 4,
+        showCustomInput: settings.showCustomInput !== false,
+        onChoiceSelect: (choice) => {
+            if (currentChoiceCallback) {
+                currentChoiceCallback(choice.text, choice.isCustom);
+            }
+            hideChoices();
+        },
+    });
+
+    isChoicePanelMounted = true;
+    console.debug(`[${MODULE_NAME}] Showing ${choices.length} choices via React`);
+}
+
+/**
+ * Hide the choice panel
+ */
+function hideChoices() {
+    if (!window.CottonTalesReact || !isChoicePanelMounted) return;
+
+    window.CottonTalesReact.updateChoicePanel(choiceContainerId, {
+        visible: false,
+        choices: [],
+    });
+
+    currentChoiceCallback = null;
+    console.debug(`[${MODULE_NAME}] Choices hidden`);
+}
+
+/**
+ * Check if choice panel is visible
+ */
+function isChoicePanelVisible() {
+    return isChoicePanelMounted && !!currentChoiceCallback;
+}
 
 // =============================================================================
 // PARSING
