@@ -1267,7 +1267,9 @@ async function handleUploadSprite() {
 }
 
 /**
- * Handle sprite pack (ZIP) upload
+ * Handle sprite pack (ZIP) upload with smart method-aware import
+ * - BERT: Shows mapping modal for unmatched labels
+ * - LLM/VectHare: Auto-imports using filenames as labels
  */
 async function handleUploadSpritePack() {
     const charFolder = selectedCharacter;
@@ -1286,13 +1288,18 @@ async function handleUploadSpritePack() {
         if (!file) return;
 
         try {
-            const { uploadSpritePackage } = await import('../core/upload-manager.js');
-            notify.info('Uploading sprite pack...');
-            const result = await uploadSpritePackage(charFolder, file);
+            const { smartImportSpritePack } = await import('./sprite-import-modal.js');
+            const result = await smartImportSpritePack(file, charFolder);
             await populateCharacterCarousel();
-            notify.success(`Uploaded ${result.count || 0} sprite(s)`);
+
+            if (result.imported > 0) {
+                notify.success(`Imported ${result.imported} sprite(s)${result.skipped > 0 ? `, skipped ${result.skipped}` : ''}`);
+            } else if (result.skipped > 0) {
+                notify.warning(`No sprites imported, ${result.skipped} skipped`);
+            }
         } catch (error) {
-            notify.error(`Upload failed: ${error.message}`);
+            notify.error(`Import failed: ${error.message}`);
+            console.error('[CT-Settings] Sprite pack import error:', error);
         }
     });
 
