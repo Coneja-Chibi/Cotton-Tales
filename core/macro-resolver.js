@@ -374,7 +374,7 @@ const macroDefinitions = {
 
     choice_count: () => {
         const settings = getSettings();
-        return String(settings.directorChoiceCount || 3);
+        return String(settings.choiceCount || 3);
     },
 };
 

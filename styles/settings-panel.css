@@ -1392,6 +1392,14 @@
     transform: scale(1.15);
 }
 
+.ct-slider-hint {
+    font-size: 10px;
+    color: var(--ct-text-light);
+    opacity: 0.7;
+    margin-top: 6px;
+    font-style: italic;
+}
+
 .ct-slider::-moz-range-thumb {
     width: 20px;
     height: 20px;

@@ -972,14 +972,15 @@ function getScenesTabHTML() {
             Choice Settings
         </div>
 
-        <!-- Choice Count -->
+        <!-- Choice Count (single source of truth - controls both UI display AND Director prompt) -->
         <div class="ct-slider-row">
             <div class="ct-slider-header">
                 <span class="ct-slider-label">Choices Per Turn</span>
                 <span class="ct-slider-value" id="ct_choice_val">${settings.choiceCount}</span>
             </div>
             <input type="range" class="ct-slider" id="ct_choice_count"
-                   min="2" max="4" value="${settings.choiceCount}" />
+                   min="2" max="6" value="${settings.choiceCount}" />
+            <div class="ct-slider-hint">AI will generate this many options. Also sets {{ct_choice_count}} macro.</div>
         </div>
 
         <!-- Custom Input Toggle -->

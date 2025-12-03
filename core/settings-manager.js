@@ -30,7 +30,7 @@ const VALIDATORS = {
     dialogueOpacity: (v) => typeof v === 'number' && v >= 0 && v <= 100,
     typewriterEnabled: (v) => typeof v === 'boolean',
     typewriterSpeed: (v) => typeof v === 'number' && v >= 0 && v <= 500,
-    choiceCount: (v) => typeof v === 'number' && v >= 2 && v <= 4,
+    choiceCount: (v) => typeof v === 'number' && v >= 2 && v <= 6,
     showCustomInput: (v) => typeof v === 'boolean',
     choiceButtonStyle: (v) => ['rounded', 'square', 'pill'].includes(v),
     choiceAnimation: (v) => ['fade', 'slide', 'none'].includes(v),

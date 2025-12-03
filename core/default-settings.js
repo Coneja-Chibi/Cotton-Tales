@@ -241,8 +241,7 @@ export const defaultSettings = {
     /** Where to inject Director prompt */
     directorPromptPosition: 'system_end',
 
-    /** Number of choices Director should generate */
-    directorChoiceCount: 3,
+    // NOTE: directorChoiceCount removed - use choiceCount as single source of truth
 
     /** Automatically parse vn-scene blocks from AI responses */
     autoParseResponses: true,
