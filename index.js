@@ -28,6 +28,9 @@ import { openSpriteManager, closeSpriteManager } from './ui/sprite-manager.js';
 // Cotton-Tales modules - Expressions
 import { initExpressions, setExpressionsVisible, cleanupExpressions } from './ct-expressions.js';
 
+// Cotton-Tales modules - Scene Handlers
+import { initSceneHandlers } from './core/vn-scene-handlers.js';
+
 // =============================================================================
 // SETTINGS MANAGEMENT
 // =============================================================================
@@ -227,6 +230,9 @@ async function init() {
 
     // Initialize expressions system (sprites, VN mode)
     await initExpressions();
+
+    // Initialize scene handlers (background, music, sfx)
+    initSceneHandlers();
 
     // Check initial state and apply appropriate mode
     const settings = getSettings();
